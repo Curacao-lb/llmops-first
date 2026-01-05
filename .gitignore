@@ -1,0 +1,25 @@
+# 虚拟环境
+env/
+venv/
+.venv/
+
+# 环境配置（含敏感信息）
+.env
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# 日志和上传文件
+storage/logs/
+storage/uploads/
+
+# macOS
+.DS_Store
