@@ -32,6 +32,7 @@ class Router:
 
         # 3.将这个BP蓝图还有对应的路由，在控制器里的方法进行映射
         bp.add_url_rule('/ping', view_func=app_handler.ping,methods=['GET'])
+        bp.add_url_rule('/app/completion', view_func=app_handler.completion, methods=['POST'])
 
         # 4.应用上去注册蓝图
         app.register_blueprint(bp)
