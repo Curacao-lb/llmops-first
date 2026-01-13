@@ -2,6 +2,12 @@
 from internal.server import Http
 from injector import Injector
 from internal.router import Router
+# 将.env加载到环境变量中
+import dotenv
+dotenv.load_dotenv()
+
+from config import Config
+conf = Config()
 
 # 1. 创建 injector（依赖注入容器）
 injector = Injector()
@@ -15,7 +21,7 @@ injector = Injector()
 #   - 把 AppHandler 注入到 Router
 #   - 返回完整的 Router 实例
 # 3. 把 Router 传给 Http
-app = Http(__name__, router=injector.get(Router))
+app = Http(__name__, conf=conf, router=injector.get(Router))
 
 if  __name__ == '__main__':
     app.run(debug = True)

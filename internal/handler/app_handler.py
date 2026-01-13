@@ -1,5 +1,8 @@
 from flask import request
 from openai import OpenAI
+import os
+
+from internal.schema.app_schema  import CompletionReq
 
 class AppHandler:
     #  应用控制器
@@ -9,12 +12,16 @@ class AppHandler:
 
     def completion(self):
         """聊天接口"""
+        req = CompletionReq()
+        if not req.validate():
+            return req.errors
+
         # 1.提取从接口中获取的输入，假定是post
         query = request.json.get('query')
         # 2.构建openAI客户端，并发起请求
         client = OpenAI(
-            api_key="xxx",
-            base_url="https://api.xty.app/v1"
+            api_key=os.getenv('OPENAI_API_KEY'),
+            base_url=os.getenv('OPENAI_API_BASE')
         )
         # 3.得到请求响应，然后将openAI得到的响应传递给前端
         completion = client.chat.completions.create(

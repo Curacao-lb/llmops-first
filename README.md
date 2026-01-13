@@ -67,6 +67,9 @@ source venv/bin/activate  # macOS/Linux
 # 3. 安装依赖
 pip install -r requirements.txt
 
+# 生成 requirements.txt（只包含项目实际导入的包）
+pipreqs . --force
+
 # 4. 配置环境变量
 cp .env.example .env
 # 编辑 .env 文件，填入实际配置
