@@ -1,4 +1,4 @@
-.PHONY: dev test install clean
+.PHONY: dev test install clean format
 
 # 开发服务器
 dev:
@@ -11,6 +11,10 @@ test:
 # 安装依赖
 install:
 	pip install -r requirements.txt
+
+# 格式化代码
+format:
+	black .
 
 # 清理缓存
 clean:
