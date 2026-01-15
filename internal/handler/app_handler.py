@@ -1,10 +1,10 @@
-from flask import request, jsonify
+from flask import request
 from openai import OpenAI, APIError, APITimeoutError, APIConnectionError
 import os
 import httpx
 
 from internal.schema.app_schema import CompletionReq
-from pkg.response import Response, HttpCode
+from pkg.response import success_json, validate_error_json, fail_json
 
 
 class AppHandler:
@@ -17,7 +17,7 @@ class AppHandler:
         """聊天接口"""
         req = CompletionReq()
         if not req.validate():
-            return req.errors
+            return validate_error_json(req.errors)
 
         # 1.提取从接口中获取的输入，假定是post
         query = request.json.get("query")
@@ -42,25 +42,11 @@ class AppHandler:
             )
             # 消息的内容
             content = completion.choices[0].message.content
-            resp = Response(
-                code=HttpCode.SUCCESS, message="", data={"content": content}
-            )
-            return jsonify(resp), 200
+            return success_json({"content": content})
 
         except APITimeoutError:
-            resp = Response(
-                code=HttpCode.INTERNAL_ERROR, message="请求超时，请稍后重试", data=None
-            )
-            return jsonify(resp), 504
+            return fail_json({"message": "请求超时，请稍后重试"})
         except APIConnectionError:
-            resp = Response(
-                code=HttpCode.INTERNAL_ERROR,
-                message="无法连接到AI服务，请检查网络或稍后重试",
-                data=None,
-            )
-            return jsonify(resp), 503
+            return fail_json({"message": "无法连接到AI服务，请检查网络或稍后重试"})
         except APIError as e:
-            resp = Response(
-                code=HttpCode.INTERNAL_ERROR, message=f"AI服务异常: {str(e)}", data=None
-            )
-            return jsonify(resp), 500
+            return fail_json({"message": f"AI服务异常: {str(e)}"})
