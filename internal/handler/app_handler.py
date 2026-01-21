@@ -5,13 +5,15 @@ import httpx
 
 from internal.schema.app_schema import CompletionReq
 from pkg.response import success_json, validate_error_json, fail_json
+from internal.exception import CustomException
 
 
 class AppHandler:
     #  应用控制器
 
     def ping(self):
-        return {"ping": "pong"}
+        raise CustomException("数据未找到")
+        # return {"ping": "pong"}
 
     def completion(self):
         """聊天接口"""

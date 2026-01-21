@@ -13,10 +13,18 @@ class Response:
     # 通过默认的工厂函数来去创建一个空字典
     data: Any = field(default_factory=dict)
 
+    def to_dict(self):
+        """手动转换为字典,避免深拷贝问题"""
+        return {
+            "code": self.code,  # HttpCode 继承自 str,可以直接序列化
+            "message": self.message,
+            "data": self.data,
+        }
+
 
 def json(data: Response = None):
     """基础的响应接口"""
-    return jsonify(data), 200
+    return jsonify(data.to_dict()), 200
 
 
 def success_json(data: Response = None):
