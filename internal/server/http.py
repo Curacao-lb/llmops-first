@@ -2,6 +2,7 @@ from flask import Flask
 from internal.router import Router
 from internal.exception import CustomException
 from pkg.response import json, Response, HttpCode
+from flask_sqlalchemy import SQLAlchemy
 import os
 
 
@@ -13,14 +14,15 @@ class Http(Flask):
 
     # *args 是非命名的参数,比如传入 1 'name' false 这种等等
     # **kwargs 是命名的参数,比如传入 name='name' age=18 这种等等
-    def __init__(self, *args, conf: "Config", router: Router, **kwargs):
+    def __init__(self, *args, conf: "Config", db: SQLAlchemy, router: Router, **kwargs):
         # 使用super去调用父类的构造函数,将整个参数进行实例化。
         # 要不然的话继承别人,如果你不去实现它的构造函数是很容易出错的。
         super(Http, self).__init__(*args, **kwargs)
         # 通过对象的方式去将我们这个类加载到这个flask应用中
         self.config.from_object(conf)
-        # self.before_request(self.before_request)
-        # self.after_request(self.after_request)
+
+        # 初始化flask扩展
+        db.init_app(self)
 
         # 注册全局异常处理器
         self.register_error_handler(Exception, self._register_error_handlers)
