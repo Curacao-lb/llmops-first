@@ -6,14 +6,26 @@ import httpx
 from internal.schema.app_schema import CompletionReq
 from pkg.response import success_json, validate_error_json, fail_json
 from internal.exception import CustomException
+from internal.service import AppService
+from injector import inject
+from dataclasses import dataclass
+from pkg.response import success_message
 
 
+@inject
+@dataclass
 class AppHandler:
     #  应用控制器
+    app_service: AppService
 
     def ping(self):
-        raise CustomException("数据未找到")
-        # return {"ping": "pong"}
+        # raise CustomException("数据未找到")
+        return {"ping": "pong"}
+
+    def create_app(self):
+        """调用服务创建新的APP记录"""
+        app = self.app_service.create_app()
+        return success_message(f"应用已经成功创建了,id为{app.id}")
 
     def completion(self):
         """聊天接口"""

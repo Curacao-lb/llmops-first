@@ -4,6 +4,7 @@ from internal.exception import CustomException
 from pkg.response import json, Response, HttpCode
 from flask_sqlalchemy import SQLAlchemy
 import os
+from internal.model import App
 
 
 class Http(Flask):
@@ -23,6 +24,9 @@ class Http(Flask):
 
         # 初始化flask扩展
         db.init_app(self)
+        with self.app_context():
+            _ = App()
+            db.create_all()
 
         # 注册全局异常处理器
         self.register_error_handler(Exception, self._register_error_handlers)
@@ -39,9 +43,9 @@ class Http(Flask):
                 Response(message=error.message, code=error.code, data=error.data)
             )
 
-        # 如果不是我们的自定义异常，则有可能是程序、数据库抛出的异常，也可以提取信息，设置为FAIL状态码
+        # 2.如果是开发环境，重新抛出异常以显示详细的调试信息
         if self.debug or os.getenv("FLASK_ENV") == "development":
-            return error
+            raise error
 
-        # 2.如果不是我们的自定义异常，则有可能是程序或者是数据库抛出的异常，也可以提取信息，然后设置为fail状态码。
-        return json(Response(message=str(error), code=HttpCode.FAIL, data={}))
+        # 3.生产环境：返回通用错误信息
+        return json(Response(message="服务器内部错误", code=HttpCode.FAIL, data={}))

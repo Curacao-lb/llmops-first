@@ -59,36 +59,36 @@ def success_json_no_data():
 
 
 # 封装message函数
-def message(code: HttpCode, message: str = ""):
+def message(code: HttpCode, msg: str = ""):
     """基础的消息响应，固定返回消息提示，数据固定为空字典"""
-    return json(Response(code=code, message=message, data={}))
+    return json(Response(code=code, message=msg, data={}))
 
 
-def success_message(message: str = ""):
+def success_message(msg: str = ""):
     """成功的消息响应"""
-    return message(HttpCode.SUCCESS, message=message)
+    return message(HttpCode.SUCCESS, msg=msg)
 
 
-def fail_message(message: str = ""):
+def fail_message(msg: str = ""):
     """失败的消息响应"""
-    return message(HttpCode.FAIL, message=message)
+    return message(HttpCode.FAIL, msg=msg)
 
 
-def not_found_message(message: str = ""):
+def not_found_message(msg: str = ""):
     """未找到的消息响应"""
-    return message(HttpCode.NOT_FOUND, message=message)
+    return message(HttpCode.NOT_FOUND, msg=msg)
 
 
-def unauthorized_message(message: str = ""):
+def unauthorized_message(msg: str = ""):
     """未授权的消息响应"""
-    return message(HttpCode.UNAUTHORIZED, message=message)
+    return message(HttpCode.UNAUTHORIZED, msg=msg)
 
 
-def forbidden_message(message: str = ""):
+def forbidden_message(msg: str = ""):
     """禁止访问的消息响应"""
-    return message(HttpCode.FORBIDDEN, message=message)
+    return message(HttpCode.FORBIDDEN, msg=msg)
 
 
-def server_error_message(message: str = ""):
+def server_error_message(msg: str = ""):
     """服务器错误的消息响应"""
-    return message(HttpCode.SERVER_ERROR, message=message)
+    return message(HttpCode.SERVER_ERROR, msg=msg)
