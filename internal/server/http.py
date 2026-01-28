@@ -2,6 +2,7 @@ from flask import Flask
 from internal.router import Router
 from internal.exception import CustomException
 from pkg.response import json, Response, HttpCode
+from pkg.sqlalchemy_encoder import SQLAlchemyJSONProvider
 from flask_sqlalchemy import SQLAlchemy
 import os
 from internal.model import App
@@ -12,6 +13,9 @@ class Http(Flask):
     http 服务引擎
     Http 类继承了 Flask 并且要注册钩子,必须手动写 __init__。
     """
+
+    # 使用自定义 JSON 编码器,自动序列化 SQLAlchemy 模型
+    json_provider_class = SQLAlchemyJSONProvider
 
     # *args 是非命名的参数,比如传入 1 'name' false 这种等等
     # **kwargs 是命名的参数,比如传入 name='name' age=18 这种等等

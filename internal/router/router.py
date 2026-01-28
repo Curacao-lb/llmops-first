@@ -41,6 +41,7 @@ class Router:
             "/app/completion", view_func=self.app_handler.completion, methods=["POST"]
         )
         bp.add_url_rule("/app", methods=["POST"], view_func=self.app_handler.create_app)
+        bp.add_url_rule("/app/<uuid:id>", view_func=self.app_handler.get_app)
 
         # 4.应用上去注册蓝图
         app.register_blueprint(bp)

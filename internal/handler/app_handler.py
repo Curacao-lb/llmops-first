@@ -10,6 +10,7 @@ from internal.service import AppService
 from injector import inject
 from dataclasses import dataclass
 from pkg.response import success_message
+import uuid
 
 
 @inject
@@ -26,6 +27,10 @@ class AppHandler:
         """调用服务创建新的APP记录"""
         app = self.app_service.create_app()
         return success_message(f"应用已经成功创建了,id为{app.id}")
+
+    def get_app(self, id: uuid.UUID):
+        app = self.app_service.get_app(id)
+        return success_json(app)  # 直接传模型对象,Flask 会自动序列化
 
     def completion(self):
         """聊天接口"""

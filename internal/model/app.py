@@ -1,10 +1,10 @@
-from internal.extension.database_extentsion import db
 from sqlalchemy import Column, UUID, String, Text, DateTime, PrimaryKeyConstraint, Index
 import uuid
 from datetime import datetime
+from .base import BaseModel
 
 
-class App(db.Model):
+class App(BaseModel):
     """
     AI应用基础模型类
 

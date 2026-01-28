@@ -29,3 +29,8 @@ class AppService:
         self.db.session.commit()
 
         return app
+
+    def get_app(self, id: uuid.UUID) -> App:
+        """根据ID获取应用信息"""
+        return self.db.session.query(App).get(id)
+        return app
