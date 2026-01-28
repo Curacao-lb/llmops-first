@@ -47,3 +47,6 @@ class App(BaseModel):
 
     # 创建时间: 记录应用创建时间,只在创建时设置一次
     created_at = Column(DateTime, default=datetime.now, nullable=False)
+
+    # 尝试新增一个字段：status
+    status = Column(String(50), default="", nullable=False)

@@ -3,6 +3,7 @@ from injector import Injector, Module, Binder
 from internal.router import Router
 from pkg.sqlalchemy import SQLAlchemy
 from .module import ExtensionModule
+from flask_migrate import Migrate
 
 # 将.env加载到环境变量中
 import dotenv
@@ -28,7 +29,11 @@ injector = Injector([ExtensionModule])
 #   - 返回完整的 Router 实例
 # 3. 把 Router 传给 Http
 app = Http(
-    __name__, conf=conf, db=injector.get(SQLAlchemy), router=injector.get(Router)
+    __name__,
+    conf=conf,
+    migrate=injector.get(Migrate),
+    db=injector.get(SQLAlchemy),
+    router=injector.get(Router),
 )
 
 if __name__ == "__main__":

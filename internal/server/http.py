@@ -6,6 +6,7 @@ from pkg.sqlalchemy_encoder import SQLAlchemyJSONProvider
 from pkg.sqlalchemy import SQLAlchemy
 import os
 from internal.model import App
+from flask_migrate import Migrate
 
 
 class Http(Flask):
@@ -19,7 +20,15 @@ class Http(Flask):
 
     # *args 是非命名的参数,比如传入 1 'name' false 这种等等
     # **kwargs 是命名的参数,比如传入 name='name' age=18 这种等等
-    def __init__(self, *args, conf: "Config", db: SQLAlchemy, router: Router, **kwargs):
+    def __init__(
+        self,
+        *args,
+        conf: "Config",
+        db: SQLAlchemy,
+        migrate: Migrate,
+        router: Router,
+        **kwargs
+    ):
         # 使用super去调用父类的构造函数,将整个参数进行实例化。
         # 要不然的话继承别人,如果你不去实现它的构造函数是很容易出错的。
         super(Http, self).__init__(*args, **kwargs)
@@ -31,6 +40,9 @@ class Http(Flask):
         with self.app_context():
             _ = App()
             db.create_all()
+
+        # migrate迁移数据工具
+        migrate.init_app(self, db, directory="internal/migration")
 
         # 注册全局异常处理器
         self.register_error_handler(Exception, self._register_error_handlers)
