@@ -3,7 +3,7 @@ from internal.router import Router
 from internal.exception import CustomException
 from pkg.response import json, Response, HttpCode
 from pkg.sqlalchemy_encoder import SQLAlchemyJSONProvider
-from flask_sqlalchemy import SQLAlchemy
+from pkg.sqlalchemy import SQLAlchemy
 import os
 from internal.model import App
 

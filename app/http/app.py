@@ -1,7 +1,7 @@
 from internal.server import Http
 from injector import Injector, Module, Binder
 from internal.router import Router
-from flask_sqlalchemy import SQLAlchemy
+from pkg.sqlalchemy import SQLAlchemy
 from .module import ExtensionModule
 
 # 将.env加载到环境变量中

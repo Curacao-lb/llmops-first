@@ -1,4 +1,4 @@
-from flask_sqlalchemy import SQLAlchemy
+from pkg.sqlalchemy import SQLAlchemy
 from injector import Binder, Module
 from internal.extension.database_extentsion import db
 
