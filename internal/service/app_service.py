@@ -34,3 +34,19 @@ class AppService:
         """根据ID获取应用信息"""
         return self.db.session.query(App).get(id)
         return app
+
+    def update_app(self, id: uuid.UUID) -> App:
+        """更新应用信息"""
+        app = self.db.session.query(App).get(id)
+        app.name = "robin的机器人"
+        self.db.session.commit()
+        return app
+
+    def delete_app(self, id: uuid.UUID) -> bool:
+        """删除应用信息"""
+        app = self.db.session.query(App).get(id)
+        if app is None:
+            return False
+        self.db.session.delete(app)
+        self.db.session.commit()
+        return True

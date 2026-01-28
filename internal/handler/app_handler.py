@@ -30,7 +30,20 @@ class AppHandler:
 
     def get_app(self, id: uuid.UUID):
         app = self.app_service.get_app(id)
-        return success_json(app)  # 直接传模型对象,Flask 会自动序列化
+        return success_json(
+            f"应用已经成功查询了,id为{app.id}"
+        )  # 直接传模型对象,Flask 会自动序列化
+
+    def update_app(self, id: uuid.UUID):
+        app = self.app_service.update_app(id)
+        return success_json(f"应用已经成功更新了,id为{app.id}，名字为{app.name}")
+
+    def delete_app(self, id: uuid.UUID):
+        result = self.app_service.delete_app(id)
+        if result:
+            return success_message(f"应用已经成功删除了, id为{id}")
+        else:
+            return fail_json({"message": "应用不存在或删除失败"})
 
     def completion(self):
         """聊天接口"""
