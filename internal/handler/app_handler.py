@@ -1,7 +1,5 @@
 from flask import request
-from openai import OpenAI, APIError, APITimeoutError, APIConnectionError
-import os
-import httpx
+from openai import APIError, APITimeoutError, APIConnectionError
 
 from internal.schema.app_schema import CompletionReq
 from pkg.response import success_json, validate_error_json, fail_json
@@ -11,6 +9,11 @@ from injector import inject
 from dataclasses import dataclass
 from pkg.response import success_message
 import uuid
+
+# LangChain 相关导入
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 
 @inject
@@ -46,34 +49,44 @@ class AppHandler:
             return fail_json({"message": "应用不存在或删除失败"})
 
     def completion(self):
-        """聊天接口"""
+        """
+        聊天接口 - 使用 LangChain 实现
+
+        流程: prompt → llm → parser
+        """
         req = CompletionReq()
         if not req.validate():
             return validate_error_json(req.errors)
 
-        # 1.提取从接口中获取的输入，假定是post
+        # 1. 提取用户输入
         query = request.json.get("query")
-        # 2.构建openAI客户端，并发起请求（设置超时时间）
-        client = OpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("OPENAI_API_BASE"),
-            timeout=httpx.Timeout(60.0, connect=10.0),  # 总超时60秒，连接超时10秒
+
+        # 2. 构建 Prompt 模板
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "你是OpenAI开发的聊天机器人，请根据用户的输入回复对应的信息",
+                ),
+                ("human", "{query}"),
+            ]
         )
 
+        # 3. 创建 LLM 实例 (会自动读取 OPENAI_API_KEY 和 OPENAI_API_BASE 环境变量)
+        llm = ChatOpenAI(
+            model="gpt-3.5-turbo",
+            timeout=60.0,  # 超时时间
+        )
+
+        # 4. 创建输出解析器 (将 AIMessage 转为纯字符串)
+        parser = StrOutputParser()
+
+        # 5. 使用 LCEL 构建链: prompt | llm | parser
+        chain = prompt | llm | parser
+
         try:
-            # 3.得到请求响应，然后将openAI得到的响应传递给前端
-            completion = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "你是OpenAI开发的聊天机器人，请根据用户的输入回复对应的信息",
-                    },
-                    {"role": "user", "content": query},
-                ],
-            )
-            # 消息的内容
-            content = completion.choices[0].message.content
+            # 6. 执行链，获取结果
+            content = chain.invoke({"query": query})
             return success_json({"content": content})
 
         except APITimeoutError:
