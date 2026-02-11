@@ -48,7 +48,7 @@ class AppHandler:
         else:
             return fail_json({"message": "应用不存在或删除失败"})
 
-    def completion(self):
+    def debug(self, app_id: uuid.UUID):
         """
         聊天接口 - 使用 LangChain 实现
 

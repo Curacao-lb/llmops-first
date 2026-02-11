@@ -36,20 +36,22 @@ class Router:
         # self.app_handler 已经通过 @inject 和 @dataclass 自动注入了
 
         # 3.将这个BP蓝图还有对应的路由，在控制器里的方法进行映射
-        bp.add_url_rule("/ping", view_func=self.app_handler.ping, methods=["GET"])
+        # bp.add_url_rule("/ping", view_func=self.app_handler.ping, methods=["GET"])
         bp.add_url_rule(
-            "/app/completion", view_func=self.app_handler.completion, methods=["POST"]
-        )
-        bp.add_url_rule("/app", methods=["POST"], view_func=self.app_handler.create_app)
-        bp.add_url_rule("/app/<uuid:id>", view_func=self.app_handler.get_app)
-        bp.add_url_rule(
-            "/app/<uuid:id>", view_func=self.app_handler.update_app, methods=["POST"]
-        )
-        bp.add_url_rule(
-            "/app/<uuid:id>/delete",
-            view_func=self.app_handler.delete_app,
+            "/apps/<uuid:app_id>/debug",
+            view_func=self.app_handler.debug,
             methods=["POST"],
         )
+        # bp.add_url_rule("/app", methods=["POST"], view_func=self.app_handler.create_app)
+        # bp.add_url_rule("/app/<uuid:id>", view_func=self.app_handler.get_app)
+        # bp.add_url_rule(
+        #     "/app/<uuid:id>", view_func=self.app_handler.update_app, methods=["POST"]
+        # )
+        # bp.add_url_rule(
+        #     "/app/<uuid:id>/delete",
+        #     view_func=self.app_handler.delete_app,
+        #     methods=["POST"],
+        # )
 
         # 4.应用上去注册蓝图
         app.register_blueprint(bp)
