@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from internal.router import Router
 from internal.exception import CustomException
 from pkg.response import json, Response, HttpCode
@@ -34,6 +35,9 @@ class Http(Flask):
         super(Http, self).__init__(*args, **kwargs)
         # 通过对象的方式去将我们这个类加载到这个flask应用中
         self.config.from_object(conf)
+
+        # 配置 CORS
+        CORS(self, resources={r"/*": {"origins": ["http://localhost:5173"]}})
 
         # 初始化flask扩展
         db.init_app(self)
