@@ -42,6 +42,11 @@ class Router:
             view_func=self.app_handler.debug,
             methods=["POST"],
         )
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/memory_debug",
+            view_func=self.app_handler.memory_debug,
+            methods=["POST"],
+        )
         # bp.add_url_rule("/app", methods=["POST"], view_func=self.app_handler.create_app)
         # bp.add_url_rule("/app/<uuid:id>", view_func=self.app_handler.get_app)
         # bp.add_url_rule(
