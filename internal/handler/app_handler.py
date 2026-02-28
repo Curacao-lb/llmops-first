@@ -12,7 +12,7 @@ import uuid
 
 # LangChain 相关导入
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 
 
@@ -68,6 +68,56 @@ class AppHandler:
                     "system",
                     "你是OpenAI开发的聊天机器人，请根据用户的输入回复对应的信息",
                 ),
+                ("human", "{query}"),
+            ]
+        )
+
+        # 3. 创建 LLM 实例 (会自动读取 OPENAI_API_KEY 和 OPENAI_API_BASE 环境变量)
+        llm = ChatOpenAI(
+            model="gpt-3.5-turbo",
+            timeout=60.0,  # 超时时间
+        )
+
+        # 4. 创建输出解析器 (将 AIMessage 转为纯字符串)
+        parser = StrOutputParser()
+
+        # 5. 使用 LCEL 构建链: prompt | llm | parser
+        chain = prompt | llm | parser
+
+        try:
+            # 6. 执行链，获取结果
+            content = chain.invoke({"query": query})
+            return success_json({"content": content})
+
+        except APITimeoutError:
+            return fail_json({"message": "请求超时，请稍后重试"})
+        except APIConnectionError:
+            return fail_json({"message": "无法连接到AI服务，请检查网络或稍后重试"})
+        except APIError as e:
+            return fail_json({"message": f"AI服务异常: {str(e)}"})
+
+    def memory_debug(self, app_id: uuid.UUID):
+        """
+        聊天接口 - 使用 LangChain 实现
+
+        流程: prompt → llm → parser
+        """
+        req = CompletionReq()
+        if not req.validate():
+            return validate_error_json(req.errors)
+
+        # 1. 提取用户输入
+        query = request.json.get("query")
+
+        # 2. 构建 Prompt 模板 与记忆组件
+        prompt = ChatPromptTemplate.from_messages(
+            # 使用消息列表的方式来去创建对应的提示模板
+            [
+                (
+                    "system",
+                    "你是OpenAI开发的聊天机器人，请根据用户的输入回复对应的信息",
+                ),
+                MessagesPlaceholder("history"),
                 ("human", "{query}"),
             ]
         )
