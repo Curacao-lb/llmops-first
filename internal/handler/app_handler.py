@@ -14,6 +14,8 @@ import uuid
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableLambda
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.messages import trim_messages
 import os
 
@@ -168,36 +170,15 @@ class AppHandler:
 
     def memory_debug(self, app_id: uuid.UUID):
         """
-        带记忆功能的聊天接口 - 使用窗口缓冲记忆
-
-        功能: 实现多轮对话，保留最近3轮对话历史
-
-        记忆策略:
-            - 使用窗口缓冲记忆（Window Buffer Memory）
-            - 只保留最近6条消息（3轮对话）
-            - 超过6条时，自动删除最早的消息
-            - 类似于人的短期记忆：只记得最近的对话
-
-        流程:
-            1. 获取用户输入和会话ID
-            2. 从存储中加载该会话的历史记录
-            3. 使用 trimmer 修剪历史（只保留最近6条）
-            4. 构建完整的 prompt（系统提示 + 历史 + 当前问题）
-            5. 调用 LLM 生成回复
-            6. 保存本轮对话到历史记录
-            7. 返回结果
+        带记忆功能的聊天接口 - 使用 RunnableWithMessageHistory
         """
         req = CompletionReq()
         if not req.validate():
             return validate_error_json(req.errors)
 
-        # ============ 1. 提取请求参数 ============
-        query = request.json.get("query")  # 用户输入
-        session_id = request.json.get(
-            "session_id", "default_session"
-        )  # 会话ID（默认值）
+        query = request.json.get("query")
+        session_id = request.json.get("session_id", "default_session")
 
-        # ============ 2. 构建 Prompt 模板（包含历史占位符） ============
         prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -211,45 +192,35 @@ class AppHandler:
             ]
         )
 
-        # ============ 3. 创建 LLM 实例 ============
         llm = ChatOpenAI(
             model="gpt-3.5-turbo",
             timeout=60.0,
         )
-
-        # ============ 4. 创建输出解析器 ============
         parser = StrOutputParser()
 
-        # ============ 5. 加载并处理历史消息 ============
-        # 5.1 获取该会话的历史记录对象（文件存储）
-        # 文件路径: /Users/.../storage/memory/{session_id}.json
-        history = self.get_session_history(session_id)
+        def trim_history(input_dict):
+            history = input_dict.get("history", [])
+            trimmed_history = self.message_trimmer.invoke(history)
+            return {"query": input_dict["query"], "history": trimmed_history}
 
-        # 5.2 获取所有历史消息（从文件自动加载）
-        messages = history.messages
-
-        # 5.3 使用 trimmer 修剪消息（只保留最近6条）
-        # 这是 v1.0 替代 ConversationBufferWindowMemory 的核心逻辑
-        trimmed_messages = self.message_trimmer.invoke(messages)
-
-        # ============ 6. 构建链并执行 ============
-        # LCEL 链: prompt | llm | parser
-        chain = prompt | llm | parser
+        chain = RunnableLambda(trim_history) | prompt | llm | parser
+        with_message_history = RunnableWithMessageHistory(
+            chain,
+            self.get_session_history,
+            input_messages_key="query",
+            history_messages_key="history",
+        )
 
         try:
-            # 6.1 执行链，传入当前问题和修剪后的历史
-            content = chain.invoke(
-                {"query": query, "history": trimmed_messages}  # 只传入最近6条消息
+            content = with_message_history.invoke(
+                {"query": query},
+                config={"configurable": {"session_id": session_id}},
             )
 
-            # ============ 7. 保存本轮对话到历史 ============
-            # 7.1 保存用户消息（自动写入文件）
-            history.add_user_message(query)
+            history = self.get_session_history(session_id)
+            messages = history.messages
+            trimmed_messages = self.message_trimmer.invoke(messages)
 
-            # 7.2 保存AI回复（自动写入文件）
-            history.add_ai_message(content)
-
-            # ============ 8. 返回结果（包含调试信息） ============
             return success_json(
                 {
                     "content": content,
@@ -258,11 +229,11 @@ class AppHandler:
                         "storage_path": os.path.join(
                             self.memory_storage_path, f"chat_history_{session_id}.json"
                         ),  # 文件路径
-                        "total_messages": len(history.messages),  # 当前总消息数
+                        "total_messages": len(messages),  # 当前总消息数
                         "trimmed_messages": len(trimmed_messages),  # 实际使用的消息数
                         "window_size": 6,  # 窗口大小
                         "storage_type": "file",  # 存储类型
-                        "note": "对话历史已保存到文件，服务重启后不会丢失",
+                        "note": "使用 RunnableWithMessageHistory + 自动修剪",
                     },
                 }
             )
