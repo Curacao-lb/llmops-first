@@ -198,8 +198,12 @@ class AppHandler:
         )
         parser = StrOutputParser()
 
-        def trim_history(input_dict):
-            history = input_dict.get("history", [])
+        def trim_history(input_dict, config):
+            # RunnableWithMessageHistory 会将当前会话对应的 history
+            # 注入到 config["configurable"]["message_history"] 中。
+            # 这样链内部就可以通过第二个参数直接拿到 memory 实例。
+            memory = config.get("configurable", {}).get("message_history")
+            history = memory.messages if memory else input_dict.get("history", [])
             trimmed_history = self.message_trimmer.invoke(history)
             return {"query": input_dict["query"], "history": trimmed_history}
 
@@ -233,7 +237,7 @@ class AppHandler:
                         "trimmed_messages": len(trimmed_messages),  # 实际使用的消息数
                         "window_size": 6,  # 窗口大小
                         "storage_type": "file",  # 存储类型
-                        "note": "使用 RunnableWithMessageHistory + 自动修剪",
+                        "note": "使用 RunnableWithMessageHistory，通过 configurable 传递 memory，并自动修剪历史",
                     },
                 }
             )

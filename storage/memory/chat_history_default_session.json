@@ -123,5 +123,55 @@
       "invalid_tool_calls": [],
       "usage_metadata": null
     }
+  },
+  {
+    "type": "human",
+    "data": {
+      "content": "你好，我是Robin，我喜欢跑步，你喜欢什么呢",
+      "additional_kwargs": {},
+      "response_metadata": {},
+      "type": "human",
+      "name": null,
+      "id": null
+    }
+  },
+  {
+    "type": "ai",
+    "data": {
+      "content": "你好 Robin！👋\n\n跑步真的是一项很棒的运动，既简单又高效，随时随地都能进行。作为聊天助手，我自己并不能做运动，但如果有机会的话，我应该会喜欢 **游泳** 🏊‍♂️，因为它全身锻炼，对关节友好。\n\n你平时跑步时喜欢设定目标吗？比如配速或者距离？",
+      "additional_kwargs": {},
+      "response_metadata": {},
+      "type": "ai",
+      "name": null,
+      "id": null,
+      "tool_calls": [],
+      "invalid_tool_calls": [],
+      "usage_metadata": null
+    }
+  },
+  {
+    "type": "human",
+    "data": {
+      "content": "根据对应的上下文信息，你知道我叫什么名字吗",
+      "additional_kwargs": {},
+      "response_metadata": {},
+      "type": "human",
+      "name": null,
+      "id": null
+    }
+  },
+  {
+    "type": "ai",
+    "data": {
+      "content": "知道的，你说过你的名字是 **Robin** 😊  \n\n而且你喜欢跑步。🏃‍♂️  \n\n你希望我以后在聊天里一直用这个名字称呼你吗？",
+      "additional_kwargs": {},
+      "response_metadata": {},
+      "type": "ai",
+      "name": null,
+      "id": null,
+      "tool_calls": [],
+      "invalid_tool_calls": [],
+      "usage_metadata": null
+    }
   }
 ]
