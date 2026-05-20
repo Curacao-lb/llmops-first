@@ -8,6 +8,7 @@ from pkg.sqlalchemy import SQLAlchemy
 import os
 from internal.model import App
 from flask_migrate import Migrate
+from werkzeug.exceptions import HTTPException
 
 
 class Http(Flask):
@@ -56,6 +57,10 @@ class Http(Flask):
 
     def _register_error_handlers(self, error: Exception):
         """注册全局异常处理器"""
+
+        # 0. Flask/Werkzeug 自带的 HTTP 异常（比如 404/405）不应该被提升为 500
+        if isinstance(error, HTTPException):
+            return error
 
         # 1.先来判断一下异常信息是不是我们的自定义异常，如果是的话，可以提取massage和code等信息
         if isinstance(error, CustomException):

@@ -1,0 +1,11 @@
+- name: tavily
+  label: Tavily
+  description: Tavily 是专为 AI 应用设计的搜索引擎，提供高质量的实时网络搜索结果
+  icon: icon.svg
+  background: "#E0F2FE"
+  category: 网络搜索
+- name: duckduckgo
+  label: Duckduckgo
+  icon: icon.svg
+  background: "#FFFFFF"
+  category: 网络搜索

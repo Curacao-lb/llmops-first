@@ -1,0 +1,41 @@
+name: tavily_search
+label: Tavily 搜索
+description: 使用 Tavily API 进行网络搜索，专为 AI 应用优化。
+params:
+  - name: api_key
+    label: API Key
+    type: password
+    default:
+    required: false
+  - name: max_results
+    label: 最大结果数
+    type: number
+    min: 1
+    max: 20
+    default: 5
+    required: false
+  - name: search_depth
+    label: 搜索深度
+    type: select
+    default: basic
+    required: false
+    options:
+      - value: basic
+        label: basic
+      - value: advanced
+        label: advanced
+  - name: include_answer
+    label: 是否包含答案摘要
+    type: boolean
+    default: true
+    required: false
+  - name: include_raw_content
+    label: 是否包含原始网页内容
+    type: boolean
+    default: false
+    required: false
+  - name: include_images
+    label: 是否包含相关图片
+    type: boolean
+    default: false
+    required: false

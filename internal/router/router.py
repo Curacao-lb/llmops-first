@@ -36,7 +36,7 @@ class Router:
         # self.app_handler 已经通过 @inject 和 @dataclass 自动注入了
 
         # 3.将这个BP蓝图还有对应的路由，在控制器里的方法进行映射
-        # bp.add_url_rule("/ping", view_func=self.app_handler.ping, methods=["GET"])
+        bp.add_url_rule("/ping", view_func=self.app_handler.ping, methods=["GET"])
         bp.add_url_rule(
             "/apps/<uuid:app_id>/debug",
             view_func=self.app_handler.debug,
