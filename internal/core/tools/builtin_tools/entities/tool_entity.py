@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field
 
 
 class ToolParamType(str, Enum):
+    """工具参数类型枚举类"""
+
     STRING = "string"
     NUMBER = "number"
     BOOLEAN = "boolean"
@@ -17,11 +19,11 @@ class ToolParamType(str, Enum):
 class ToolParam(BaseModel):
     """工具参数类型"""
 
-    name: str
+    name: str  # 参数的实际名字
     label: str
     type: ToolParamType
     required: bool = False
-    default: Optional[Any] = None
+    default: Optional[Any] = None  # 默认值
     min: Optional[float] = None
     max: Optional[float] = None
     options: list[dict[str, Any]] = Field(default_factory=list)
@@ -34,4 +36,3 @@ class ToolEntity(BaseModel):
     label: str
     description: str
     params: list[ToolParam] = Field(default_factory=list)
-

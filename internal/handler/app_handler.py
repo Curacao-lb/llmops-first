@@ -56,14 +56,20 @@ class AppHandler:
         )
 
     def ping(self):
-        tool_factory = self.provider_factory.get_tool("tavily", "tavily_search")
-        if tool_factory is None:
-            raise CustomException("tavily_search 工具未加载")
+        # tool_factory = self.provider_factory.get_tool("tavily", "tavily_search")
+        # if tool_factory is None:
+        #     raise CustomException("tavily_search 工具未加载")
 
-        tavily = tool_factory()
-        result = tavily.invoke({"query": "2025北京半程马拉松 男子前三名 成绩 以及 女子前三名 成绩"})
-        # raise CustomException("数据未找到")
-        return {"ping": "pong", "tavily": result}
+        # tavily = tool_factory()
+        # result = tavily.invoke({"query": "2025北京半程马拉松 男子前三名 成绩 以及 女子前三名 成绩"})
+
+        tavily = self.provider_factory.get_provider("tavily")
+        tavily_search_entity = tavily.get_tool_entity("tavily_search")
+        print("tavily_search_entity:", tavily_search_entity)
+        return {
+            "ping": "pong"
+            # , "tavily": result
+        }
 
     def create_app(self):
         """调用服务创建新的APP记录"""
