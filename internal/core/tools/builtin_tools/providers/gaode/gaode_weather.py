@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Copyright [2025] [caixiaorong]
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""
+@Time   : 2024/9/20 23:14
+@Author : caixiaorong01@outlook.com
+@File   : gaode_weather.py
+"""
+import json
+from typing import Any, Type
+
+import requests
+from langchain_core.tools import BaseTool
+from pydantic import BaseModel, Field
+
+from internal.lib.helper import add_attribute
+
+
+class GaodeWeatherArgsSchema(BaseModel):
+    city: str = Field(description="需要查询天气预报的目标城市，例如：广州")
+
+
+class GaodeWeatherTool(BaseTool):
+    """根据传入的城市名查询天气"""
+    name: str = "gaode_weather"
+    description: str = "当你想查询天气或者与天气相关的问题时可以使用的工具"
+    args_schema: Type[BaseModel] = GaodeWeatherArgsSchema
+    api_key: str | None
+    url: str | None
+    extensions: str | None = "all"
+
+    def _run(self, *args: Any, **kwargs: Any) -> str:
+        """根据传入的城市名称运行调用api获取城市对应的天气预报信息"""
+        try:
+            # 获取高德API秘钥，如果没有创建的话，则抛出错误
+            if not self.url or not self.api_key:
+                return f"接口地址/应用密钥未配置"
+
+            # 从参数中获取city城市名字
+            city = kwargs.get("city", "")
+            if city == "":
+                return "搜索城市为空"
+
+            session = requests.session()
+
+            # 发起行政区域编码查询，根据city获取ad_code
+            city_response = session.request(
+                method="GET",
+                url=f"{self.url}/config/district?key={self.api_key}&keywords={city}&subdistrict=0",
+                headers={"Content-Type": "application/json; charset=utf-8"},
+            )
+            city_response.raise_for_status()
+            city_data = city_response.json()
+            if city_data.get("info") == "OK":
+                ad_code = city_data["districts"][0]["adcode"]
+
+                # 根据得到的ad_code调用天气预报API接口，获取天气信息
+                weather_response = session.request(
+                    method="GET",
+                    url=f"{self.url}/weather/weatherInfo?key={self.api_key}&city={ad_code}&extensions={self.extensions}",
+                    headers={"Content-Type": "application/json; charset=utf-8"},
+                )
+                weather_response.raise_for_status()
+                weather_data = weather_response.json()
+                if weather_data.get("info") == "OK":
+                    # 返回最后的结果字符串
+                    return json.dumps(weather_data)
+            return f"获取{city}天气预报信息失败"
+        except Exception as e:
+            return f"获取{kwargs.get('city', '')}天气预报信息失败"
+
+
+@add_attribute("args_schema", GaodeWeatherArgsSchema)
+def gaode_weather(**kwargs) -> BaseTool:
+    """获取高德天气预报查询工具"""
+    return GaodeWeatherTool(**kwargs)

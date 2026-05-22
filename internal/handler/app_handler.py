@@ -63,13 +63,18 @@ class AppHandler:
         # tavily = tool_factory()
         # result = tavily.invoke({"query": "2025北京半程马拉松 男子前三名 成绩 以及 女子前三名 成绩"})
 
-        tavily = self.provider_factory.get_provider("tavily")
-        tavily_search_entity = tavily.get_tool_entity("tavily_search")
-        print("tavily_search_entity:", tavily_search_entity)
-        return {
-            "ping": "pong"
-            # , "tavily": result
-        }
+        # tavily = self.provider_factory.get_provider("tavily")
+        # tavily_search_entity = tavily.get_tool_entity("tavily_search")
+        # print("tavily_search_entity:", tavily_search_entity)
+
+        # return {
+        #     "ping": "pong"
+        #     # , "tavily": result
+        # }
+
+        providers = self.provider_factory.get_provider_entities()
+
+        return success_json([provider.dict() for provider in providers])
 
     def create_app(self):
         """调用服务创建新的APP记录"""

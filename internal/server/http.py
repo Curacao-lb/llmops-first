@@ -36,6 +36,7 @@ class Http(Flask):
         super(Http, self).__init__(*args, **kwargs)
         # 通过对象的方式去将我们这个类加载到这个flask应用中
         self.config.from_object(conf)
+        self.json.ensure_ascii = False
 
         # 配置 CORS
         CORS(self, resources={r"/*": {"origins": ["http://localhost:5173"]}})
