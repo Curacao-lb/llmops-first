@@ -22,7 +22,7 @@ import os
 # 自定义的中文文件存储
 from internal.extension.chinese_file_chat_history import ChineseFileChatMessageHistory
 
-from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
+# from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
 
 
 @inject
@@ -30,7 +30,7 @@ from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
 class AppHandler:
     #  应用控制器
     app_service: AppService
-    provider_factory: BuiltinProviderManager
+    # provider_factory: BuiltinProviderManager
 
     def __post_init__(self):
         # ============ 文件存储配置 ============
@@ -72,9 +72,10 @@ class AppHandler:
         #     # , "tavily": result
         # }
 
-        providers = self.provider_factory.get_provider_entities()
+        # providers = self.provider_factory.get_provider_entities()
 
-        return success_json([provider.dict() for provider in providers])
+        # return success_json([provider.dict() for provider in providers])
+        return success_json()
 
     def create_app(self):
         """调用服务创建新的APP记录"""

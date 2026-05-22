@@ -1,5 +1,5 @@
-
 from .app_handler import AppHandler
+from .builtin_tool_handler import BuiltinToolHandler
 
 # 引用魔术变量也叫 dunder 变量，是 Python 内置的特殊变量
-__all__ = ["AppHandler"]
+__all__ = ["AppHandler", "BuiltinToolHandler"]

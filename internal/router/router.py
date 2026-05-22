@@ -1,7 +1,7 @@
 from flask import Flask, Blueprint
 
 # 使用魔术变量（__all__），这里就可以导入 AppHandler
-from internal.handler import AppHandler
+from internal.handler import AppHandler, BuiltinToolHandler
 from dataclasses import dataclass
 
 """
@@ -18,6 +18,7 @@ class Router:
     """路由"""
 
     app_handler: AppHandler
+    builtin_tool_handler: BuiltinToolHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -57,6 +58,15 @@ class Router:
         #     view_func=self.app_handler.delete_app,
         #     methods=["POST"],
         # )
+
+        # 内置插件广场模块
+        bp.add_url_rule(
+            "/builtin-tools", view_func=self.builtin_tool_handler.get_builtin_tools
+        )
+        bp.add_url_rule(
+            "/builtin-tools/<string:provider_name>/tools/<string:tool_name>",
+            view_func=self.builtin_tool_handler.get_provider_tool,
+        )
 
         # 4.应用上去注册蓝图
         app.register_blueprint(bp)
