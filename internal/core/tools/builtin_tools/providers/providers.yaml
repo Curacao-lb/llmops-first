@@ -1,41 +1,77 @@
-- name: tavily
-  label: Tavily
-  description: Tavily 是专为 AI 应用设计的搜索引擎，提供高质量的实时网络搜索结果
+- name: google
+  label: Google
+  description: 谷歌服务提供商，涵盖了谷歌搜索等工具
   icon: icon.svg
-  background: "#E0F2FE"
-  category: 网络搜索
-  created_at: 1778888888888
-- name: duckduckgo
-  label: Duckduckgo
-  icon: icon.svg
-  background: "#FFFFFF"
-  category: 网络搜索
+  background: "#E5E7EB"
+  category: search
   created_at: 1778888888888
 - name: time
   label: 时间
   description: 一个用于获取当前时间的工具
   icon: icon.svg
   background: "#E5E7EB"
-  category: 实用工具
+  category: tool
+  created_at: 1778888888888
+- name: duckduckgo
+  label: DuckDuckGo
+  description: 这是一个注重隐私等搜索引擎
+  icon: icon.svg
+  background: "#FFFFFF"
+  category: search
   created_at: 1778888888888
 - name: dalle
   label: DALLE
   description: DALLE是一个文生图工具
   icon: icon.png
   background: "#E5E7EB"
-  category: 文生图
+  category: image
   created_at: 1778888888888
 - name: gaode
   label: 高德天气工具包
   description: 内置高德天气预报和ip查询功能
   icon: icon.png
   background: "#E5E7EB"
-  category: 天气
+  category: weather
   created_at: 1778888888888
 - name: wikipedia
   label: 维基百科
   description: 维基百科是一个由全世界志愿者创建和编辑的免费在线百科全书
   icon: icon.svg
   background: "#FFFFFF"
-  category: 其他
+  category: other
   created_at: 1778888888888
+- name: pptx
+  label: PPT工具包
+  description: 这是一个PPT处理工具包，可以将特定内容生成PPT文档。
+  icon: icon.png
+  background: "#FFFFFF"
+  category: tool
+  created_at: 1778888888899
+- name: docx
+  label: WORD工具包
+  description: 这是一个word文档处理工具包，可以将特定内容生成word文档。
+  icon: icon.svg
+  background: "#FFFFFF"
+  category: tool
+  created_at: 1778888899888
+- name: bocha
+  label: 博查搜索
+  description: 从全网搜索任何网页信息和网页链接，结果准确、摘要完整，更适合AI使用。
+  icon: icon.png
+  background: "#FFFFFF"
+  category: search
+  created_at: 1778888896888
+- name: extract
+  label: 内容提取工具
+  description: 支持从指定网页地址/各类文档/文件提取内容。
+  icon: extract.svg
+  background: "#FFFFFF"
+  category: tool
+  created_at: 1778888478888
+- name: translate
+  label: 翻译工具
+  description: 翻译工具。
+  icon: icon.svg
+  background: "#FFFFFF"
+  category: tool
+  created_at: 1778888833888

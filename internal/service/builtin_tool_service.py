@@ -189,7 +189,7 @@ class BuiltinToolService:
 
         return icon_data, mimetype
 
-    def get_categories(self) -> list[dict]:
+    def get_categories(self) -> list[dict, Any]:
         """获取所有内置工具的分类列表信息"""
         # 1.从分类管理器获取分类映射
         builtin_category_manager = BuiltinCategoryManager()
