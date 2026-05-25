@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from typing import Any, Type
 
 from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
+from internal.core.tools.builtin_tools.categories import BuiltinCategoryManager
 from pydantic import BaseModel
 from internal.exception import NotFoundException
 
@@ -146,3 +147,64 @@ class BuiltinToolService:
         }
 
         return builtin_tool
+
+    def get_provider_icon(self, provider_name: str) -> tuple[bytes, str]:
+        """根据提供商名字获取对应的icon文件路径"""
+        import os
+
+        # 1.获取内置的提供商
+        provider = self.builtin_provider_manager.get_provider(provider_name)
+        if provider is None:
+            raise NotFoundException(f"该提供商{provider_name}不存在")
+
+        # 2.获取提供商的icon文件名
+        provider_entity = provider.provider_entity
+        if not provider_entity.icon:
+            raise NotFoundException(f"该提供商{provider_name}未配置icon")
+
+        # 3.拼接icon文件路径
+        icon_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..",
+            "core",
+            "tools",
+            "builtin_tools",
+            "providers",
+            provider_name,
+            "_asset",
+            provider_entity.icon,
+        )
+        if not os.path.exists(icon_path):
+            raise NotFoundException(f"该提供商{provider_name}的icon文件不存在")
+
+        # 4.读取icon文件内容并推断mimetype
+        import mimetypes
+
+        mimetype, _ = mimetypes.guess_type(icon_path)
+        if mimetype is None:
+            mimetype = "application/octet-stream"
+
+        with open(icon_path, "rb") as f:
+            icon_data = f.read()
+
+        return icon_data, mimetype
+
+    def get_categories(self) -> list[dict]:
+        """获取所有内置工具的分类列表信息"""
+        # 1.从分类管理器获取分类映射
+        builtin_category_manager = BuiltinCategoryManager()
+        category_map = builtin_category_manager.get_category_map()
+
+        # 2.组装分类列表
+        categories = []
+        for category_key, category_info in category_map.items():
+            category_entity = category_info["entity"]
+            categories.append(
+                {
+                    "category": category_entity.category,
+                    "name": category_entity.name,
+                    "icon": category_info["icon"],
+                }
+            )
+
+        return categories
