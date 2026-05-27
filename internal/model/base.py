@@ -1,4 +1,4 @@
-from internal.extension.database_extentsion import db
+from internal.extension.database_extension import db
 from datetime import datetime
 
 

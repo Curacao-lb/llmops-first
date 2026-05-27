@@ -91,11 +91,11 @@ def run_migrations_online():
     if conf_args.get("process_revision_directives") is None:
         conf_args["process_revision_directives"] = process_revision_directives
 
-    # 启用 server_default 和类型比较
+    # 启用类型比较，关闭 server_default 比较（避免空字符串默认值引号嵌套导致的 SQL 语法错误）
     if conf_args.get("compare_type") is None:
         conf_args["compare_type"] = True
     if conf_args.get("compare_server_default") is None:
-        conf_args["compare_server_default"] = True
+        conf_args["compare_server_default"] = False
 
     connectable = get_engine()
 

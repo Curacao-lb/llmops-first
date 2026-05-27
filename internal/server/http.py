@@ -6,7 +6,6 @@ from pkg.response import json, Response, HttpCode
 from pkg.sqlalchemy_encoder import SQLAlchemyJSONProvider
 from pkg.sqlalchemy import SQLAlchemy
 import os
-from internal.model import App
 from flask_migrate import Migrate
 from werkzeug.exceptions import HTTPException
 
@@ -43,9 +42,6 @@ class Http(Flask):
 
         # 初始化flask扩展
         db.init_app(self)
-        with self.app_context():
-            _ = App()
-            db.create_all()
 
         # migrate迁移数据工具
         migrate.init_app(self, db, directory="internal/migration")
