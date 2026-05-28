@@ -1,7 +1,7 @@
 from flask import Flask, Blueprint
 
 # 使用魔术变量（__all__），这里就可以导入 AppHandler
-from internal.handler import AppHandler, BuiltinToolHandler
+from internal.handler import AppHandler, BuiltinToolHandler, ApiToolHandler
 from dataclasses import dataclass
 
 """
@@ -19,6 +19,7 @@ class Router:
 
     app_handler: AppHandler
     builtin_tool_handler: BuiltinToolHandler
+    api_tool_handler: ApiToolHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -74,6 +75,13 @@ class Router:
         bp.add_url_rule(
             "/builtin-tools/categories",
             view_func=self.builtin_tool_handler.get_categories,
+        )
+
+        # 自定义API插件模块
+        bp.add_url_rule(
+            "/api-tools/validate-openapi-schema",
+            methods=["POST"],
+            view_func=self.api_tool_handler.validate_openapi_schema,
         )
 
         # 4.应用上去注册蓝图
