@@ -1,6 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField
 from wtforms.validators import DataRequired, Length
+from .schema import ListField
+from wtforms.validators import DataRequired, Length, URL, Optional
 
 
 # 定义方法和对应的请求名保持一致
@@ -11,3 +13,38 @@ class ValidateOpenAPISchema(FlaskForm):
         "openapi_schema",
         validators=[DataRequired(message="openapi_schema字符串不能为空")],
     )
+
+
+class CreateApiToolReq(FlaskForm):
+    """创建自定义API请求"""
+
+    name = StringField(
+        "name",
+        validators=[
+            DataRequired(message="工具提供者名字不能为空"),
+            Length(min=1, max=30, message="工具提供者的名字长度在1-30"),
+        ],
+    )
+    icon = StringField(
+        "icon",
+        validators=[
+            DataRequired(message="icon不能为空"),
+            URL(message="icon必须是URL链接"),
+        ],
+    )
+    openapi_schema = StringField(
+        "openapi_schema",
+        validators=[DataRequired(message="openapi_schema字符串不能为空")],
+    )
+    headers = ListField("headers", default=[])
+
+    @classmethod
+    def validate_headers(cls, form, field):
+        """校验headers请求的数据是否正确,涵盖列表校验,列表元素校验"""
+        for header in field.data:
+            if not isinstance(header, dict):
+                raise ValidationError("headers元素类型错误")
+            if set(header.keys()) != {"key", "value"}:
+                raise ValidationError(
+                    "headers里面的每一个元素必须包含key和value两个属性，不允许有其他属性"
+                )
