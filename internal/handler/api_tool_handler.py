@@ -3,6 +3,7 @@ from internal.schema.api_tool_schema import (
     ValidateOpenAPISchema,
     CreateApiToolReq,
     GetApiToolProviderResp,
+    GetApiToolResp,
 )
 from pkg.response import validate_error_json, success_message
 from internal.service import ApiToolService
@@ -47,3 +48,9 @@ class ApiToolHandler:
 
         resp = GetApiToolProviderResp()
         return success_json(resp.dump(api_tool_provider))
+
+    def get_api_tool(self, provider_id: UUID, tool_name: str):
+        """根据传递的provider_id加tool_name获取工具的详情信息"""
+        api_tool = self.api_tool_service.get_api_tool(provider_id, tool_name)
+        resp = GetApiToolResp()
+        return success_json(resp.dump(api_tool))

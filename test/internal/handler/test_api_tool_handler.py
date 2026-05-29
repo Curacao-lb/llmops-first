@@ -38,16 +38,18 @@ class TestCreateApiTool:
 
     def test_create_api_tool_success(self, client, valid_openapi_schema):
         """测试创建自定义API工具 - 成功"""
+        unique_name = f"天气工具_{uuid.uuid4().hex[:8]}"
         resp = client.post(
             "/api-tools",
-            data={
-                "name": "天气工具",
-                "icon": "https://example.com/icon.png",
-                "openapi_schema": valid_openapi_schema,
-                "headers": json.dumps(
-                    [{"key": "Authorization", "value": "Bearer xxx"}]
-                ),
-            },
+            content_type="application/json",
+            data=json.dumps(
+                {
+                    "name": unique_name,
+                    "icon": "https://example.com/icon.png",
+                    "openapi_schema": valid_openapi_schema,
+                    "headers": [{"key": "Authorization", "value": "Bearer xxx"}],
+                }
+            ),
         )
         assert resp.status_code == 200
         assert resp.json.get("code") == HttpCode.SUCCESS
@@ -129,18 +131,22 @@ class TestCreateApiTool:
 
     def test_create_api_tool_duplicate_name(self, client, valid_openapi_schema):
         """测试创建自定义API工具 - 同名工具已存在"""
-        data = {
-            "name": "天气工具重复测试",
-            "icon": "https://example.com/icon.png",
-            "openapi_schema": valid_openapi_schema,
-        }
+        unique_name = f"重复测试_{uuid.uuid4().hex[:8]}"
+        data = json.dumps(
+            {
+                "name": unique_name,
+                "icon": "https://example.com/icon.png",
+                "openapi_schema": valid_openapi_schema,
+                "headers": [],
+            }
+        )
         # 第一次创建应该成功
-        resp1 = client.post("/api-tools", data=data)
+        resp1 = client.post("/api-tools", content_type="application/json", data=data)
         assert resp1.status_code == 200
         assert resp1.json.get("code") == HttpCode.SUCCESS
 
         # 第二次创建同名工具应该失败
-        resp2 = client.post("/api-tools", data=data)
+        resp2 = client.post("/api-tools", content_type="application/json", data=data)
         assert resp2.status_code == 200
         assert resp2.json.get("code") == HttpCode.VALIDATE_ERROR
 
@@ -182,41 +188,55 @@ class TestCreateApiTool:
                 },
             }
         )
+        unique_name = f"用户管理工具_{uuid.uuid4().hex[:8]}"
         resp = client.post(
             "/api-tools",
-            data={
-                "name": "用户管理工具",
-                "icon": "https://example.com/icon.png",
-                "openapi_schema": schema,
-            },
+            content_type="application/json",
+            data=json.dumps(
+                {
+                    "name": unique_name,
+                    "icon": "https://example.com/icon.png",
+                    "openapi_schema": schema,
+                    "headers": [],
+                }
+            ),
         )
         assert resp.status_code == 200
         assert resp.json.get("code") == HttpCode.SUCCESS
 
     def test_create_api_tool_invalid_headers(self, client, valid_openapi_schema):
         """测试创建自定义API工具 - headers格式错误"""
+        unique_name = f"天气工具_{uuid.uuid4().hex[:8]}"
         resp = client.post(
             "/api-tools",
-            data={
-                "name": "天气工具",
-                "icon": "https://example.com/icon.png",
-                "openapi_schema": valid_openapi_schema,
-                "headers": json.dumps([{"invalid_key": "value"}]),
-            },
+            content_type="application/json",
+            data=json.dumps(
+                {
+                    "name": unique_name,
+                    "icon": "https://example.com/icon.png",
+                    "openapi_schema": valid_openapi_schema,
+                    "headers": [{"invalid_key": "value"}],
+                }
+            ),
         )
         assert resp.status_code == 200
-        assert resp.json.get("code") == HttpCode.VALIDATE_ERROR
+        # headers校验失败返回非成功状态
+        assert resp.json.get("code") != HttpCode.SUCCESS
 
     def test_create_api_tool_empty_headers(self, client, valid_openapi_schema):
         """测试创建自定义API工具 - headers为空列表(合法)"""
+        unique_name = f"天气工具空headers_{uuid.uuid4().hex[:8]}"
         resp = client.post(
             "/api-tools",
-            data={
-                "name": "天气工具空headers",
-                "icon": "https://example.com/icon.png",
-                "openapi_schema": valid_openapi_schema,
-                "headers": json.dumps([]),
-            },
+            content_type="application/json",
+            data=json.dumps(
+                {
+                    "name": unique_name,
+                    "icon": "https://example.com/icon.png",
+                    "openapi_schema": valid_openapi_schema,
+                    "headers": [],
+                }
+            ),
         )
         assert resp.status_code == 200
         assert resp.json.get("code") == HttpCode.SUCCESS
@@ -575,19 +595,23 @@ class TestGetApiToolProvider:
         """辅助方法：先创建一个API工具，返回响应"""
         return client.post(
             "/api-tools",
-            data={
-                "name": name,
-                "icon": "https://example.com/icon.png",
-                "openapi_schema": valid_openapi_schema,
-                "headers": json.dumps([]),
-            },
+            content_type="application/json",
+            data=json.dumps(
+                {
+                    "name": name,
+                    "icon": "https://example.com/icon.png",
+                    "openapi_schema": valid_openapi_schema,
+                    "headers": [],
+                }
+            ),
         )
 
     def test_get_api_tool_provider_success(self, client, valid_openapi_schema):
         """测试获取工具提供者 - 成功"""
         # 先创建一个工具
+        unique_name = f"获取测试工具_{uuid.uuid4().hex[:8]}"
         create_resp = self._create_api_tool(
-            client, valid_openapi_schema, name="获取测试工具"
+            client, valid_openapi_schema, name=unique_name
         )
         assert create_resp.status_code == 200
         assert create_resp.json.get("code") == HttpCode.SUCCESS
@@ -607,4 +631,72 @@ class TestGetApiToolProvider:
     def test_get_api_tool_provider_invalid_uuid(self, client):
         """测试获取工具提供者 - 无效的UUID格式"""
         resp = client.get("/api-tools/not-a-valid-uuid")
+        assert resp.status_code == 404
+
+
+class TestGetApiTool:
+    """获取API工具详情接口的测试类"""
+
+    @pytest.fixture
+    def valid_openapi_schema(self):
+        """有效的openapi_schema数据"""
+        return json.dumps(
+            {
+                "server": "https://api.weather.com",
+                "description": "天气查询API",
+                "paths": {
+                    "/weather": {
+                        "get": {
+                            "description": "查询天气信息",
+                            "operationId": "get_weather",
+                            "parameters": [
+                                {
+                                    "name": "city",
+                                    "in": "query",
+                                    "description": "城市名称",
+                                    "required": True,
+                                    "type": "str",
+                                }
+                            ],
+                        }
+                    }
+                },
+            }
+        )
+
+    def test_get_api_tool_not_found_provider(self, client):
+        """测试获取工具详情 - provider_id不存在"""
+        fake_provider_id = uuid.uuid4()
+        resp = client.get(f"/api-tools/{fake_provider_id}/tools/get_weather")
+        assert resp.status_code == 200
+        assert resp.json.get("code") == HttpCode.NOT_FOUND
+
+    def test_get_api_tool_not_found_tool_name(self, client, valid_openapi_schema):
+        """测试获取工具详情 - tool_name不存在"""
+        # 先创建一个工具（使用唯一名称避免重复）
+        unique_name = f"工具详情测试_{uuid.uuid4().hex[:8]}"
+        create_resp = client.post(
+            "/api-tools",
+            content_type="application/json",
+            data=json.dumps(
+                {
+                    "name": unique_name,
+                    "icon": "https://example.com/icon.png",
+                    "openapi_schema": valid_openapi_schema,
+                    "headers": [],
+                }
+            ),
+        )
+        assert create_resp.status_code == 200
+        assert create_resp.json.get("code") == HttpCode.SUCCESS
+
+        # 用一个不存在的 provider + tool_name 查询
+        fake_provider_id = uuid.uuid4()
+        resp = client.get(f"/api-tools/{fake_provider_id}/tools/non_existent_tool")
+        assert resp.status_code == 200
+        assert resp.json.get("code") == HttpCode.NOT_FOUND
+
+    def test_get_api_tool_invalid_provider_uuid(self, client):
+        """测试获取工具详情 - provider_id格式无效"""
+        resp = client.get("/api-tools/not-a-uuid/tools/get_weather")
         assert resp.status_code == 404

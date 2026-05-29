@@ -4,7 +4,7 @@ from wtforms.validators import DataRequired, Length
 from .schema import ListField
 from wtforms.validators import DataRequired, Length, URL, Optional
 from marshmallow import Schema, fields, pre_dump
-from internal.model import ApiToolProvider
+from internal.model import ApiToolProvider, ApiTool
 
 
 # 定义方法和对应的请求名保持一致
@@ -71,4 +71,34 @@ class GetApiToolProviderResp(Schema):
             "openapi_schema": data.openapi_schema,
             "headers": data.headers,
             "created_at": int(data.created_at.timestamp()),
+        }
+
+
+class GetApiToolResp(Schema):
+    """获取API工具参数详情响应。"""
+
+    id = fields.UUID()
+    name = fields.String()
+    description = fields.String()
+    inputs = fields.List(fields.Dict, dump_default=[])
+    provider = fields.Dict()
+
+    @pre_dump
+    def process_data(self, data: ApiTool, **kwargs):
+        provider = data.provider
+        return {
+            "id": data.id,
+            "name": data.name,
+            "description": data.description,
+            "inputs": [
+                {k: v for k, v in parameter.items() if k != "in"}
+                for parameter in data.parameters
+            ],
+            "provider": {
+                "id": provider.id,
+                "name": provider.name,
+                "icon": provider.icon,
+                "description": provider.description,
+                "headers": provider.headers,
+            },
         }
