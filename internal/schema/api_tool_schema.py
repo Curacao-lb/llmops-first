@@ -3,6 +3,8 @@ from wtforms import StringField
 from wtforms.validators import DataRequired, Length
 from .schema import ListField
 from wtforms.validators import DataRequired, Length, URL, Optional
+from marshmallow import Schema, fields, pre_dump
+from internal.model import ApiToolProvider
 
 
 # 定义方法和对应的请求名保持一致
@@ -48,3 +50,25 @@ class CreateApiToolReq(FlaskForm):
                 raise ValidationError(
                     "headers里面的每一个元素必须包含key和value两个属性，不允许有其他属性"
                 )
+
+
+class GetApiToolProviderResp(Schema):
+    """获取API工具提供者响应信息"""
+
+    id = fields.UUID()
+    name = fields.String()
+    icon = fields.String()
+    openapi_schema = fields.String()
+    headers = fields.List(fields.Dict, dump_default=[])
+    created_at = fields.Integer(dump_default=0)
+
+    @pre_dump
+    def process_data(self, data: ApiToolProvider, **kwargs):
+        return {
+            "id": data.id,
+            "name": data.name,
+            "icon": data.icon,
+            "openapi_schema": data.openapi_schema,
+            "headers": data.headers,
+            "created_at": int(data.created_at.timestamp()),
+        }

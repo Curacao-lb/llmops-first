@@ -5,6 +5,8 @@ from internal.schema.api_tool_schema import CreateApiToolReq
 from pkg.sqlalchemy import SQLAlchemy
 from internal.model import ApiTool, ApiToolProvider
 
+from uuid import UUID
+
 from injector import inject
 import json
 
@@ -74,3 +76,16 @@ class ApiToolService:
                         parameters=method_item.get("parameters", []),
                     )
                     self.db.session.add(api_tool)
+
+    def get_api_tool_provider(self, provider_id: UUID) -> ApiToolProvider:
+        """根据传递的provider_id获取API工具提供者信息"""
+
+        # 临时写一个account_id
+        account_id = "46db30d1-3199-4e79-a0cd-abf12fa6858f"
+
+        # 1.查询数据库获取对应的数据
+        api_tool_provider = self.db.session.query(ApiToolProvider).get(provider_id)
+        # 2.检验数据是否为空，并且判读是否属于当前账号
+        if api_tool_provider is None or str(api_tool_provider.account_id) != account_id:
+            raise NotFoundException("该工具提供者不存在")
+        return api_tool_provider

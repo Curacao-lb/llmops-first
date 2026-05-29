@@ -1,7 +1,14 @@
 from dataclasses import dataclass
-from internal.schema.api_tool_schema import ValidateOpenAPISchema, CreateApiToolReq
+from internal.schema.api_tool_schema import (
+    ValidateOpenAPISchema,
+    CreateApiToolReq,
+    GetApiToolProviderResp,
+)
 from pkg.response import validate_error_json, success_message
 from internal.service import ApiToolService
+from uuid import UUID
+from pkg.response import success_json
+
 
 from injector import inject
 
@@ -33,3 +40,10 @@ class ApiToolHandler:
         # 2. 调用服务并解析传递的数据
         self.api_tool_service.parse_openapi_schema(req.openapi_schema.data)
         return success_message("数据校验成功")
+
+    def get_api_tool_provider(self, provider_id: UUID):
+        """根据provider_id获取工具提供者"""
+        api_tool_provider = self.api_tool_service.get_api_tool_provider(provider_id)
+
+        resp = GetApiToolProviderResp()
+        return success_json(resp.dump(api_tool_provider))
