@@ -4,6 +4,15 @@ from internal.core.tools.api_tools.entites import OpenAPISchema
 from internal.schema.api_tool_schema import CreateApiToolReq
 from pkg.sqlalchemy import SQLAlchemy
 from internal.model import ApiTool, ApiToolProvider
+from internal.schema.api_tool_schema import (
+    CreateApiToolReq,
+    GetApiToolProvidersWithPageReq,
+    # UpdateApiToolProviderReq,
+)
+from pkg.paginator import Paginator
+from typing import Any
+from sqlalchemy import desc
+
 
 from uuid import UUID
 
@@ -89,6 +98,23 @@ class ApiToolService:
         if api_tool_provider is None or str(api_tool_provider.account_id) != account_id:
             raise NotFoundException("该工具提供者不存在")
         return api_tool_provider
+
+    def get_api_tool_providers_with_page(
+        self, req: GetApiToolProvidersWithPageReq
+    ) -> tuple[list[Any], Paginator]:
+        """获取自定义API工具服务提供者分页列表数据"""
+        # 临时写一个account_id
+        account_id = "46db30d1-3199-4e79-a0cd-abf12fa6858f"
+        paginator = Paginator(db=self.db, req=req)
+        filters = [ApiToolProvider.account_id == account_id]
+        if req.search_word.data:
+            filters.append(ApiToolProvider.name.ilike(f"%{req.search_word.data}%"))
+        api_tool_providers = paginator.paginate(
+            self.db.session.query(ApiToolProvider)
+            .filter(*filters)
+            .order_by(desc("created_at"))
+        )
+        return api_tool_providers, paginator
 
     def get_api_tool(self, provider_id: UUID, tool_name: str) -> ApiTool:
         """根据传递的provider_id+tool_name获取对应工具的参数详情信息"""

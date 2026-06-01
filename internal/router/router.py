@@ -91,6 +91,11 @@ class Router:
         )
 
         bp.add_url_rule(
+            "/api-tools",
+            view_func=self.api_tool_handler.get_api_tool_providers_with_page,
+        )
+
+        bp.add_url_rule(
             "/api-tools/<uuid:provider_id>",
             view_func=self.api_tool_handler.get_api_tool_provider,
         )
