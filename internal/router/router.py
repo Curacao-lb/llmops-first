@@ -101,6 +101,13 @@ class Router:
             view_func=self.api_tool_handler.get_api_tool,
         )
 
+        # /api-tools/:api_tool_provider_id/delete
+        bp.add_url_rule(
+            "/api-tools/<uuid:provider_id>/delete",
+            methods=["POST"],
+            view_func=self.api_tool_handler.delete_api_tool_provider,
+        )
+
         # 4.应用上去注册蓝图
         app.register_blueprint(bp)
         # 现在我们只需要传入一个APP的应用，我们就可以去访问对应的接口了

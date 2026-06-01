@@ -700,3 +700,142 @@ class TestGetApiTool:
         """测试获取工具详情 - provider_id格式无效"""
         resp = client.get("/api-tools/not-a-uuid/tools/get_weather")
         assert resp.status_code == 404
+
+
+class TestDeleteApiToolProvider:
+    """删除API工具提供者接口的测试类"""
+
+    # 与 service 层临时硬编码保持一致的账号ID
+    ACCOUNT_ID = "46db30d1-3199-4e79-a0cd-abf12fa6858f"
+
+    @pytest.fixture
+    def valid_openapi_schema(self):
+        """有效的openapi_schema数据"""
+        return json.dumps(
+            {
+                "server": "https://api.weather.com",
+                "description": "天气查询API",
+                "paths": {
+                    "/weather": {
+                        "get": {
+                            "description": "查询天气信息",
+                            "operationId": "get_weather",
+                            "parameters": [
+                                {
+                                    "name": "city",
+                                    "in": "query",
+                                    "description": "城市名称",
+                                    "required": True,
+                                    "type": "str",
+                                }
+                            ],
+                        }
+                    }
+                },
+            }
+        )
+
+    def _create_provider(self, client, valid_openapi_schema):
+        """辅助方法：创建一个工具提供者并返回其 provider_id"""
+        from app.http.app import app
+        from internal.extension.database_extension import db
+        from internal.model import ApiToolProvider
+
+        unique_name = f"删除测试工具_{uuid.uuid4().hex[:8]}"
+        create_resp = client.post(
+            "/api-tools",
+            content_type="application/json",
+            data=json.dumps(
+                {
+                    "name": unique_name,
+                    "icon": "https://example.com/icon.png",
+                    "openapi_schema": valid_openapi_schema,
+                    "headers": [],
+                }
+            ),
+        )
+        assert create_resp.status_code == 200
+        assert create_resp.json.get("code") == HttpCode.SUCCESS
+
+        # 创建接口不返回 id，通过查库拿到刚创建的 provider_id
+        with app.app_context():
+            provider = (
+                db.session.query(ApiToolProvider)
+                .filter_by(account_id=self.ACCOUNT_ID, name=unique_name)
+                .one_or_none()
+            )
+            assert provider is not None
+            return str(provider.id)
+
+    def test_delete_api_tool_provider_success(self, client, valid_openapi_schema):
+        """测试删除工具提供者 - 成功"""
+        provider_id = self._create_provider(client, valid_openapi_schema)
+
+        resp = client.post(f"/api-tools/{provider_id}/delete")
+        assert resp.status_code == 200
+        assert resp.json.get("code") == HttpCode.SUCCESS
+        assert resp.json.get("message") == "删除自定义API成功"
+
+    def test_delete_api_tool_provider_removes_data(self, client, valid_openapi_schema):
+        """测试删除工具提供者 - 提供者及其关联工具都被删除"""
+        from app.http.app import app
+        from internal.extension.database_extension import db
+        from internal.model import ApiTool, ApiToolProvider
+
+        provider_id = self._create_provider(client, valid_openapi_schema)
+
+        # 删除前确认 provider 与关联 tool 存在
+        with app.app_context():
+            assert db.session.query(ApiToolProvider).get(provider_id) is not None
+            assert (
+                db.session.query(ApiTool)
+                .filter(ApiTool.provider_id == provider_id)
+                .count()
+                > 0
+            )
+
+        resp = client.post(f"/api-tools/{provider_id}/delete")
+        assert resp.status_code == 200
+        assert resp.json.get("code") == HttpCode.SUCCESS
+
+        # 删除后确认 provider 与关联 tool 都已被清除
+        with app.app_context():
+            assert db.session.query(ApiToolProvider).get(provider_id) is None
+            assert (
+                db.session.query(ApiTool)
+                .filter(ApiTool.provider_id == provider_id)
+                .count()
+                == 0
+            )
+
+    def test_delete_api_tool_provider_not_found(self, client):
+        """测试删除工具提供者 - 不存在的ID"""
+        fake_id = uuid.uuid4()
+        resp = client.post(f"/api-tools/{fake_id}/delete")
+        assert resp.status_code == 200
+        assert resp.json.get("code") == HttpCode.NOT_FOUND
+
+    def test_delete_api_tool_provider_twice(self, client, valid_openapi_schema):
+        """测试删除工具提供者 - 重复删除第二次返回not_found"""
+        provider_id = self._create_provider(client, valid_openapi_schema)
+
+        # 第一次删除成功
+        resp1 = client.post(f"/api-tools/{provider_id}/delete")
+        assert resp1.status_code == 200
+        assert resp1.json.get("code") == HttpCode.SUCCESS
+
+        # 第二次删除返回 not_found
+        resp2 = client.post(f"/api-tools/{provider_id}/delete")
+        assert resp2.status_code == 200
+        assert resp2.json.get("code") == HttpCode.NOT_FOUND
+
+    def test_delete_api_tool_provider_invalid_uuid(self, client):
+        """测试删除工具提供者 - 无效的UUID格式"""
+        resp = client.post("/api-tools/not-a-valid-uuid/delete")
+        assert resp.status_code == 404
+
+    def test_delete_api_tool_provider_get_method_not_allowed(self, client):
+        """测试删除工具提供者 - 路由仅允许POST，GET返回405"""
+        fake_id = uuid.uuid4()
+        resp = client.get(f"/api-tools/{fake_id}/delete")
+        assert resp.status_code == 405
