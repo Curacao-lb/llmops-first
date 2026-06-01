@@ -26,14 +26,14 @@ class ApiToolHandler:
 
     api_tool_service: ApiToolService
 
-    def create_api_tool(self):
+    def create_api_tool_provider(self):
         """创建自定义API工具"""
         # 1.提取请求的数据并且校验
         req = CreateApiToolReq()
         if not req.validate():
             return validate_error_json(req.errors)
         # 2. 调用服务创建API工具
-        self.api_tool_service.create_api_tool(req)
+        self.api_tool_service.create_api_tool_provider(req)
         return success_message("创建成功")
 
     def validate_openapi_schema(self):
