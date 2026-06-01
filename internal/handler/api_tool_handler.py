@@ -6,6 +6,7 @@ from internal.schema.api_tool_schema import (
     GetApiToolResp,
     GetApiToolProvidersWithPageReq,
     GetApiToolProvidersWithPageResp,
+    UpdateApiToolProviderReq,
 )
 from pkg.response import validate_error_json, success_message
 from internal.service import ApiToolService
@@ -76,3 +77,13 @@ class ApiToolHandler:
         """根据传递的provider_id删除对应的工具提供者信息"""
         self.api_tool_service.delete_api_tool_provider(provider_id)
         return success_message("删除自定义API成功")
+
+    def update_api_tool_provider(self, provider_id: UUID):
+        """更新自定义API工具提供者信息"""
+
+        req = UpdateApiToolProviderReq()
+        if not req.validate():
+            return validate_error_json(req.errors)
+
+        self.api_tool_service.update_api_tool_provider(provider_id, req)
+        return success_message("更新成功")
