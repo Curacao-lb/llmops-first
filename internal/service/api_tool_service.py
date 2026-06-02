@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from internal.exception import ValidateException, NotFoundException
-from internal.core.tools.api_tools.entites import OpenAPISchema
+from internal.core.tools.api_tools.entites import OpenAPISchema, ToolEntity
+from internal.core.tools.api_tools.providers import ApiProviderManager
 from internal.model import ApiTool, ApiToolProvider
 from internal.schema.api_tool_schema import (
     CreateApiToolReq,
@@ -23,6 +24,8 @@ from .base_service import BaseService
 @dataclass
 class ApiToolService(BaseService):
     """自定义API插件服务"""
+
+    api_provider_manager: ApiProviderManager
 
     @classmethod
     def parse_openapi_schema(cls, openapi_schema_str: str) -> OpenAPISchema:
@@ -198,3 +201,31 @@ class ApiToolService(BaseService):
                     method=method,
                     parameters=method_item.get("parameters", []),
                 )
+
+    def api_tool_invoke(self):
+        provider_id = "cf2d6d2d-7e8f-4b15-b966-880116172dc0"
+        tool_name = "get_weather"
+
+        api_tool = (
+            self.db.session.query(ApiTool)
+            .filter(ApiTool.provider_id == provider_id, ApiTool.name == tool_name)
+            .one_or_none()
+        )
+        if api_tool is None:
+            raise NotFoundException("该工具不存在")
+
+        api_tool_provider = api_tool.provider
+
+        tool = self.api_provider_manager.get_tool(
+            ToolEntity(
+                id=provider_id,
+                name=tool_name,
+                url=api_tool.url,
+                method=api_tool.method,
+                description=api_tool.description,
+                headers=api_tool_provider.headers,
+                parameters=api_tool.parameters,
+            )
+        )
+
+        return tool.invoke({"city": "武汉"})

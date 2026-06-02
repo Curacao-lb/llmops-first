@@ -1,23 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# Copyright [2025] [caixiaorong]
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""
-@Time   : 2024/10/9 20:30
-@Author : caixiaorong01@outlook.com
-@File   : api_provider_manager.py
-"""
 from dataclasses import dataclass
 from typing import Type, Optional, Callable
 
@@ -26,17 +6,24 @@ from injector import inject
 from langchain_core.tools import BaseTool, StructuredTool
 from pydantic import BaseModel, create_model, Field
 
-from internal.core.tools.api_tools.entites import ToolEntity, ParameterTypeMap, ParameterIn
+from internal.core.tools.api_tools.entites import (
+    ToolEntity,
+    ParameterTypeMap,
+    ParameterIn,
+)
 from internal.lib.helper import generate_random_string
 
 
 @inject
 @dataclass
 class ApiProviderManager(BaseModel):
+    """API工具提供者管理器,能根据传递的工具配置信息生成自定义LaangChain工具"""
 
     @classmethod
     def _create_tool_func_from_tool_entity(cls, tool_entity: ToolEntity) -> Callable:
         def tool_func(**kwargs) -> str:
+            """API工具请求函数"""
+            # 1. 定义变量存储来自path/query/header/cookie/request_body中的数据
             parameters = {
                 ParameterIn.PATH: {},
                 ParameterIn.HEADER: {},
@@ -44,13 +31,24 @@ class ApiProviderManager(BaseModel):
                 ParameterIn.COOKIE: {},
                 ParameterIn.REQUEST_BODY: {},
             }
-            parameter_map = {parameter.get("name"): parameter for parameter in tool_entity.parameters}
-            header_map = {header.get("key"): header.get("value") for header in tool_entity.headers}
+
+            # 2.更改参数结构映射
+            parameter_map = {
+                parameter.get("name"): parameter for parameter in tool_entity.parameters
+            }
+            header_map = {
+                header.get("key"): header.get("value") for header in tool_entity.headers
+            }
+
+            # 3.循环遍历传递的所有字段并校验
             for key, value in kwargs.items():
+                # 4.提取键值对关联的字段并校验
                 parameter = parameter_map.get(key)
                 if parameter is None:
                     continue
+                # 5.将参数存储到合适的位置上,默认在query上
                 parameters[parameter.get("in", ParameterIn.QUERY)][key] = value
+            # 6.构建request请求并返回采集的内容
             return requests.request(
                 method=tool_entity.method,
                 url=tool_entity.url.format(**parameters[ParameterIn.PATH]),
@@ -80,6 +78,7 @@ class ApiProviderManager(BaseModel):
         return create_model("DynamicModel", **fields)
 
     def get_tool(self, tool_entity: ToolEntity) -> BaseTool:
+        """根据传递的配置获取自定义API工具"""
         return StructuredTool.from_function(
             func=self._create_tool_func_from_tool_entity(tool_entity),
             name=f"{tool_entity.name}_{generate_random_string(6)}",

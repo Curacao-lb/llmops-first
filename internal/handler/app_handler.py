@@ -23,6 +23,7 @@ import os
 from internal.extension.chinese_file_chat_history import ChineseFileChatMessageHistory
 
 # from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
+from internal.service import ApiToolService
 
 
 @inject
@@ -31,6 +32,7 @@ class AppHandler:
     #  应用控制器
     app_service: AppService
     # provider_factory: BuiltinProviderManager
+    api_tool_service: ApiToolService
 
     def __post_init__(self):
         # ============ 文件存储配置 ============
@@ -75,7 +77,9 @@ class AppHandler:
         # providers = self.provider_factory.get_provider_entities()
 
         # return success_json([provider.dict() for provider in providers])
-        return success_json()
+
+        # return success_json()
+        return self.api_tool_service.api_tool_invoke()
 
     def create_app(self):
         """调用服务创建新的APP记录"""
