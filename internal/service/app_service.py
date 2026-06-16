@@ -2,6 +2,10 @@ from pkg.sqlalchemy import SQLAlchemy
 from injector import inject
 from dataclasses import dataclass
 from internal.model import App
+from internal.schema.app_schema import GetAppsWithPageReq
+from pkg.paginator import Paginator
+from sqlalchemy import desc
+from typing import Any
 import uuid
 
 
@@ -11,6 +15,23 @@ class AppService:
     """应用服务逻辑"""
 
     db: SQLAlchemy
+
+    def get_apps_with_page(
+        self, req: GetAppsWithPageReq
+    ) -> tuple[list[Any], Paginator]:
+        """获取应用分页列表数据"""
+        # 临时写一个account_id,后续接入登录态后替换
+        account_id = "46db30d1-3199-4e79-a0cd-abf12fa6858f"
+        paginator = Paginator(db=self.db, req=req)
+        filters = [App.account_id == account_id]
+        if req.search_word.data:
+            filters.append(App.name.ilike(f"%{req.search_word.data}%"))
+        if req.status.data:
+            filters.append(App.status == req.status.data)
+        apps = paginator.paginate(
+            self.db.session.query(App).filter(*filters).order_by(desc("created_at"))
+        )
+        return apps, paginator
 
     def create_app(self) -> App:
         """创建新的应用记录"""

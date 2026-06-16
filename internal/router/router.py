@@ -40,6 +40,11 @@ class Router:
         # 3.将这个BP蓝图还有对应的路由，在控制器里的方法进行映射
         bp.add_url_rule("/ping", view_func=self.app_handler.ping, methods=["GET"])
         bp.add_url_rule(
+            "/apps",
+            view_func=self.app_handler.get_apps_with_page,
+            methods=["GET"],
+        )
+        bp.add_url_rule(
             "/apps/<uuid:app_id>/debug",
             view_func=self.app_handler.debug,
             methods=["POST"],

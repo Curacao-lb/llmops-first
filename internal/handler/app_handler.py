@@ -1,8 +1,13 @@
 from flask import request
 from openai import APIError, APITimeoutError, APIConnectionError
 
-from internal.schema.app_schema import CompletionReq
+from internal.schema.app_schema import (
+    CompletionReq,
+    GetAppsWithPageReq,
+    GetAppsWithPageResp,
+)
 from pkg.response import success_json, validate_error_json, fail_json
+from pkg.paginator import PageModel
 from internal.exception import CustomException
 from internal.service import AppService
 from injector import inject
@@ -85,6 +90,15 @@ class AppHandler:
         """调用服务创建新的APP记录"""
         app = self.app_service.create_app()
         return success_message(f"应用已经成功创建了,id为{app.id}")
+
+    def get_apps_with_page(self):
+        """获取应用列表信息,该接口支持分页"""
+        req = GetAppsWithPageReq(request.args)
+        if not req.validate():
+            return validate_error_json(req.errors)
+        apps, paginator = self.app_service.get_apps_with_page(req)
+        resp = GetAppsWithPageResp(many=True)
+        return success_json(PageModel(list=resp.dump(apps), paginator=paginator))
 
     def get_app(self, id: uuid.UUID):
         app = self.app_service.get_app(id)
