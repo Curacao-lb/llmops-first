@@ -1,19 +1,33 @@
+import json
+import os
+import uuid
+from dataclasses import dataclass
+from queue import Queue
+from threading import Thread
+from typing import Any
+
 from flask import request
 from openai import APIError, APITimeoutError, APIConnectionError
+from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
+from langgraph.graph import StateGraph, MessagesState, START
+from langgraph.prebuilt import ToolNode, tools_condition
 
 from internal.schema.app_schema import (
     CompletionReq,
     GetAppsWithPageReq,
     GetAppsWithPageResp,
 )
-from pkg.response import success_json, validate_error_json, fail_json
+from pkg.response import (
+    compact_generate_response,
+    fail_json,
+    success_json,
+    validate_error_json,
+)
 from pkg.paginator import PageModel
 from internal.exception import CustomException
 from internal.service import AppService
 from injector import inject
-from dataclasses import dataclass
 from pkg.response import success_message
-import uuid
 
 # LangChain 相关导入
 from langchain_openai import ChatOpenAI
@@ -21,8 +35,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.messages import trim_messages
-import os
+from langchain_core.messages import HumanMessage, trim_messages
 
 # 自定义的中文文件存储
 from internal.extension.chinese_file_chat_history import ChineseFileChatMessageHistory
@@ -36,7 +49,7 @@ from internal.service import ApiToolService
 class AppHandler:
     #  应用控制器
     app_service: AppService
-    # provider_factory: BuiltinProviderManager
+    provider_factory: BuiltinProviderManager
     api_tool_service: ApiToolService
 
     def __post_init__(self):
@@ -284,3 +297,142 @@ class AppHandler:
             return fail_json({"message": "无法连接到AI服务，请检查网络或稍后重试"})
         except APIError as e:
             return fail_json({"message": f"AI服务异常: {str(e)}"})
+
+    def stream_debug(self, app_id: uuid.UUID):
+        """应用会话调试聊天接口，该接口为流式事件输出"""
+        req = CompletionReq()
+        if not req.validate():
+            return validate_error_json(req.errors)
+
+        # 图在后台线程中运行；请求线程只负责把队列里的事件转成 SSE。
+        q = Queue()
+        query = req.query.data
+        finished = object()
+
+        def emit(event: str, event_type: str, data: Any, message_id: str) -> None:
+            """将内部事件统一放进队列，data 保持为 JSON 字符串以兼容前端事件协议。"""
+            q.put(
+                {
+                    "id": message_id,
+                    "event": event,
+                    "type": event_type,
+                    "data": json.dumps(data, ensure_ascii=False, default=str),
+                }
+            )
+
+        def build_tools() -> list[Any]:
+            """创建本次执行可用的内置工具，并为高德工具提供默认配置。"""
+            tool_configs = [
+                ("tavily", "tavily_search", {}),
+                (
+                    "gaode",
+                    "gaode_weather",
+                    {
+                        "api_key": os.getenv("GAODE_API_KEY")
+                        or os.getenv("AMAP_API_KEY"),
+                        "url": os.getenv("GAODE_API_BASE_URL")
+                        or "https://restapi.amap.com/v3",
+                    },
+                ),
+                ("dalle", "dalle3", {}),
+            ]
+            tools = []
+            for provider_name, tool_name, kwargs in tool_configs:
+                tool_factory = self.provider_factory.get_tool(provider_name, tool_name)
+                if tool_factory is None:
+                    raise RuntimeError(f"内置工具未加载: {provider_name}/{tool_name}")
+                tools.append(tool_factory(**kwargs))
+            return tools
+
+        def graph_app() -> None:
+            """创建并执行包含工具调用分支的 LangGraph。"""
+            message_id = str(uuid.uuid4())
+            try:
+                tools = build_tools()
+                llm = ChatOpenAI(
+                    model="gpt-4o-mini", temperature=0.7, timeout=60.0
+                ).bind_tools(tools)
+
+                def chatbot(state: MessagesState) -> dict[str, list[Any]]:
+                    """流式调用模型，同时累计 chunk 作为图节点的最终输出。"""
+                    gathered = None
+                    for chunk in llm.stream(state["messages"]):
+                        tool_call_chunks = getattr(chunk, "tool_call_chunks", None) or []
+                        tool_calls = getattr(chunk, "tool_calls", None) or []
+                        content = chunk.content
+
+                        # 部分模型会先给一个没有任何内容的初始化 chunk，忽略即可。
+                        if not content and not tool_call_chunks and not tool_calls:
+                            continue
+
+                        gathered = chunk if gathered is None else gathered + chunk
+
+                        if content:
+                            emit(
+                                "message",
+                                "text",
+                                {"content": content},
+                                message_id,
+                            )
+                        if tool_call_chunks or tool_calls:
+                            emit(
+                                "agent_thought",
+                                "tool_call",
+                                tool_call_chunks or tool_calls,
+                                message_id,
+                            )
+
+                    return {"messages": [gathered]} if gathered is not None else {"messages": []}
+
+                tool_node = ToolNode(tools)
+
+                def execute_tools(state: MessagesState) -> dict[str, list[Any]]:
+                    """执行工具，并将工具观察结果也作为流事件返回给客户端。"""
+                    result = tool_node.invoke(state)
+                    for tool_message in result.get("messages", []):
+                        emit(
+                            "agent_thought",
+                            "tool_result",
+                            {
+                                "tool_call_id": getattr(tool_message, "tool_call_id", None),
+                                "tool_name": getattr(tool_message, "name", None),
+                                "content": tool_message.content,
+                            },
+                            message_id,
+                        )
+                    return result
+
+                workflow = StateGraph(MessagesState)
+                workflow.add_node("chatbot", chatbot)
+                workflow.add_node("tools", execute_tools)
+                workflow.add_edge(START, "chatbot")
+                workflow.add_conditional_edges("chatbot", tools_condition)
+                workflow.add_edge("tools", "chatbot")
+
+                workflow.compile().invoke({"messages": [HumanMessage(content=query)]})
+                emit("message_end", "end", {"status": "completed"}, message_id)
+            except (APITimeoutError, APIConnectionError, APIError) as error:
+                emit("error", "llm_error", {"message": str(error)}, message_id)
+            except Exception as error:
+                emit("error", "server_error", {"message": str(error)}, message_id)
+            finally:
+                q.put(finished)
+
+        def generate():
+            """按 SSE 协议从队列持续输出事件，直至图程序结束。"""
+            worker = Thread(target=graph_app, daemon=True)
+            worker.start()
+
+            while True:
+                event = q.get()
+                if event is finished:
+                    break
+                yield (
+                    f"event: {event['event']}\n"
+                    f"data: {json.dumps(event, ensure_ascii=False, default=str)}\n\n"
+                )
+
+        response = compact_generate_response(generate())
+        response.headers["Cache-Control"] = "no-cache"
+        response.headers["X-Accel-Buffering"] = "no"
+        return response

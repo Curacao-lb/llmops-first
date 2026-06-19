@@ -1,7 +1,7 @@
 from .http_code import HttpCode
-from typing import Any
+from typing import Any, Union, Generator
 from dataclasses import field, dataclass
-from flask import jsonify
+from flask import jsonify, stream_with_context, Response as FlaskResponse
 
 
 @dataclass
@@ -98,3 +98,20 @@ def forbidden_message(msg: str = ""):
 def server_error_message(msg: str = ""):
     """服务器错误的消息响应"""
     return message(HttpCode.SERVER_ERROR, msg=msg)
+
+
+def compact_generate_response(response: Union[Response, Generator]) -> FlaskResponse:
+    """统一合并处理块输出以及流式事件输出"""
+    # 1.检测下是否为块输出（Response）
+    if isinstance(response, Response):
+        return json(response)
+    else:
+        # 2.response格式为生成器，代表本次响应需要执行流式事件输出
+        def generate() -> Generator:
+            """构建generate函数，流式从response中获取数据"""
+            yield from response
+
+        # 3.返回携带上下文的流式事件输出
+        return FlaskResponse(
+            stream_with_context(generate()), status=200, mimetype="text/event-stream"
+        )

@@ -75,3 +75,10 @@
   background: "#FFFFFF"
   category: tool
   created_at: 1778888833888
+- name: tavily
+  label: Tavily 搜索
+  description: 使用 Tavily API 进行网络搜索，专为 AI 应用优化。
+  icon: icon.svg
+  background: "#FFFFFF"
+  category: search
+  created_at: 1778888888888
