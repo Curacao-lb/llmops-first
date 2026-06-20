@@ -38,7 +38,12 @@ class Http(Flask):
         self.json.ensure_ascii = False
 
         # 配置 CORS
-        CORS(self, resources={r"/*": {"origins": ["http://localhost:5173"]}})
+        CORS(
+            self,
+            resources={r"/*": {"origins": ["http://localhost:5173"]}},
+            supports_credentials=True,
+            allow_headers=["Content-Type", "Authorization"],
+        )
 
         # 初始化flask扩展
         db.init_app(self)
