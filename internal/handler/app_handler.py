@@ -25,7 +25,6 @@ from pkg.response import (
 )
 from pkg.paginator import PageModel
 from internal.exception import CustomException
-from internal.service import AppService
 from injector import inject
 from pkg.response import success_message
 
@@ -41,7 +40,7 @@ from langchain_core.messages import HumanMessage, trim_messages
 from internal.extension.chinese_file_chat_history import ChineseFileChatMessageHistory
 
 # from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
-from internal.service import ApiToolService
+from internal.service import ApiToolService, AppService, ConversationService
 
 
 @inject
@@ -51,6 +50,7 @@ class AppHandler:
     app_service: AppService
     provider_factory: BuiltinProviderManager
     api_tool_service: ApiToolService
+    conversation_service: ConversationService
 
     def __post_init__(self):
         # ============ 文件存储配置 ============
@@ -95,9 +95,15 @@ class AppHandler:
         # providers = self.provider_factory.get_provider_entities()
 
         # return success_json([provider.dict() for provider in providers])
+        human_message = "你好，我是ro小bin，你是？"
+        ai_message = """你好 ro 小 bin～我是chatgpt呀，很高兴认识你！"""
+        old_summary = "人类询问AI关于LLM（大语言模型）和Agent（智能体）的定义及其关系。AI解释道，LLM是基于海量文本数据训练的大型神经网络，能够理解和生成自然语言，具备问答、翻译、写文案等基础能力，但存在局限，如缺乏自主目标、无法主动规划等。常见的LLM例子包括GPT系列等。 \n\nAgent则是以LLM为核心，结合记忆、规划、工具调用和反思模块的智能系统，能够自主设定目标并完成复杂任务。Agent的四大核心组件包括负责思考的LLM大脑、短期和长期记忆模块、自动拆分目标的规划模块，以及能够调用外部工具的能力。相比之下，LLM只能被动回答，而Agent可以在给定目标后自动完成任务。\n\n总结：LLM是理解和生成自然语言的基础模型，具备一定能力但缺乏主动性；Agent是基于LLM的智能体，具备自主目标和复杂任务处理能力。"
+        summary = self.conversation_service.summary(
+            human_message, ai_message, old_summary
+        )
 
-        # return success_json()
-        return self.api_tool_service.api_tool_invoke()
+        return success_json({"summary": summary})
+        # return self.api_tool_service.api_tool_invoke()
 
     def create_app(self):
         """调用服务创建新的APP记录"""
@@ -357,7 +363,9 @@ class AppHandler:
                     """流式调用模型，同时累计 chunk 作为图节点的最终输出。"""
                     gathered = None
                     for chunk in llm.stream(state["messages"]):
-                        tool_call_chunks = getattr(chunk, "tool_call_chunks", None) or []
+                        tool_call_chunks = (
+                            getattr(chunk, "tool_call_chunks", None) or []
+                        )
                         tool_calls = getattr(chunk, "tool_calls", None) or []
                         content = chunk.content
 
@@ -382,7 +390,11 @@ class AppHandler:
                                 message_id,
                             )
 
-                    return {"messages": [gathered]} if gathered is not None else {"messages": []}
+                    return (
+                        {"messages": [gathered]}
+                        if gathered is not None
+                        else {"messages": []}
+                    )
 
                 tool_node = ToolNode(tools)
 
@@ -394,7 +406,9 @@ class AppHandler:
                             "agent_thought",
                             "tool_result",
                             {
-                                "tool_call_id": getattr(tool_message, "tool_call_id", None),
+                                "tool_call_id": getattr(
+                                    tool_message, "tool_call_id", None
+                                ),
                                 "tool_name": getattr(tool_message, "name", None),
                                 "content": tool_message.content,
                             },
