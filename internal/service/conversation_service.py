@@ -144,36 +144,41 @@ class ConversationService(BaseService):
 
         return new_summary
 
-    # @classmethod
-    # def generate_conversation_name(cls, query: str) -> str:
-    #     prompt = ChatPromptTemplate.from_messages(
-    #         [("system", CONVERSATION_NAME_TEMPLATE), ("human", "{query}")]
-    #     )
-    #     # 构建llm设置温度降低幻觉概率
-    #     llm = ChatOpenAI(model="gpt-4o", temperature=0)
+    @classmethod
+    def generate_conversation_name(cls, query: str) -> str:
+        """根据传递的query生成对应的会话名字，并且语言与用户的输入保持一致"""
+        prompt = ChatPromptTemplate.from_messages(
+            [("system", CONVERSATION_NAME_TEMPLATE), ("human", "{query}")]
+        )
+        # 构建llm设置温度降低幻觉概率
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
-    #     structured_llm = llm.with_structured_output(ConversationInfo)
+        structured_llm = llm.with_structured_output(ConversationInfo)
 
-    #     chain = prompt | structured_llm
-    #     if len(query) > 2000:
-    #         query = query[:300] + "...[TRUNCATED]..." + query[-300:]
-    #     query = query.replace("\n", " ")
+        chain = prompt | structured_llm
+        # 提取并整理query，截取长度过长的部分
+        if len(query) > 2000:
+            query = query[:300] + "...[TRUNCATED]..." + query[-300:]
+        query = query.replace("\n", " ")
 
-    #     conversation_info = chain.invoke({"query": query})
-    #     name = "新的会话"
-    #     try:
-    #         if conversation_info and hasattr(conversation_info, "subject"):
-    #             name = conversation_info.subject
-    #     except Exception as e:
-    #         logging.exception(
-    #             "提取会话名称出错, conversation_info: %(conversation_info)s, 错误信息: %(error)s",
-    #             {"conversation_info": conversation_info, "error": e},
-    #         )
+        # 调用链并获取会话信息
+        conversation_info = chain.invoke({"query": query})
 
-    #     if len(name) > 75:
-    #         name = name[:75] + "..."
+        # 提取会话名称
+        name = "新的会话"
+        try:
+            if conversation_info and hasattr(conversation_info, "subject"):
+                name = conversation_info.subject
+        except Exception as e:
+            logging.exception(
+                "提取会话名称出错, conversation_info: %(conversation_info)s, 错误信息: %(error)s",
+                {"conversation_info": conversation_info, "error": e},
+            )
 
-    #     return name
+        if len(name) > 75:
+            name = name[:75] + "..."
+
+        return name
 
     # @classmethod
     # def generate_suggested_questions(cls, histories: str) -> list[str]:

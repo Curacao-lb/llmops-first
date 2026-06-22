@@ -98,11 +98,16 @@ class AppHandler:
         human_message = "你好，我是ro小bin，你是？"
         ai_message = """你好 ro 小 bin～我是chatgpt呀，很高兴认识你！"""
         old_summary = "人类询问AI关于LLM（大语言模型）和Agent（智能体）的定义及其关系。AI解释道，LLM是基于海量文本数据训练的大型神经网络，能够理解和生成自然语言，具备问答、翻译、写文案等基础能力，但存在局限，如缺乏自主目标、无法主动规划等。常见的LLM例子包括GPT系列等。 \n\nAgent则是以LLM为核心，结合记忆、规划、工具调用和反思模块的智能系统，能够自主设定目标并完成复杂任务。Agent的四大核心组件包括负责思考的LLM大脑、短期和长期记忆模块、自动拆分目标的规划模块，以及能够调用外部工具的能力。相比之下，LLM只能被动回答，而Agent可以在给定目标后自动完成任务。\n\n总结：LLM是理解和生成自然语言的基础模型，具备一定能力但缺乏主动性；Agent是基于LLM的智能体，具备自主目标和复杂任务处理能力。"
-        summary = self.conversation_service.summary(
-            human_message, ai_message, old_summary
-        )
+        # summary = self.conversation_service.summary(
+        #     human_message, ai_message, old_summary
+        # )
 
-        return success_json({"summary": summary})
+        conversation_name = self.conversation_service.generate_conversation_name(
+            human_message
+        )
+        return success_json({"conversation_name": conversation_name})
+
+        # return success_json({"summary": summary})
         # return self.api_tool_service.api_tool_invoke()
 
     def create_app(self):
