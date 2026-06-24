@@ -74,9 +74,51 @@ pipreqs . --force
 cp .env.example .env
 # 编辑 .env 文件，填入实际配置
 
-# 5. 运行数据库迁移
-# python -m internal.migration.migrate
+# 5. 运行数据库迁移（具体命令见下方「数据库迁移」）
 
 # 6. 启动服务
 # python -m app.http
 ```
+
+## 数据库迁移
+
+在项目根目录执行。`.flaskenv` 已配置应用入口，激活虚拟环境后可以直接使用 `flask db` 命令。
+
+```bash
+# 使用当前项目的虚拟环境（macOS/Linux）
+source ../.venv/bin/activate
+```
+
+### 新增或修改 Model 后
+
+先确保新模型已在 `internal/model/__init__.py` 中导入，否则迁移工具无法识别它：
+
+```python
+from .user import User
+```
+
+然后依次执行：
+
+```bash
+# 1. 根据模型变更生成迁移文件（不会修改数据库）
+flask db migrate -m "add user table"
+
+# 2. 查看 internal/migration/versions/ 下刚生成的文件，确认变更内容
+
+# 3. 将迁移应用到数据库
+flask db upgrade
+```
+
+`migrate` 与 `upgrade` 适用于新增模型、添加字段、修改字段等所有模型结构变更；只需将说明改成符合本次变更的描述。
+
+### 常用检查命令
+
+```bash
+# 查看数据库当前已应用的迁移版本
+flask db current
+
+# 查看全部迁移历史
+flask db history
+```
+
+> 仓库已有迁移目录，日常开发不需要执行 `flask db init`。

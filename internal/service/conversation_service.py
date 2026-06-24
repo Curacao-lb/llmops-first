@@ -180,32 +180,34 @@ class ConversationService(BaseService):
 
         return name
 
-    # @classmethod
-    # def generate_suggested_questions(cls, histories: str) -> list[str]:
-    #     prompt = ChatPromptTemplate.from_messages(
-    #         [("system", SUGGESTED_QUESTIONS_TEMPLATE), ("human", "{histories}")]
-    #     )
-    #     # 构建llm设置温度降低幻觉概率
-    #     llm = ChatOpenAI(model="gpt-4o", temperature=0)
+    @classmethod
+    def generate_suggested_questions(cls, histories: str) -> list[str]:
+        """根据传递的历史信息生成最多不超过三个的建议问题"""
+        prompt = ChatPromptTemplate.from_messages(
+            [("system", SUGGESTED_QUESTIONS_TEMPLATE), ("human", "{histories}")]
+        )
+        # 构建llm设置温度降低幻觉概率
+        llm = ChatOpenAI(model="gpt-4o", temperature=0)
 
-    #     structured_llm = llm.with_structured_output(SuggestedQuestions)
+        structured_llm = llm.with_structured_output(SuggestedQuestions)
 
-    #     chain = prompt | structured_llm
-    #     suggested_questions = chain.invoke({"histories": histories})
-    #     questions = []
-    #     try:
-    #         if suggested_questions and hasattr(suggested_questions, "questions"):
-    #             questions = suggested_questions.questions
-    #     except Exception as e:
-    #         logging.exception(
-    #             "生成建议问题出错, suggested_questions: %(suggested_questions)s, 错误信息: %(e)s",
-    #             {"suggested_questions": suggested_questions, "error": e},
-    #         )
+        chain = prompt | structured_llm
+        # 调用链获取建议问题列表
+        suggested_questions = chain.invoke({"histories": histories})
+        questions = []
+        try:
+            if suggested_questions and hasattr(suggested_questions, "questions"):
+                questions = suggested_questions.questions
+        except Exception as e:
+            logging.exception(
+                "生成建议问题出错, suggested_questions: %(suggested_questions)s, 错误信息: %(e)s",
+                {"suggested_questions": suggested_questions, "error": e},
+            )
 
-    #     if len(questions) > 3:
-    #         questions = questions[:3]
+        if len(questions) > 3:
+            questions = questions[:3]
 
-    #     return questions
+        return questions
 
     # def save_agent_thoughts(
     #     self,

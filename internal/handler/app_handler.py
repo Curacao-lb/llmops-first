@@ -102,9 +102,14 @@ class AppHandler:
         #     human_message, ai_message, old_summary
         # )
 
-        conversation_name = self.conversation_service.generate_conversation_name(
+        # conversation_name = self.conversation_service.generate_conversation_name(
+        #     human_message
+        # )
+
+        questions = self.conversation_service.generate_suggested_questions(
             human_message
         )
+
         return success_json({"conversation_name": conversation_name})
 
         # return success_json({"summary": summary})
