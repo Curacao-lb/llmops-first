@@ -1,11 +1,14 @@
-import asyncio
+# import asyncio
 import json
 import logging
-import re
-import time
-import uuid
-from typing import Literal
+from typing import Any
 
+# import re
+# import time
+# import uuid
+# from typing import Literal
+
+from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import (
     HumanMessage,
     SystemMessage,
@@ -14,6 +17,7 @@ from langchain_core.messages import (
     AIMessage,
 )
 from langchain_core.messages import messages_to_dict, AnyMessage, HumanMessage
+
 from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -45,17 +49,27 @@ class FunctionCallAgent(BaseAgent):
         if history is None:
             history = []
 
-        # 2.调用函数构建智能体
-        agent = self._build_graph()
-
-        # 3.调用智能体获取数据
-        return agent.invoke(
+        # 2.调用智能体获取数据
+        return self.invoke(
             {
-                "message": [HumanMessage(content=query)],
+                "messages": [HumanMessage(content=query)],
                 "history": history,
                 "long_term_memory": long_term_memory,
             }
         )
+
+    def invoke(
+        self,
+        input: AgentState,  # pylint: disable=redefined-builtin
+        config: RunnableConfig | None = None,
+        **kwargs: Any,
+    ):
+        """调用已编译的智能体图。"""
+        return self._agent.invoke(input, config=config, **kwargs)
+
+    def _build_agent(self) -> CompiledStateGraph:
+        """构建智能体图结构程序。"""
+        return self._build_graph()
 
     def _build_graph(self) -> CompiledStateGraph:
         """构建 langgraph 图结构编译程序"""
@@ -150,93 +164,103 @@ class FunctionCallAgent(BaseAgent):
     def _long_term_memory_recall_node(self, state: AgentState) -> AgentState:
         """长期记忆召回节点"""
         long_term_memory = ""
+        # 1.根据传递的智能体配置 判断是否需要找回长期记忆
         if self.agent_config.enable_long_term_memory:
             long_term_memory = state["long_term_memory"]
-            self.agent_queue_manager.publish(
-                state["task_id"],
-                AgentThought(
-                    id=uuid.uuid4(),
-                    task_id=state["task_id"],
-                    event=QueueEvent.LONG_TERM_MEMORY_RECALL,
-                    observation=long_term_memory,
-                ),
-            )
+            # self.agent_queue_manager.publish(
+            #     state["task_id"],
+            #     AgentThought(
+            #         id=uuid.uuid4(),
+            #         task_id=state["task_id"],
+            #         event=QueueEvent.LONG_TERM_MEMORY_RECALL,
+            #         observation=long_term_memory,
+            #     ),
+            # )
 
+        # 2.构建预设消息列表，并将 preset_prompt + long_term_memory 填充到系统消息中
         preset_messages = [
             SystemMessage(
                 AGENT_SYSTEM_PROMPT_TEMPLATE.format(
                     preset_prompt=self.agent_config.preset_prompt,
                     long_term_memory=long_term_memory,
+                    tool_description="",
                 )
             )
         ]
+
+        # 3.将短期历史消息添加到消息列表中
         history = state["history"]
         if isinstance(history, list) and len(history) > 0:
+            # 4.校验历史消息是不是偶数的，也就是[人类消息, AI消息 ...]
             if len(history) % 2 != 0:
-                self.agent_queue_manager.publish_error(
-                    state["task_id"], "智能体历史消息列表格式错误"
-                )
-                logging.exception(
-                    "智能体历史消息列表格式错误, len(history)=%(len_history)d, history=%(history)s",
-                    {
-                        "len_history": len(history),
-                        "history": json.dumps(messages_to_dict(history)),
-                    },
-                )
+                # self.agent_queue_manager.publish_error(
+                #     state["task_id"], "智能体历史消息列表格式错误"
+                # )
+                # logging.exception(
+                #     "智能体历史消息列表格式错误, len(history)=%(len_history)d, history=%(history)s",
+                #     {
+                #         "len_history": len(history),
+                #         "history": json.dumps(messages_to_dict(history)),
+                #     },
+                # )
                 raise FailException("智能体历史消息列表格式错误")
+            # 5.拼接历史消息
             preset_messages.extend(history)
+        # 6.拼接当前用户的提问信息
         human_message = state["messages"][-1]
         preset_messages.append(HumanMessage(human_message.content))
 
         return {
+            # 7.处理预设消息，将预设消息添加到用户消息前，先去删除用户的原始消息，然后补充一个新的代替
             "messages": [RemoveMessage(id=human_message.id), *preset_messages],
-            "task_id": state["task_id"],
-            "iteration_count": state["iteration_count"],
-            "history": state["history"],
-            "long_term_memory": state["long_term_memory"],
+            # "task_id": state["task_id"],
+            # "iteration_count": state["iteration_count"],
+            # "history": state["history"],
+            # "long_term_memory": state["long_term_memory"],
         }
 
     def _llm_node(self, state: AgentState) -> AgentState:
         """大语言模型节点"""
         # 检测当前Agent迭代次数是否符合需求
-        if state["iteration_count"] > self.agent_config.max_iteration_count:
-            self.agent_queue_manager.publish(
-                state["task_id"],
-                AgentThought(
-                    id=uuid.uuid4(),
-                    task_id=state["task_id"],
-                    event=QueueEvent.AGENT_MESSAGE,
-                    thought=MAX_ITERATION_RESPONSE,
-                    message=messages_to_dict(state["messages"]),
-                    answer=MAX_ITERATION_RESPONSE,
-                    latency=0,
-                ),
-            )
-            self.agent_queue_manager.publish(
-                state["task_id"],
-                AgentThought(
-                    id=uuid.uuid4(),
-                    task_id=state["task_id"],
-                    event=QueueEvent.AGENT_END,
-                ),
-            )
-            return {
-                "messages": [AIMessage(MAX_ITERATION_RESPONSE)],
-                "task_id": state["task_id"],
-                "iteration_count": state["iteration_count"],
-                "history": state["history"],
-                "long_term_memory": state["long_term_memory"],
-            }
+        # if state["iteration_count"] > self.agent_config.max_iteration_count:
+        #     self.agent_queue_manager.publish(
+        #         state["task_id"],
+        #         AgentThought(
+        #             id=uuid.uuid4(),
+        #             task_id=state["task_id"],
+        #             event=QueueEvent.AGENT_MESSAGE,
+        #             thought=MAX_ITERATION_RESPONSE,
+        #             message=messages_to_dict(state["messages"]),
+        #             answer=MAX_ITERATION_RESPONSE,
+        #             latency=0,
+        #         ),
+        #     )
+        #     self.agent_queue_manager.publish(
+        #         state["task_id"],
+        #         AgentThought(
+        #             id=uuid.uuid4(),
+        #             task_id=state["task_id"],
+        #             event=QueueEvent.AGENT_END,
+        #         ),
+        #     )
+        #     return {
+        #         "messages": [AIMessage(MAX_ITERATION_RESPONSE)],
+        #         "task_id": state["task_id"],
+        #         "iteration_count": state["iteration_count"],
+        #         "history": state["history"],
+        #         "long_term_memory": state["long_term_memory"],
+        #     }
 
-        # 从智能体配置中提取大语言模型
-        id = uuid.uuid4()
-        start_at = time.perf_counter()
-        llm = self.llm
+        # 1.从智能体配置中提取大语言模型
+        llm = self.agent_config.llm
+        # id = uuid.uuid4()
+        # start_at = time.perf_counter()
 
-        # 检测大语言模型实例是否有bind_tools方法，如果没有则不绑定，如果有还需要检测tools是否为空，不为空则绑定
+        # 2.检测大语言模型实例是否有bind_tools方法，如果没有则不绑定，如果有还需要检测tools是否为空，不为空则绑定
         if (
-            ModelFeature.TOOL_CALL in llm.features
-            and hasattr(llm, "bind_tools")
+            # ModelFeature.TOOL_CALL in llm.features
+            # and
+            hasattr(llm, "bind_tools")
             and callable(getattr(llm, "bind_tools"))
             and len(self.agent_config.tools) > 0
         ):
@@ -245,174 +269,178 @@ class FunctionCallAgent(BaseAgent):
         # 流式调用LLM输出对应内容
         gathered = None
         is_first_chunk = True
-        generation_type = ""
+        # generation_type = ""
         try:
             for chunk in llm.stream(state["messages"]):
                 # 修复第三方api中转导致数据为None
-                if chunk.usage_metadata is not None:
-                    chunk.usage_metadata["input_tokens"] = (
-                        0
-                        if chunk.usage_metadata["input_tokens"] is None
-                        else chunk.usage_metadata["input_tokens"]
-                    )
-                    chunk.usage_metadata["output_tokens"] = (
-                        0
-                        if chunk.usage_metadata["output_tokens"] is None
-                        else chunk.usage_metadata["output_tokens"]
-                    )
-                    chunk.usage_metadata["total_tokens"] = (
-                        0
-                        if chunk.usage_metadata["total_tokens"] is None
-                        else chunk.usage_metadata["total_tokens"]
-                    )
+                # if chunk.usage_metadata is not None:
+                #     chunk.usage_metadata["input_tokens"] = (
+                #         0
+                #         if chunk.usage_metadata["input_tokens"] is None
+                #         else chunk.usage_metadata["input_tokens"]
+                #     )
+                #     chunk.usage_metadata["output_tokens"] = (
+                #         0
+                #         if chunk.usage_metadata["output_tokens"] is None
+                #         else chunk.usage_metadata["output_tokens"]
+                #     )
+                #     chunk.usage_metadata["total_tokens"] = (
+                #         0
+                #         if chunk.usage_metadata["total_tokens"] is None
+                #         else chunk.usage_metadata["total_tokens"]
+                #     )
                 if is_first_chunk:
                     gathered = chunk
                     is_first_chunk = False
                 else:
                     gathered += chunk
 
-                # 检测生成类型是工具参数还是文本生成
-                if not generation_type:
-                    if chunk.tool_calls:
-                        generation_type = "thought"
-                    elif chunk.content:
-                        generation_type = "message"
+                # # 检测生成类型是工具参数还是文本生成
+                # if not generation_type:
+                #     if chunk.tool_calls:
+                #         generation_type = "thought"
+                #     elif chunk.content:
+                #         generation_type = "message"
 
-                # 如果生成的是消息则提交智能体消息事件
-                if generation_type == "message":
-                    # 提取片段内容并检测是否开启输出审核
-                    review_config = self.agent_config.review_config
-                    content = chunk.content
-                    if (
-                        review_config["enable"]
-                        and review_config["outputs_config"]["enable"]
-                    ):
-                        for keyword in review_config["keywords"]:
-                            content = re.sub(
-                                re.escape(keyword), "**", content, flags=re.IGNORECASE
-                            )
+                # # 如果生成的是消息则提交智能体消息事件
+                # if generation_type == "message":
+                #     # 提取片段内容并检测是否开启输出审核
+                #     review_config = self.agent_config.review_config
+                #     content = chunk.content
+                #     if (
+                #         review_config["enable"]
+                #         and review_config["outputs_config"]["enable"]
+                #     ):
+                #         for keyword in review_config["keywords"]:
+                #             content = re.sub(
+                #                 re.escape(keyword), "**", content, flags=re.IGNORECASE
+                #             )
 
-                    self.agent_queue_manager.publish(
-                        state["task_id"],
-                        AgentThought(
-                            id=id,
-                            task_id=state["task_id"],
-                            event=QueueEvent.AGENT_MESSAGE,
-                            thought=content,
-                            message=messages_to_dict(state["messages"]),
-                            answer=content,
-                            latency=(time.perf_counter() - start_at),
-                        ),
-                    )
+                #     self.agent_queue_manager.publish(
+                #         state["task_id"],
+                #         AgentThought(
+                #             id=id,
+                #             task_id=state["task_id"],
+                #             event=QueueEvent.AGENT_MESSAGE,
+                #             thought=content,
+                #             message=messages_to_dict(state["messages"]),
+                #             answer=content,
+                #             latency=(time.perf_counter() - start_at),
+                #         ),
+                #     )
+
         except Exception as e:
             logging.exception(
                 "LLM节点发生错误, 错误信息: %(error)s",
                 {"error": str(e) or "LLM出现未知错误"},
             )
-            self.agent_queue_manager.publish_error(
-                state["task_id"], f"LLM节点发生错误, 错误信息: {str(e)}"
-            )
+            # self.agent_queue_manager.publish_error(
+            #     state["task_id"], f"LLM节点发生错误, 错误信息: {str(e)}"
+            # )
             raise e
 
-        # 计算输入、输出token数
-        input_token_count = self.llm.get_num_tokens_from_messages(state["messages"])
-        output_token_count = self.llm.get_num_tokens_from_messages([gathered])
+        # # 计算输入、输出token数
+        # input_token_count = self.llm.get_num_tokens_from_messages(state["messages"])
+        # output_token_count = self.llm.get_num_tokens_from_messages([gathered])
 
-        # 获取输入/输出价格和单位
-        input_price, output_price, unit = self.llm.get_pricing()
+        # # 获取输入/输出价格和单位
+        # input_price, output_price, unit = self.llm.get_pricing()
 
-        # 计算总token+总成本
-        total_token_count = input_token_count + output_token_count
-        total_price = (
-            input_token_count * input_price + output_token_count * output_price
-        ) * unit
+        # # 计算总token+总成本
+        # total_token_count = input_token_count + output_token_count
+        # total_price = (
+        #     input_token_count * input_price + output_token_count * output_price
+        # ) * unit
 
-        # 如果类型为推理则添加智能体推理事件
-        if generation_type == "thought":
-            self.agent_queue_manager.publish(
-                state["task_id"],
-                AgentThought(
-                    id=id,
-                    task_id=state["task_id"],
-                    event=QueueEvent.AGENT_THOUGHT,
-                    thought=json.dumps(gathered.tool_calls, ensure_ascii=False),
-                    message=messages_to_dict(state["messages"]),
-                    message_token_count=input_token_count,
-                    message_unit_price=input_price,
-                    message_price_unit=unit,
-                    answer="",
-                    answer_token_count=output_token_count,
-                    answer_unit_price=output_price,
-                    answer_price_unit=unit,
-                    total_token_count=total_token_count,
-                    total_price=total_price,
-                    latency=(time.perf_counter() - start_at),
-                ),
-            )
-        elif generation_type == "message":
-            # 如果LLM直接生成answer则表示已经拿到了最终答案，推送一条空消息用于计算总token+总成本并停止监听
-            self.agent_queue_manager.publish(
-                state["task_id"],
-                AgentThought(
-                    id=id,
-                    task_id=state["task_id"],
-                    event=QueueEvent.AGENT_MESSAGE,
-                    thought="",
-                    message=messages_to_dict(state["messages"]),
-                    message_token_count=input_token_count,
-                    message_unit_price=input_price,
-                    message_price_unit=unit,
-                    answer="",
-                    answer_token_count=output_token_count,
-                    answer_unit_price=output_price,
-                    answer_price_unit=unit,
-                    total_token_count=total_token_count,
-                    total_price=total_price,
-                    latency=(time.perf_counter() - start_at),
-                ),
-            )
-            self.agent_queue_manager.publish(
-                state["task_id"],
-                AgentThought(
-                    id=uuid.uuid4(),
-                    task_id=state["task_id"],
-                    event=QueueEvent.AGENT_END,
-                ),
-            )
-        return {
-            "messages": [gathered],
-            "iteration_count": state["iteration_count"] + 1,
-            "task_id": state["task_id"],
-            "history": state["history"],
-            "long_term_memory": state["long_term_memory"],
-        }
+        # # 如果类型为推理则添加智能体推理事件
+        # if generation_type == "thought":
+        #     self.agent_queue_manager.publish(
+        #         state["task_id"],
+        #         AgentThought(
+        #             id=id,
+        #             task_id=state["task_id"],
+        #             event=QueueEvent.AGENT_THOUGHT,
+        #             thought=json.dumps(gathered.tool_calls, ensure_ascii=False),
+        #             message=messages_to_dict(state["messages"]),
+        #             message_token_count=input_token_count,
+        #             message_unit_price=input_price,
+        #             message_price_unit=unit,
+        #             answer="",
+        #             answer_token_count=output_token_count,
+        #             answer_unit_price=output_price,
+        #             answer_price_unit=unit,
+        #             total_token_count=total_token_count,
+        #             total_price=total_price,
+        #             latency=(time.perf_counter() - start_at),
+        #         ),
+        #     )
+        # elif generation_type == "message":
+        #     # 如果LLM直接生成answer则表示已经拿到了最终答案，推送一条空消息用于计算总token+总成本并停止监听
+        #     self.agent_queue_manager.publish(
+        #         state["task_id"],
+        #         AgentThought(
+        #             id=id,
+        #             task_id=state["task_id"],
+        #             event=QueueEvent.AGENT_MESSAGE,
+        #             thought="",
+        #             message=messages_to_dict(state["messages"]),
+        #             message_token_count=input_token_count,
+        #             message_unit_price=input_price,
+        #             message_price_unit=unit,
+        #             answer="",
+        #             answer_token_count=output_token_count,
+        #             answer_unit_price=output_price,
+        #             answer_price_unit=unit,
+        #             total_token_count=total_token_count,
+        #             total_price=total_price,
+        #             latency=(time.perf_counter() - start_at),
+        #         ),
+        #     )
+        #     self.agent_queue_manager.publish(
+        #         state["task_id"],
+        #         AgentThought(
+        #             id=uuid.uuid4(),
+        #             task_id=state["task_id"],
+        #             event=QueueEvent.AGENT_END,
+        #         ),
+        #     )
+
+        # return {
+        #     "messages": [gathered],
+        #     "iteration_count": state["iteration_count"] + 1,
+        #     "task_id": state["task_id"],
+        #     "history": state["history"],
+        #     "long_term_memory": state["long_term_memory"],
+        # }
+
+        return {"messages": [gathered]}
 
     def _tools_node(self, state: AgentState) -> AgentState:
         """工具执行节点"""
-        # 将工具列表转换成字典，便于调用指定的工具
+        # 1.将工具列表转换成字典，便于调用指定的工具
         tools_by_name = {tool.name: tool for tool in self.agent_config.tools}
 
-        # 提取消息中的工具调用参数
+        # 2.提取消息中的工具调用参数
         tool_calls = state["messages"][-1].tool_calls
 
-        # 循环执行工具组装工具消息
+        # 3.循环执行工具组装工具消息
         messages = []
         for tool_call in tool_calls:
             # 创建智能体动作事件id并记录开始时间
-            id = uuid.uuid4()
-            start_at = time.perf_counter()
+            # id = uuid.uuid4()
+            # start_at = time.perf_counter()
 
             try:
                 # 获取工具并调用工具
                 tool = tools_by_name[tool_call["name"]]
-                try:
-                    tool_result = tool.invoke(tool_call["args"])
-                except NotImplementedError as e:
-                    tool_result = asyncio.run(tool.ainvoke(tool_call["args"]))
+                # try:
+                tool_result = tool.invoke(tool_call["args"])
+                # except NotImplementedError as e:
+                #     tool_result = asyncio.run(tool.ainvoke(tool_call["args"]))
             except Exception as e:
                 # 添加错误工具信息
                 tool_result = f"工具执行出错: {str(e)}"
-                logging.exception(f"工具执行出错, 错误信息: {str(e)}")
+                # logging.exception(f"工具执行出错, 错误信息: {str(e)}")
 
             # 将工具消息添加到消息列表中
             messages.append(
@@ -424,53 +452,53 @@ class FunctionCallAgent(BaseAgent):
             )
 
             # 判断执行工具的名字，提交不同事件，涵盖智能体动作以及知识库检索
-            event = (
-                QueueEvent.AGENT_ACTION
-                if tool_call["name"] != DATASET_RETRIEVAL_TOOL_NAME
-                else QueueEvent.DATASET_RETRIEVAL
-            )
-            self.agent_queue_manager.publish(
-                state["task_id"],
-                AgentThought(
-                    id=id,
-                    task_id=state["task_id"],
-                    event=event,
-                    observation=json.dumps(tool_result, ensure_ascii=False),
-                    tool=tool_call["name"],
-                    tool_input=tool_call["args"],
-                    latency=(time.perf_counter() - start_at),
-                ),
-            )
+            # event = (
+            #     QueueEvent.AGENT_ACTION
+            #     if tool_call["name"] != DATASET_RETRIEVAL_TOOL_NAME
+            #     else QueueEvent.DATASET_RETRIEVAL
+            # )
+            # self.agent_queue_manager.publish(
+            #     state["task_id"],
+            #     AgentThought(
+            #         id=id,
+            #         task_id=state["task_id"],
+            #         event=event,
+            #         observation=json.dumps(tool_result, ensure_ascii=False),
+            #         tool=tool_call["name"],
+            #         tool_input=tool_call["args"],
+            #         latency=(time.perf_counter() - start_at),
+            #     ),
+            # )
 
         return {
             "messages": messages,
-            "iteration_count": state["iteration_count"],
-            "task_id": state["task_id"],
-            "history": state["history"],
-            "long_term_memory": state["long_term_memory"],
+            # "iteration_count": state["iteration_count"],
+            # "task_id": state["task_id"],
+            # "history": state["history"],
+            # "long_term_memory": state["long_term_memory"],
         }
 
     @classmethod
-    def _tools_condition(cls, state: AgentState) -> Literal["tools", "__end__"]:
+    def _tools_condition(cls, state: AgentState):
         """检测下一个节点是执行tools节点，还是直接结束"""
         messages = state["messages"]
         ai_message = messages[-1]
 
-        # 检测是否存在tools_call参数，如果存在则执行tools节点，否则结束
+        # 检测是否存在tool_calls参数，如果存在则执行tools节点，否则结束
         if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
             return "tools"
         return END
 
-    @classmethod
-    def _preset_operation_condition(
-        cls, state: AgentState
-    ) -> Literal["long_term_memory_recall", "__end__"]:
-        """预设操作条件边，用于判断是否触发预设响应"""
-        # 提取状态的最后一条消息
-        message = state["messages"][-1]
+    # @classmethod
+    # def _preset_operation_condition(
+    #     cls, state: AgentState
+    # ) -> Literal["long_term_memory_recall", "__end__"]:
+    #     """预设操作条件边，用于判断是否触发预设响应"""
+    #     # 提取状态的最后一条消息
+    #     message = state["messages"][-1]
 
-        # 判断消息的类型，如果是AI消息则说明触发了审核机制，直接结束
-        if message.type == "ai":
-            return END
+    #     # 判断消息的类型，如果是AI消息则说明触发了审核机制，直接结束
+    #     if message.type == "ai":
+    #         return END
 
-        return "long_term_memory_recall"
+    #     return "long_term_memory_recall"

@@ -1,3 +1,9 @@
+"""app_handler 模块：应用相关的 HTTP 接口处理器。
+
+提供应用的增删改查，以及基于 LangChain / LangGraph 的聊天调试、
+带记忆的聊天调试与流式（SSE）聊天调试等接口。
+"""
+
 import json
 import os
 import uuid
@@ -7,46 +13,42 @@ from threading import Thread
 from typing import Any
 
 from flask import request
-from openai import APIError, APITimeoutError, APIConnectionError
-from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
+from injector import inject
+from langchain_core.messages import HumanMessage, trim_messages
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables import RunnableLambda
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, MessagesState, START
 from langgraph.prebuilt import ToolNode, tools_condition
+from openai import APIError, APITimeoutError, APIConnectionError
 
+from internal.core.agent.agents import FunctionCallAgent
+from internal.core.agent.entities.agent_entity import AgentConfig
+from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
+from internal.extension.chinese_file_chat_history import ChineseFileChatMessageHistory
 from internal.schema.app_schema import (
     CompletionReq,
     GetAppsWithPageReq,
     GetAppsWithPageResp,
 )
+from internal.service import ApiToolService, AppService, ConversationService
+from pkg.paginator import PageModel
 from pkg.response import (
     compact_generate_response,
     fail_json,
     success_json,
+    success_message,
     validate_error_json,
 )
-from pkg.paginator import PageModel
-from internal.exception import CustomException
-from injector import inject
-from pkg.response import success_message
-
-# LangChain 相关导入
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnableLambda
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.messages import HumanMessage, trim_messages
-
-# 自定义的中文文件存储
-from internal.extension.chinese_file_chat_history import ChineseFileChatMessageHistory
-
-# from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
-from internal.service import ApiToolService, AppService, ConversationService
 
 
 @inject
 @dataclass
 class AppHandler:
-    #  应用控制器
+    """应用控制器：处理应用的增删改查与会话调试相关接口。"""
+
     app_service: AppService
     provider_factory: BuiltinProviderManager
     api_tool_service: ApiToolService
@@ -66,54 +68,47 @@ class AppHandler:
         # ============ 消息修剪器配置 ============
         # 用于限制历史消息数量，避免 token 过多
         # 这是 LangChain v1.0 替代 ConversationBufferWindowMemory 的方式
-        self.message_trimmer = trim_messages(
+        #
+        # 说明：trim_messages 的 messages 是必填参数。“不传 messages” 的调用方式依赖
+        # @_runnable_support 装饰器在运行时返回 Runnable，但静态检查器无法识别该装饰器
+        # 的语义，会在该调用上误报“缺少参数 messages”。这里改用 RunnableLambda 包装，
+        # 调用 trim_messages 时始终带上 messages，行为完全一致且能消除误报。
+        self.message_trimmer = RunnableLambda(self._trim_recent_messages)
+
+    def _trim_recent_messages(self, messages):
+        """将历史消息修剪到最近 6 条（约 3 轮对话），并保证从用户消息开始。"""
+        return trim_messages(
+            messages,
             max_tokens=6,  # 最多保留6条消息（3轮对话：3个用户消息 + 3个AI消息）
             strategy="last",  # 保留最后（最新）的消息
-            token_counter=lambda msgs: len(msgs),  # 按消息数量计数（简化版）
+            token_counter=len,  # 按消息数量计数（简化版）
             include_system=False,  # 不包含系统消息（系统消息在 prompt 中单独定义）
             allow_partial=False,  # 不允许部分消息（确保消息完整性）
             start_on="human",  # 确保从用户消息开始（保持对话逻辑完整）
         )
 
     def ping(self):
-        # tool_factory = self.provider_factory.get_tool("tavily", "tavily_search")
-        # if tool_factory is None:
-        #     raise CustomException("tavily_search 工具未加载")
+        # """调试接口：基于示例问题生成建议问题列表，用于联调验证。"""
+        # human_message = "你好，我是ro小bin，你是？"
 
-        # tavily = tool_factory()
-        # result = tavily.invoke({"query": "2025北京半程马拉松 男子前三名 成绩 以及 女子前三名 成绩"})
-
-        # tavily = self.provider_factory.get_provider("tavily")
-        # tavily_search_entity = tavily.get_tool_entity("tavily_search")
-        # print("tavily_search_entity:", tavily_search_entity)
-
-        # return {
-        #     "ping": "pong"
-        #     # , "tavily": result
-        # }
-
-        # providers = self.provider_factory.get_provider_entities()
-
-        # return success_json([provider.dict() for provider in providers])
-        human_message = "你好，我是ro小bin，你是？"
-        ai_message = """你好 ro 小 bin～我是chatgpt呀，很高兴认识你！"""
-        old_summary = "人类询问AI关于LLM（大语言模型）和Agent（智能体）的定义及其关系。AI解释道，LLM是基于海量文本数据训练的大型神经网络，能够理解和生成自然语言，具备问答、翻译、写文案等基础能力，但存在局限，如缺乏自主目标、无法主动规划等。常见的LLM例子包括GPT系列等。 \n\nAgent则是以LLM为核心，结合记忆、规划、工具调用和反思模块的智能系统，能够自主设定目标并完成复杂任务。Agent的四大核心组件包括负责思考的LLM大脑、短期和长期记忆模块、自动拆分目标的规划模块，以及能够调用外部工具的能力。相比之下，LLM只能被动回答，而Agent可以在给定目标后自动完成任务。\n\n总结：LLM是理解和生成自然语言的基础模型，具备一定能力但缺乏主动性；Agent是基于LLM的智能体，具备自主目标和复杂任务处理能力。"
-        # summary = self.conversation_service.summary(
-        #     human_message, ai_message, old_summary
-        # )
-
-        # conversation_name = self.conversation_service.generate_conversation_name(
+        # 也可改为调用 self.conversation_service.summary(...) 或
+        # self.conversation_service.generate_conversation_name(...) 进行其他联调。
+        # questions = self.conversation_service.generate_suggested_questions(
         #     human_message
         # )
 
-        questions = self.conversation_service.generate_suggested_questions(
-            human_message
+        # return success_json({"suggested_questions": questions})
+        llm = ChatOpenAI(model="gpt-4o-mini")
+        agent_config = AgentConfig(
+            user_id=uuid.uuid4(),
+            llm=llm,
+            preset_prompt="你是一个拥有20年经验的诗人，请根据用户提供的主题写一段诗",
         )
+        agent = FunctionCallAgent(llm=llm, agent_config=agent_config)
+        state = agent.run("程序员", [], "")
+        content = state["messages"][-1].content
 
-        return success_json({"conversation_name": conversation_name})
-
-        # return success_json({"summary": summary})
-        # return self.api_tool_service.api_tool_invoke()
+        return success_json({"content": content})
 
     def create_app(self):
         """调用服务创建新的APP记录"""
@@ -129,24 +124,24 @@ class AppHandler:
         resp = GetAppsWithPageResp(many=True)
         return success_json(PageModel(list=resp.dump(apps), paginator=paginator))
 
-    def get_app(self, id: uuid.UUID):
-        app = self.app_service.get_app(id)
-        return success_json(
-            f"应用已经成功查询了,id为{app.id}"
-        )  # 直接传模型对象,Flask 会自动序列化
+    def get_app(self, app_id: uuid.UUID):
+        """根据应用 id 查询应用记录。"""
+        app = self.app_service.get_app(app_id)
+        return success_json(f"应用已经成功查询了,id为{app.id}")
 
-    def update_app(self, id: uuid.UUID):
-        app = self.app_service.update_app(id)
+    def update_app(self, app_id: uuid.UUID):
+        """根据应用 id 更新应用记录。"""
+        app = self.app_service.update_app(app_id)
         return success_json(f"应用已经成功更新了,id为{app.id}，名字为{app.name}")
 
-    def delete_app(self, id: uuid.UUID):
-        result = self.app_service.delete_app(id)
+    def delete_app(self, app_id: uuid.UUID):
+        """根据应用 id 删除应用记录。"""
+        result = self.app_service.delete_app(app_id)
         if result:
-            return success_message(f"应用已经成功删除了, id为{id}")
-        else:
-            return fail_json({"message": "应用不存在或删除失败"})
+            return success_message(f"应用已经成功删除了, id为{app_id}")
+        return fail_json({"message": "应用不存在或删除失败"})
 
-    def debug(self, app_id: uuid.UUID):
+    def debug(self, app_id: uuid.UUID):  # pylint: disable=unused-argument
         """
         聊天接口 - 使用 LangChain 实现
 
@@ -191,8 +186,8 @@ class AppHandler:
             return fail_json({"message": "请求超时，请稍后重试"})
         except APIConnectionError:
             return fail_json({"message": "无法连接到AI服务，请检查网络或稍后重试"})
-        except APIError as e:
-            return fail_json({"message": f"AI服务异常: {str(e)}"})
+        except APIError as error:
+            return fail_json({"message": f"AI服务异常: {str(error)}"})
 
     def get_session_history(self, session_id: str) -> ChineseFileChatMessageHistory:
         """
@@ -233,7 +228,7 @@ class AppHandler:
         # 并且中文字符会正常显示，不会转义为 \uXXXX
         return ChineseFileChatMessageHistory(file_path)
 
-    def memory_debug(self, app_id: uuid.UUID):
+    def memory_debug(self, app_id: uuid.UUID):  # pylint: disable=unused-argument
         """
         带记忆功能的聊天接口 - 使用 RunnableWithMessageHistory
         """
@@ -264,6 +259,7 @@ class AppHandler:
         parser = StrOutputParser()
 
         def trim_history(input_dict, config):
+            """读取会话 memory 中的历史消息，修剪后与当前 query 一起返回给链。"""
             # RunnableWithMessageHistory 会将当前会话对应的 history
             # 注入到 config["configurable"]["message_history"] 中。
             # 这样链内部就可以通过第二个参数直接拿到 memory 实例。
@@ -311,23 +307,23 @@ class AppHandler:
             return fail_json({"message": "请求超时，请稍后重试"})
         except APIConnectionError:
             return fail_json({"message": "无法连接到AI服务，请检查网络或稍后重试"})
-        except APIError as e:
-            return fail_json({"message": f"AI服务异常: {str(e)}"})
+        except APIError as error:
+            return fail_json({"message": f"AI服务异常: {str(error)}"})
 
-    def stream_debug(self, app_id: uuid.UUID):
+    def stream_debug(self, app_id: uuid.UUID):  # pylint: disable=unused-argument
         """应用会话调试聊天接口，该接口为流式事件输出"""
         req = CompletionReq()
         if not req.validate():
             return validate_error_json(req.errors)
 
         # 图在后台线程中运行；请求线程只负责把队列里的事件转成 SSE。
-        q = Queue()
+        event_queue = Queue()
         query = req.query.data
         finished = object()
 
         def emit(event: str, event_type: str, data: Any, message_id: str) -> None:
             """将内部事件统一放进队列，data 保持为 JSON 字符串以兼容前端事件协议。"""
-            q.put(
+            event_queue.put(
                 {
                     "id": message_id,
                     "event": event,
@@ -437,10 +433,10 @@ class AppHandler:
                 emit("message_end", "end", {"status": "completed"}, message_id)
             except (APITimeoutError, APIConnectionError, APIError) as error:
                 emit("error", "llm_error", {"message": str(error)}, message_id)
-            except Exception as error:
+            except Exception as error:  # pylint: disable=broad-exception-caught
                 emit("error", "server_error", {"message": str(error)}, message_id)
             finally:
-                q.put(finished)
+                event_queue.put(finished)
 
         def generate():
             """按 SSE 协议从队列持续输出事件，直至图程序结束。"""
@@ -448,7 +444,7 @@ class AppHandler:
             worker.start()
 
             while True:
-                event = q.get()
+                event = event_queue.get()
                 if event is finished:
                     break
                 yield (
