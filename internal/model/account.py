@@ -2,7 +2,8 @@ import uuid
 from datetime import datetime
 
 from flask import current_app
-from flask_login import UserMixin
+
+# from flask_login import UserMixin
 from sqlalchemy import (
     Column,
     UUID,
@@ -10,7 +11,7 @@ from sqlalchemy import (
     DateTime,
     text,
     PrimaryKeyConstraint,
-    Index,
+    # Index,
 )
 
 from internal.entity.conversation_entity import InvokeFrom
@@ -18,13 +19,16 @@ from internal.extension.database_extension import db
 from .conversation import Conversation
 
 
-class Account(UserMixin, db.Model):
+class Account(
+    # UserMixin,
+    db.Model
+):
     """账号模型"""
 
     __tablename__ = "account"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_account_id"),
-        Index("account_email_idx", "email"),
+        # Index("account_email_idx", "email"),
     )
 
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
@@ -67,7 +71,7 @@ class Account(UserMixin, db.Model):
 
     @property
     def assistant_agent_conversation(self) -> "Conversation":
-        """只读属性，返回当前账号的辅助Agent会话"""
+        """只读属性, 返回当前账号的辅助Agent会话"""
         # 获取辅助Agent应用id
         assistant_agent_id = current_app.config.get("ASSISTANT_AGENT_ID")
         conversation = (
@@ -103,8 +107,8 @@ class AccountOAuth(db.Model):
     __tablename__ = "account_oauth"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_account_oauth_id"),
-        Index("account_oauth_account_id_idx", "account_id"),
-        Index("account_oauth_openid_provider_idx", "openid", "provider"),
+        # Index("account_oauth_account_id_idx", "account_id"),
+        # Index("account_oauth_openid_provider_idx", "openid", "provider"),
     )
 
     id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
