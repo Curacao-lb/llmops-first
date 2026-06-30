@@ -1,9 +1,10 @@
 from internal.server import Http
 from injector import Injector, Module, Binder
 from internal.router import Router
+from internal.middleware import Middleware
 from pkg.sqlalchemy import SQLAlchemy
-from .module import ExtensionModule
 from flask_migrate import Migrate
+from flask_login import LoginManager
 
 # 将.env加载到环境变量中
 import dotenv
@@ -13,6 +14,8 @@ dotenv.load_dotenv()
 from config import Config
 
 conf = Config()
+
+from .module import ExtensionModule
 
 
 # 1. 创建 injector（依赖注入容器）
@@ -32,7 +35,9 @@ app = Http(
     __name__,
     conf=conf,
     migrate=injector.get(Migrate),
+    login_manager=injector.get(LoginManager),
     db=injector.get(SQLAlchemy),
+    middlware=injector.get(Middleware),
     router=injector.get(Router),
 )
 

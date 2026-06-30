@@ -3,7 +3,7 @@ from datetime import datetime
 
 from flask import current_app
 
-# from flask_login import UserMixin
+from flask_login import UserMixin
 from sqlalchemy import (
     Column,
     UUID,
@@ -19,10 +19,7 @@ from internal.extension.database_extension import db
 from .conversation import Conversation
 
 
-class Account(
-    # UserMixin,
-    db.Model
-):
+class Account(UserMixin, db.Model):
     """账号模型"""
 
     __tablename__ = "account"

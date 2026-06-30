@@ -8,6 +8,8 @@ from pkg.sqlalchemy import SQLAlchemy
 import os
 from flask_migrate import Migrate
 from werkzeug.exceptions import HTTPException
+from flask_login import LoginManager
+from internal.middleware import Middleware
 
 
 class Http(Flask):
@@ -27,6 +29,9 @@ class Http(Flask):
         conf: "Config",
         db: SQLAlchemy,
         migrate: Migrate,
+        login_manager: LoginManager,
+        # 中间件
+        middlware: Middleware,
         router: Router,
         **kwargs
     ):
@@ -56,6 +61,11 @@ class Http(Flask):
 
         # 注册应用路由
         router.register_router(self)
+
+        login_manager.init_app(self)
+
+        # 注册应用中间件
+        login_manager.request_loader(middlware.request_loader)
 
     def _register_error_handlers(self, error: Exception):
         """注册全局异常处理器"""

@@ -39,4 +39,4 @@ class BaseService:
 
     def get(self, model: Any, primary_key: Any) -> Optional[Any]:
         """根据主键获取一条记录"""
-        return self.db.session.query(model).get(primary_key)
+        return self.db.session.get(model, primary_key)

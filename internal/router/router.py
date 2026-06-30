@@ -1,7 +1,7 @@
 from flask import Flask, Blueprint
 
 # 使用魔术变量（__all__），这里就可以导入 AppHandler
-from internal.handler import AppHandler, BuiltinToolHandler, ApiToolHandler
+from internal.handler import AppHandler, BuiltinToolHandler, ApiToolHandler, DatasetHandler
 from dataclasses import dataclass
 
 """
@@ -20,6 +20,7 @@ class Router:
     app_handler: AppHandler
     builtin_tool_handler: BuiltinToolHandler
     api_tool_handler: ApiToolHandler
+    dataset_handler: DatasetHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -58,6 +59,13 @@ class Router:
             "/apps/<uuid:app_id>/stream_debug",
             view_func=self.app_handler.stream_debug,
             methods=["POST"],
+        )
+
+        # 知识库模块
+        bp.add_url_rule(
+            "/datasets",
+            view_func=self.dataset_handler.get_datasets_with_page,
+            methods=["GET"],
         )
         # bp.add_url_rule("/app", methods=["POST"], view_func=self.app_handler.create_app)
         # bp.add_url_rule("/app/<uuid:id>", view_func=self.app_handler.get_app)

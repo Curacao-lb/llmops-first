@@ -72,3 +72,26 @@ class App(BaseModel):
     status = Column(
         String(50), server_default=("''::character varying"), nullable=False
     )
+
+
+class AppDatasetJoin(BaseModel):
+    """应用知识库关联表模型"""
+
+    __tablename__ = "app_dataset_join"
+    __table_args__ = (
+        PrimaryKeyConstraint("id", name="pk_app_dataset_join_id"),
+        Index("app_dataset_join_app_id_dataset_id_idx", "app_id", "dataset_id"),
+    )
+
+    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
+    app_id = Column(UUID, nullable=False)
+    dataset_id = Column(UUID, nullable=False)
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP(0)"),
+        onupdate=datetime.now,
+    )
+    created_at = Column(
+        DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
+    )

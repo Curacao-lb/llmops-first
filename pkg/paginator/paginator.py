@@ -46,6 +46,8 @@ class Paginator:
         self.db = db
 
     def paginate(self, select) -> list[Any]:
+        if hasattr(select, "statement"):
+            select = select.statement
         p = self.db.paginate(
             select, page=self.current_page, per_page=self.page_size, error_out=False
         )
