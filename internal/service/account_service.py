@@ -36,24 +36,28 @@ class AccountService(BaseService):
         """根据id获取指定的账号模型"""
         return self.get(Account, account_id)
 
-    # def get_account_oauth_by_provider_name_and_openid(
-    #     self, provider_name: str, openid: str
-    # ) -> AccountOAuth:
-    #     return (
-    #         self.db.session.query(AccountOAuth)
-    #         .filter(
-    #             AccountOAuth.provider == provider_name, AccountOAuth.openid == openid
-    #         )
-    #         .one_or_none()
-    #     )
+    def get_account_oauth_by_provider_name_and_openid(
+        self, provider_name: str, openid: str
+    ) -> AccountOAuth:
+        """根据传递的提供者名字+openid获取第三方授权认证记录"""
 
-    # def get_account_by_email(self, email: str) -> Account:
-    #     return (
-    #         self.db.session.query(Account).filter(Account.email == email).one_or_none()
-    #     )
+        return (
+            self.db.session.query(AccountOAuth)
+            .filter(
+                AccountOAuth.provider == provider_name, AccountOAuth.openid == openid
+            )
+            .one_or_none()
+        )
 
-    # def create_account(self, **kwargs) -> Account:
-    #     return self.create(Account, **kwargs)
+    def get_account_by_email(self, email: str) -> Account:
+        """根据传递的邮箱查询账号信息"""
+        return (
+            self.db.session.query(Account).filter(Account.email == email).one_or_none()
+        )
+
+    def create_account(self, **kwargs) -> Account:
+        """根据传递的键值对创建账号信息"""
+        return self.create(Account, **kwargs)
 
     # def send_verification_code(self, email: str):
     #     key = f"send_verification_code:{email}"

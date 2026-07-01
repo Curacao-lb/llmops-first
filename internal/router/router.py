@@ -1,7 +1,13 @@
 from flask import Flask, Blueprint
 
 # 使用魔术变量（__all__），这里就可以导入 AppHandler
-from internal.handler import AppHandler, BuiltinToolHandler, ApiToolHandler, DatasetHandler
+from internal.handler import (
+    AppHandler,
+    BuiltinToolHandler,
+    ApiToolHandler,
+    DatasetHandler,
+    OAuthHandler,
+)
 from dataclasses import dataclass
 
 """
@@ -21,6 +27,7 @@ class Router:
     builtin_tool_handler: BuiltinToolHandler
     api_tool_handler: ApiToolHandler
     dataset_handler: DatasetHandler
+    oauth_handler: OAuthHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -136,6 +143,17 @@ class Router:
             "/api-tools/<uuid:provider_id>",
             methods=["POST"],
             view_func=self.api_tool_handler.update_api_tool_provider,
+        )
+
+        # 授权认证模块路由
+        bp.add_url_rule(
+            "/oauth/<string:provider_name>",
+            view_func=self.oauth_handler.provider,
+        )
+        bp.add_url_rule(
+            "/oauth/authorize/<string:provider_name>",
+            methods=["POST"],
+            view_func=self.oauth_handler.authorize,
         )
 
         # 4.应用上去注册蓝图
