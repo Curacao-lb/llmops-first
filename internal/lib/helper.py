@@ -130,6 +130,13 @@ def generate_random_string(length: int = 16) -> str:
 
 
 def decode_password(password: str) -> str:
+    """
+    读取 private.pem RSA 私钥，用环境变量 PRIVATE_KEY_PASSWORD 解锁私钥
+    base64.b64decode(password) 把密文还原成字节
+    private_key.decrypt(..., PKCS1v15()) 用私钥解密
+
+    这样就让新密码变回明文 "def7890"
+    """
     with open("private.pem", "rb") as key_file:
         private_key = serialization.load_pem_private_key(
             key_file.read(),

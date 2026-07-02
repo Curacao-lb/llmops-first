@@ -23,3 +23,5 @@ storage/uploads/
 
 # macOS
 .DS_Store
+
+private.pem

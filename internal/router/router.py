@@ -7,6 +7,7 @@ from internal.handler import (
     ApiToolHandler,
     DatasetHandler,
     OAuthHandler,
+    AccountHandler,
 )
 from dataclasses import dataclass
 
@@ -28,6 +29,7 @@ class Router:
     api_tool_handler: ApiToolHandler
     dataset_handler: DatasetHandler
     oauth_handler: OAuthHandler
+    account_handler: AccountHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -155,6 +157,26 @@ class Router:
             methods=["POST"],
             view_func=self.oauth_handler.authorize,
         )
+
+        # 账号设置模块相关路由
+        bp.add_url_rule(
+            "/account", view_func=self.account_handler.get_current_user
+        )  # 获取用户信息
+        bp.add_url_rule(
+            "/account/password",
+            methods=["POST"],
+            view_func=self.account_handler.update_password,
+        )  # 更新账号密码
+        bp.add_url_rule(
+            "/account/name",
+            methods=["POST"],
+            view_func=self.account_handler.update_name,
+        )  # 更新账号名称
+        bp.add_url_rule(
+            "/account/avatar",
+            methods=["POST"],
+            view_func=self.account_handler.update_avatar,
+        )  # 更新账号头像信息
 
         # 4.应用上去注册蓝图
         app.register_blueprint(bp)
