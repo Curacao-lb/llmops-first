@@ -161,14 +161,14 @@ class AccountService(BaseService):
 
     def password_login(self, email: str, password: str) -> dict[str, Any]:
         """根据传递的密码+邮箱登录特定的账号"""
-        # 根据传递的邮箱查询账号是否存在
+        # 1.根据传递的邮箱查询账号是否存在
         account = self.get_account_by_email(email)
         if not account:
-            raise FailException("账号或者密码错误，请核实后重试")
+            raise FailException("账号不存在或者密码错误，请核实后重试")
 
         password = decode_password(password)
 
-        # 校验账号密码是否正确
+        # 2.校验账号密码是否正确
         if not account.is_password_set or not compare_password(
             password,
             account.password,
@@ -176,7 +176,7 @@ class AccountService(BaseService):
         ):
             raise FailException("账号或者密码错误，请核实后重试")
 
-        # 生成凭证信息
+        # 3.生成凭证信息
         expire_at = int((datetime.now() + timedelta(days=1)).timestamp())
         payload = {
             "sub": str(account.id),

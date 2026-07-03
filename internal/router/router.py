@@ -8,6 +8,7 @@ from internal.handler import (
     DatasetHandler,
     OAuthHandler,
     AccountHandler,
+    AuthHandler,
 )
 from dataclasses import dataclass
 
@@ -30,6 +31,7 @@ class Router:
     dataset_handler: DatasetHandler
     oauth_handler: OAuthHandler
     account_handler: AccountHandler
+    auth_handler: AuthHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -177,6 +179,17 @@ class Router:
             methods=["POST"],
             view_func=self.account_handler.update_avatar,
         )  # 更新账号头像信息
+
+        bp.add_url_rule(
+            "/auth/password-login",
+            methods=["POST"],
+            view_func=self.auth_handler.password_login,
+        )  # 账号密码登录
+
+        bp.add_url_rule(
+            "/auth/logout", methods=["POST"], view_func=self.auth_handler.logout
+        )
+        # 退出登录
 
         # 4.应用上去注册蓝图
         app.register_blueprint(bp)

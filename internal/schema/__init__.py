@@ -10,6 +10,8 @@ from .account_schema import (
     SendVerificationCodeReq,
 )
 
+from .auth_schema import PasswordLoginReq, PasswordLoginResp
+
 __all___ = [
     "ListField",
     "AuthorizeReq",
@@ -20,4 +22,6 @@ __all___ = [
     "UpdateAvatarReq",
     "RegisterReq",
     "SendVerificationCodeReq",
+    "PasswordLoginReq",
+    "PasswordLoginResp",
 ]
