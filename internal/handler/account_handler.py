@@ -56,7 +56,7 @@ class AccountHandler:
             return validate_error_json(req.errors)
 
         # 2.调用服务更新账号名称
-        self.account_service.update_account(current_user, name=req.name.data)
+        self.account_service.update_account(account=current_user, name=req.name.data)
 
         return success_message("更新账号名称成功")
 
@@ -67,7 +67,7 @@ class AccountHandler:
         req = UpdateAvatarReq()
         if not req.validate():
             return validate_error_json(req.errors)
-        self.account_service.update_account(current_user, avatar=req.avatar.data)
+        self.account_service.update_account(account=current_user, avatar=req.avatar.data)
 
         return success_message("更新账号头像成功")
 

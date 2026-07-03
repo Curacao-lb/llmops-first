@@ -13,6 +13,7 @@ from threading import Thread
 from typing import Any
 
 from flask import request
+from flask_login import current_user, login_required
 from injector import inject
 from langchain_core.messages import HumanMessage, trim_messages
 from langchain_core.output_parsers import StrOutputParser
@@ -87,6 +88,7 @@ class AppHandler:
             start_on="human",  # 确保从用户消息开始（保持对话逻辑完整）
         )
 
+    @login_required
     def ping(self):
         # """调试接口：基于示例问题生成建议问题列表，用于联调验证。"""
         # human_message = "你好，我是ro小bin，你是？"
@@ -110,43 +112,52 @@ class AppHandler:
 
         return success_json({"content": content})
 
+    @login_required
     def create_app(self):
         """调用服务创建新的APP记录"""
-        app = self.app_service.create_app()
+        app = self.app_service.create_app(account=current_user)
         return success_message(f"应用已经成功创建了,id为{app.id}")
 
+    @login_required
     def get_apps_with_page(self):
         """获取应用列表信息,该接口支持分页"""
         req = GetAppsWithPageReq(request.args)
         if not req.validate():
             return validate_error_json(req.errors)
-        apps, paginator = self.app_service.get_apps_with_page(req)
+        apps, paginator = self.app_service.get_apps_with_page(
+            req, account=current_user
+        )
         resp = GetAppsWithPageResp(many=True)
         return success_json(PageModel(list=resp.dump(apps), paginator=paginator))
 
+    @login_required
     def get_app(self, app_id: uuid.UUID):
         """根据应用 id 查询应用记录。"""
-        app = self.app_service.get_app(app_id)
+        app = self.app_service.get_app(app_id, account=current_user)
         return success_json(f"应用已经成功查询了,id为{app.id}")
 
+    @login_required
     def update_app(self, app_id: uuid.UUID):
         """根据应用 id 更新应用记录。"""
-        app = self.app_service.update_app(app_id)
+        app = self.app_service.update_app(app_id, account=current_user)
         return success_json(f"应用已经成功更新了,id为{app.id}，名字为{app.name}")
 
+    @login_required
     def delete_app(self, app_id: uuid.UUID):
         """根据应用 id 删除应用记录。"""
-        result = self.app_service.delete_app(app_id)
+        result = self.app_service.delete_app(app_id, account=current_user)
         if result:
             return success_message(f"应用已经成功删除了, id为{app_id}")
         return fail_json({"message": "应用不存在或删除失败"})
 
+    @login_required
     def debug(self, app_id: uuid.UUID):  # pylint: disable=unused-argument
         """
         聊天接口 - 使用 LangChain 实现
 
         流程: prompt → llm → parser
         """
+        self.app_service.get_app(app_id, account=current_user)
         req = CompletionReq()
         if not req.validate():
             return validate_error_json(req.errors)
@@ -228,10 +239,12 @@ class AppHandler:
         # 并且中文字符会正常显示，不会转义为 \uXXXX
         return ChineseFileChatMessageHistory(file_path)
 
+    @login_required
     def memory_debug(self, app_id: uuid.UUID):  # pylint: disable=unused-argument
         """
         带记忆功能的聊天接口 - 使用 RunnableWithMessageHistory
         """
+        self.app_service.get_app(app_id, account=current_user)
         req = CompletionReq()
         if not req.validate():
             return validate_error_json(req.errors)
@@ -310,8 +323,10 @@ class AppHandler:
         except APIError as error:
             return fail_json({"message": f"AI服务异常: {str(error)}"})
 
+    @login_required
     def stream_debug(self, app_id: uuid.UUID):  # pylint: disable=unused-argument
         """应用会话调试聊天接口，该接口为流式事件输出"""
+        self.app_service.get_app(app_id, account=current_user)
         req = CompletionReq()
         if not req.validate():
             return validate_error_json(req.errors)
