@@ -5,6 +5,7 @@ from .dataset_handler import DatasetHandler
 from .oauth_handler import OAuthHandler, AuthorizeReq, AuthorizeResp
 from .account_handler import AccountHandler
 from .auth_handler import AuthHandler
+from .upload_file_handler import UploadFileHandler
 
 # 引用魔术变量也叫 dunder 变量，是 Python 内置的特殊变量
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "OAuthHandler",
     "AccountHandler",
     "AuthHandler",
+    "UploadFileHandler",
 ]

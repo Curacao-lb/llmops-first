@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint
+from flask import Flask, Blueprint, send_from_directory
 
 # 使用魔术变量（__all__），这里就可以导入 AppHandler
 from internal.handler import (
@@ -9,7 +9,9 @@ from internal.handler import (
     OAuthHandler,
     AccountHandler,
     AuthHandler,
+    UploadFileHandler,
 )
+from internal.service import CosService
 from dataclasses import dataclass
 
 """
@@ -32,6 +34,7 @@ class Router:
     oauth_handler: OAuthHandler
     account_handler: AccountHandler
     auth_handler: AuthHandler
+    upload_file_handler: UploadFileHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -188,9 +191,32 @@ class Router:
 
         bp.add_url_rule(
             "/auth/logout", methods=["POST"], view_func=self.auth_handler.logout
+        )  # 退出登录
+
+        # 上传文件模块
+        bp.add_url_rule(
+            "/upload-files/image",
+            endpoint="upload_image",
+            methods=["POST"],
+            view_func=self.upload_file_handler.upload_image,
         )
-        # 退出登录
+        bp.add_url_rule(
+            "/api/upload-files/image",
+            endpoint="api_upload_image",
+            methods=["POST"],
+            view_func=self.upload_file_handler.upload_image,
+        )
+        bp.add_url_rule(
+            "/uploaded-files/<path:filename>",
+            view_func=self.get_uploaded_file,
+            methods=["GET"],
+        )
 
         # 4.应用上去注册蓝图
         app.register_blueprint(bp)
         # 现在我们只需要传入一个APP的应用，我们就可以去访问对应的接口了
+
+    def get_uploaded_file(self, filename: str):
+        """读取本地上传文件"""
+
+        return send_from_directory(CosService.get_local_upload_dir(), filename)
