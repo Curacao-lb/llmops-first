@@ -1,8 +1,8 @@
 from pkg.sqlalchemy import SQLAlchemy
 from injector import inject
 from dataclasses import dataclass
-from internal.exception import NotFoundException
-from internal.model import Account, App
+from internal.exception import NotFoundException, UnauthorizedException
+from internal.model import Account, App, AppConfigVersion
 from internal.schema.app_schema import GetAppsWithPageReq
 from pkg.paginator import Paginator
 from sqlalchemy import desc
@@ -11,12 +11,12 @@ from uuid import UUID
 from internal.schema.app_schema import CreateAppReq
 import uuid
 from internal.entity.app_entity import AppStatus, AppConfigType, DEFAULT_APP_CONFIG
-from internal.model import AppConfigVersion
+from .base_service import BaseService
 
 
 @inject
 @dataclass
-class AppService:
+class AppService(BaseService):
     """应用服务逻辑"""
 
     db: SQLAlchemy
@@ -69,16 +69,44 @@ class AppService:
         # 5.返回创建的应用记录
         return app
 
-    def get_app(self, app_id: UUID, account: Account) -> App:
-        """根据ID获取应用信息"""
-        app = (
-            self.db.session.query(App)
-            .filter(App.id == app_id, App.account_id == account.id)
-            .one_or_none()
-        )
-        if app is None:
+    def get_app(self, app_id: uuid.UUID, account: Account) -> App:
+        """根据传递的id获取应用的基础信息"""
+        # 1.查询数据库获取应用基础信息
+        app = self.get(App, app_id)
+        # 2.判断应用是否存在
+        if not app:
             raise NotFoundException("应用不存在")
+        # 3.判断当前账号是否有权限访问该应用
+        if app.account_id != account.id:
+            raise UnauthorizedException("当前账号无权限")
         return app
+
+    def get_draft_app_config(self, app: App) -> AppConfigVersion:
+        """获取指定应用的草稿配置，不存在时创建一份默认草稿配置。
+
+        与只读属性 App.draft_app_config 不同，这里承担「取不到就创建」的业务行为，
+        所有写入都收敛在一个受控事务里，并同步回写 app.draft_app_config_id，
+        避免草稿配置存在两个不一致的真相源。
+        """
+        # 1.先通过只读属性尝试获取已有草稿配置
+        draft_app_config = app.draft_app_config
+        if draft_app_config is not None:
+            return draft_app_config
+
+        # 2.不存在则在单个事务里创建默认草稿配置并回写关联id
+        with self.db.auto_commit():
+            draft_app_config = AppConfigVersion(
+                id=uuid.uuid4(),
+                app_id=app.id,
+                version=0,
+                config_type=AppConfigType.DRAFT,
+                **DEFAULT_APP_CONFIG,
+            )
+            self.db.session.add(draft_app_config)
+            self.db.session.flush()
+            app.draft_app_config_id = draft_app_config.id
+
+        return draft_app_config
 
     def update_app(self, app_id: UUID, account: Account) -> App:
         """更新应用信息"""

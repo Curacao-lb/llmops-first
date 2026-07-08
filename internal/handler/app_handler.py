@@ -32,6 +32,7 @@ from internal.schema.app_schema import (
     GetAppsWithPageReq,
     GetAppsWithPageResp,
     CreateAppReq,
+    GetAppResp,
 )
 from internal.service import AppService
 from pkg.paginator import PageModel
@@ -70,6 +71,11 @@ class AppHandler:
 
     @login_required
     def get_app(self, app_id: uuid.UUID):
-        """根据应用 id 查询应用记录。"""
+        """获取指定的应用基础信息"""
+        # 1.获取应用基础信息
         app = self.app_service.get_app(app_id, account=current_user)
-        return success_json(f"应用已经成功查询了,id为{app.id}")
+        # 2.确保草稿配置存在：只读属性不再自动创建，这里显式执行「取不到就创建」
+        self.app_service.get_draft_app_config(app)
+        # 3.序列化并返回应用基础信息
+        resp = GetAppResp()
+        return success_json(resp.dump(app))

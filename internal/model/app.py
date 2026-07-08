@@ -14,8 +14,10 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 import uuid
 from datetime import datetime
+from typing import Optional
 from .base import BaseModel
 from internal.extension.database_extension import db
+from internal.entity.app_entity import AppConfigType
 
 
 class App(db.Model):
@@ -94,6 +96,23 @@ class App(db.Model):
     mode = Column(
         Integer, nullable=False, server_default=text("0")
     )  # 模式 0:单agent模式 1:supervisor模式
+
+    @property
+    def draft_app_config(self) -> Optional["AppConfigVersion"]:
+        """只读属性，返回当前应用的草稿配置。
+
+        这是一个纯读取属性，不存在时返回 None，且不会产生任何写入或提交副作用。
+        若需要「不存在则创建默认草稿配置」的业务行为，请调用
+        AppService.get_draft_app_config()。
+        """
+        return (
+            db.session.query(AppConfigVersion)
+            .filter(
+                AppConfigVersion.app_id == self.id,
+                AppConfigVersion.config_type == AppConfigType.DRAFT,
+            )
+            .one_or_none()
+        )
 
 
 class AppConfig(db.Model):

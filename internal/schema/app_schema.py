@@ -5,6 +5,7 @@ from marshmallow import Schema, fields, pre_dump
 
 from internal.model import App
 from pkg.paginator import PaginatorReq
+from internal.lib.helper import datetime_to_timestamp
 
 
 class GetAppsWithPageReq(PaginatorReq):
@@ -66,3 +67,46 @@ class CreateAppReq(FlaskForm):
         "description",
         validators=[Length(max=800, message="应用描述的长度不能超过800个字符")],
     )
+
+
+class GetAppResp(Schema):
+    """获取应用基础信息响应结构"""
+
+    id = fields.UUID(dump_default="")
+    debug_conversation_id = fields.UUID(dump_default="")
+    name = fields.String(dump_default="")
+    en_name = fields.String(dump_default="")
+    icon = fields.String(dump_default="")
+    description = fields.String(dump_default="")
+    status = fields.String(dump_default="")
+    draft_updated_at = fields.Integer(dump_default=0)
+    mode = fields.Integer(dump_default=0)
+    updated_at = fields.Integer(dump_default=0)
+    created_at = fields.Integer(dump_default=0)
+
+    @pre_dump
+    def process_data(self, data: App, **kwargs):
+        # draft_app_config 现在是纯读取属性，草稿不存在时会返回 None，
+        # 因此这里做空值保护，避免序列化时报错。
+        # 注意：确保草稿配置存在的「取不到就创建」逻辑应在 handler/service 中
+        # 通过 AppService.get_draft_app_config() 显式完成。
+        draft_app_config = data.draft_app_config
+        return {
+            "id": data.id,
+            "debug_conversation_id": (
+                data.debug_conversation_id if data.debug_conversation_id else ""
+            ),
+            "name": data.name,
+            "en_name": data.en_name,
+            "icon": data.icon,
+            "description": data.description,
+            "status": data.status,
+            "draft_updated_at": (
+                datetime_to_timestamp(draft_app_config.updated_at)
+                if draft_app_config is not None
+                else 0
+            ),
+            "updated_at": datetime_to_timestamp(data.updated_at),
+            "created_at": datetime_to_timestamp(data.created_at),
+            "mode": data.mode,
+        }
