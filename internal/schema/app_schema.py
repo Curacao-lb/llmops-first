@@ -1,25 +1,10 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField
-from wtforms.validators import DataRequired, Length, Optional
+from wtforms.validators import DataRequired, Length, Optional, URL
 from marshmallow import Schema, fields, pre_dump
 
 from internal.model import App
 from pkg.paginator import PaginatorReq
-
-
-# 定义方法和对应的请求名保持一致
-class CompletionReq(FlaskForm):
-    """基础聊天接口请求验证"""
-
-    # 验证规则：1.必填 2.长度最大为2000
-    query = StringField(
-        "query",
-        validators=[
-            # 这里的 message 指的是如果数据不符合规则时，返回什么提示
-            DataRequired(message="用户的提问是必填的"),
-            Length(max=2000, message="用户的提问最大长度是2000"),
-        ],
-    )
 
 
 class GetAppsWithPageReq(PaginatorReq):
@@ -51,3 +36,33 @@ class GetAppsWithPageResp(Schema):
             "updated_at": int(data.updated_at.timestamp()),
             "created_at": int(data.created_at.timestamp()),
         }
+
+
+class CreateAppReq(FlaskForm):
+    """创建Agent应用请求结构体"""
+
+    name = StringField(
+        "name",
+        validators=[
+            DataRequired("应用名称不能为空"),
+            Length(max=40, message="应用名称长度最大不能超过40个字符"),
+        ],
+    )
+    en_name = StringField(
+        "en_name",
+        validators=[
+            DataRequired("应用英文名称不能为空"),
+            Length(max=40, message="应用英文名称长度最大不能超过40个字符"),
+        ],
+    )
+    icon = StringField(
+        "icon",
+        validators=[
+            DataRequired("应用图标不能为空"),
+            URL(message="应用图标必须是图片URL链接"),
+        ],
+    )
+    description = StringField(
+        "description",
+        validators=[Length(max=800, message="应用描述的长度不能超过800个字符")],
+    )

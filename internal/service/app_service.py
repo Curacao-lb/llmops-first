@@ -8,6 +8,10 @@ from pkg.paginator import Paginator
 from sqlalchemy import desc
 from typing import Any
 from uuid import UUID
+from internal.schema.app_schema import CreateAppReq
+import uuid
+from internal.entity.app_entity import AppStatus, AppConfigType, DEFAULT_APP_CONFIG
+from internal.model import AppConfigVersion
 
 
 @inject
@@ -32,16 +36,37 @@ class AppService:
         )
         return apps, paginator
 
-    def create_app(self, account: Account) -> App:
-        """创建新的应用记录"""
-        # 使用 auto_commit 自动提交,无需手动 commit
+    def create_app(self, req: CreateAppReq, account: Account) -> App:
+        # 1. 开启数据库自动提交上下文
         with self.db.auto_commit():
-            app = App()
-            app.account_id = account.id
-            app.name = "测试机器人"
-            app.icon = ""
-            app.description = "这是一个简单的聊天机器人"
+            # 2.创建应用记录，并刷新数据，从而可以拿到应用id
+            app = App(
+                id=uuid.uuid4(),
+                account_id=account.id,
+                name=req.name.data,
+                en_name=req.en_name.data,
+                icon=req.icon.data,
+                description=req.description.data,
+                status=AppStatus.DRAFT,
+            )
             self.db.session.add(app)
+            self.db.session.flush()
+
+            # 3.添加草稿记录
+            app_config_version = AppConfigVersion(
+                id=uuid.uuid4(),
+                app_id=app.id,
+                version=0,
+                config_type=AppConfigType.DRAFT,
+                **DEFAULT_APP_CONFIG,
+            )
+            self.db.session.add(app_config_version)
+            self.db.session.flush()
+
+            # 4.为应用添加草稿配置id
+            app.draft_app_config_id = app_config_version.id
+
+        # 5.返回创建的应用记录
         return app
 
     def get_app(self, app_id: UUID, account: Account) -> App:

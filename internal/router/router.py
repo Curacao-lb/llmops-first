@@ -15,9 +15,9 @@ from internal.service import CosService
 from dataclasses import dataclass
 
 """
-下面注释的代码
-由dataclass替代
-dataclass 可以自动生成 __init__，减少样板代码：
+    下面注释的代码
+    由dataclass替代
+    dataclass 可以自动生成 __init__，减少样板代码：
 """
 from injector import inject
 
@@ -54,25 +54,9 @@ class Router:
 
         # 3.将这个BP蓝图还有对应的路由，在控制器里的方法进行映射
         bp.add_url_rule("/ping", view_func=self.app_handler.ping, methods=["GET"])
+
         bp.add_url_rule(
-            "/apps",
-            view_func=self.app_handler.get_apps_with_page,
-            methods=["GET"],
-        )
-        bp.add_url_rule(
-            "/apps/<uuid:app_id>/debug",
-            view_func=self.app_handler.debug,
-            methods=["POST"],
-        )
-        bp.add_url_rule(
-            "/apps/<uuid:app_id>/memory_debug",
-            view_func=self.app_handler.memory_debug,
-            methods=["POST"],
-        )
-        bp.add_url_rule(
-            "/apps/<uuid:app_id>/stream_debug",
-            view_func=self.app_handler.stream_debug,
-            methods=["POST"],
+            "/apps", view_func=self.app_handler.create_app, methods=["POST"]
         )
 
         # 知识库模块
@@ -81,16 +65,6 @@ class Router:
             view_func=self.dataset_handler.get_datasets_with_page,
             methods=["GET"],
         )
-        # bp.add_url_rule("/app", methods=["POST"], view_func=self.app_handler.create_app)
-        # bp.add_url_rule("/app/<uuid:id>", view_func=self.app_handler.get_app)
-        # bp.add_url_rule(
-        #     "/app/<uuid:id>", view_func=self.app_handler.update_app, methods=["POST"]
-        # )
-        # bp.add_url_rule(
-        #     "/app/<uuid:id>/delete",
-        #     view_func=self.app_handler.delete_app,
-        #     methods=["POST"],
-        # )
 
         # 内置插件广场模块
         bp.add_url_rule(
