@@ -103,7 +103,7 @@ class App(db.Model):
 
         这是一个纯读取属性，不存在时返回 None，且不会产生任何写入或提交副作用。
         若需要「不存在则创建默认草稿配置」的业务行为，请调用
-        AppService.get_draft_app_config()。
+        AppService.get_draft_app_config_in_get_app()。
         """
         return (
             db.session.query(AppConfigVersion)

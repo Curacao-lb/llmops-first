@@ -89,7 +89,7 @@ class GetAppResp(Schema):
         # draft_app_config 现在是纯读取属性，草稿不存在时会返回 None，
         # 因此这里做空值保护，避免序列化时报错。
         # 注意：确保草稿配置存在的「取不到就创建」逻辑应在 handler/service 中
-        # 通过 AppService.get_draft_app_config() 显式完成。
+        # 通过 AppService.get_draft_app_config_in_get_app() 显式完成。
         draft_app_config = data.draft_app_config
         return {
             "id": data.id,

@@ -75,7 +75,14 @@ class AppHandler:
         # 1.获取应用基础信息
         app = self.app_service.get_app(app_id, account=current_user)
         # 2.确保草稿配置存在：只读属性不再自动创建，这里显式执行「取不到就创建」
-        self.app_service.get_draft_app_config(app)
+        self.app_service.get_draft_app_config_in_get_app(app)
         # 3.序列化并返回应用基础信息
         resp = GetAppResp()
         return success_json(resp.dump(app))
+
+    @login_required
+    def get_draft_app_config(self, app_id: uuid.UUID):
+        """根据传递的应用id获取应用的最新草稿配置"""
+        return success_json(
+            self.app_service.get_draft_app_config(app_id, account=current_user)
+        )

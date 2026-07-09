@@ -61,6 +61,11 @@ class Router:
 
         bp.add_url_rule("/apps/<uuid:app_id>", view_func=self.app_handler.get_app)
 
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/draft-app-config",
+            view_func=self.app_handler.get_draft_app_config,
+        )
+
         # 知识库模块
         bp.add_url_rule(
             "/datasets",

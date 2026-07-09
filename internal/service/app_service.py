@@ -12,6 +12,7 @@ from internal.schema.app_schema import CreateAppReq
 import uuid
 from internal.entity.app_entity import AppStatus, AppConfigType, DEFAULT_APP_CONFIG
 from .base_service import BaseService
+from .app_config_service import AppConfigService
 
 
 @inject
@@ -20,6 +21,7 @@ class AppService(BaseService):
     """应用服务逻辑"""
 
     db: SQLAlchemy
+    app_config_service: AppConfigService
 
     def get_apps_with_page(
         self, req: GetAppsWithPageReq, account: Account
@@ -81,7 +83,7 @@ class AppService(BaseService):
             raise UnauthorizedException("当前账号无权限")
         return app
 
-    def get_draft_app_config(self, app: App) -> AppConfigVersion:
+    def get_draft_app_config_in_get_app(self, app: App) -> AppConfigVersion:
         """获取指定应用的草稿配置，不存在时创建一份默认草稿配置。
 
         与只读属性 App.draft_app_config 不同，这里承担「取不到就创建」的业务行为，
@@ -107,6 +109,15 @@ class AppService(BaseService):
             app.draft_app_config_id = draft_app_config.id
 
         return draft_app_config
+
+    def get_draft_app_config(
+        self, app_id: uuid.UUID, account: Account
+    ) -> dict[str, Any]:
+        """根据传递的应用id，获取指定的应用草稿配置信息"""
+
+        # 1.获取应用信息并校验权限
+        app = self.get_app(app_id, account)
+        return self.app_config_service.get_draft_app_config(app)
 
     def update_app(self, app_id: UUID, account: Account) -> App:
         """更新应用信息"""
