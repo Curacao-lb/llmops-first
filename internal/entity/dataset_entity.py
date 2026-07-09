@@ -1,6 +1,8 @@
 from enum import Enum
 
-DEFAULT_DATASET_DESCRIPTION_FORMATTER = "当你需要回答管理《{name}》的时候可以引用该知识库。"
+DEFAULT_DATASET_DESCRIPTION_FORMATTER = (
+    "当你需要回答管理《{name}》的时候可以引用该知识库。"
+)
 
 
 class ProcessType(str, Enum):
@@ -24,12 +26,12 @@ DEFAULT_PROCESS_RULE = {
                 "；|;\s",
                 "，|,\s",
                 " ",
-                ""
+                "",
             ],
             "chunk_size": 500,
             "chunk_overlap": 50,
-        }
-    }
+        },
+    },
 }
 
 
