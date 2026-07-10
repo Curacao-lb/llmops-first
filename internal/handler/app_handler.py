@@ -93,13 +93,20 @@ class AppHandler:
 
         # 1.获取草稿请求的json数据
         draft_app_config = request.get_json(force=True, silent=True) or {}
-        # self.app_service.update_draft_app_config(
-        #     app_id, draft_app_config, account=current_user
-        # )
-
-        draft_app_config = self.app_service._validate_draft_app_config(
-            draft_app_config, current_user
+        self.app_service.update_draft_app_config(
+            app_id, draft_app_config, account=current_user
         )
 
-        # return success_message("更新应用草稿配置成功")
-        return success_json(draft_app_config)
+        # draft_app_config = self.app_service._validate_draft_app_config(
+        #     draft_app_config, current_user
+        # )
+
+        return success_message("更新应用草稿配置成功")
+        # return success_json(draft_app_config)
+
+    @login_required
+    def publish(self, app_id: uuid.UUID):
+        """发布/更新应用"""
+
+        self.app_service.publish_draft_app_config(app_id, account=current_user)
+        return success_message("发布/更新应用配置成功")

@@ -15,7 +15,8 @@ from internal.model import (
     AppDatasetJoin,
 )
 from internal.entity.app_entity import DEFAULT_APP_CONFIG, AppStatus
-from internal.core.language_model import LanguageModelManager
+
+# from internal.core.language_model import LanguageModelManager
 from internal.lib.helper import datetime_to_timestamp, get_value_type
 from internal.core.language_model.entities.model_entity import ModelParameterType
 from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
@@ -37,11 +38,11 @@ class AppConfigService(BaseService):
         draft_app_config = app.draft_app_config
 
         # 校验model_config配置信息
-        # validate_model_config = self._process_and_validate_model_config(
-        #     draft_app_config.model_config
-        # )
-        # if draft_app_config.model_config != validate_model_config:
-        #     self.update(draft_app_config, model_config=validate_model_config)
+        validate_model_config = self._process_and_validate_model_config(
+            draft_app_config.model_config
+        )
+        if draft_app_config.model_config != validate_model_config:
+            self.update(draft_app_config, model_config=validate_model_config)
 
         # 循环遍历工具列表删除已经被删除的工具信息
         tools, validate_tools = self._process_and_validate_tools(draft_app_config.tools)
@@ -342,65 +343,65 @@ class AppConfigService(BaseService):
             model_config["provider"], str
         ):
             return DEFAULT_APP_CONFIG["model_config"]
-        provider = self.language_model_manager.get_provider(model_config["provider"])
-        if not provider:
-            return DEFAULT_APP_CONFIG["model_config"]
+        # provider = self.language_model_manager.get_provider(model_config["provider"])
+        # if not provider:
+        #     return DEFAULT_APP_CONFIG["model_config"]
 
         # 判断model是否存在、类型是否正确，如果不符合则返回默认值
         if not model_config["model"] or not isinstance(model_config["model"], str):
             return DEFAULT_APP_CONFIG["model_config"]
-        model_entity = provider.get_model_entity(model_config["model"])
-        if not model_entity:
-            return DEFAULT_APP_CONFIG["model_config"]
+        # model_entity = provider.get_model_entity(model_config["model"])
+        # if not model_entity:
+        #     return DEFAULT_APP_CONFIG["model_config"]
 
         # 判断parameters信息类型是否错误，如果错误则设置为默认值
-        if not isinstance(model_config["parameters"], dict):
-            model_config["parameters"] = {
-                parameter.name: parameter.default
-                for parameter in model_entity.parameters
-            }
+        # if not isinstance(model_config["parameters"], dict):
+        #     model_config["parameters"] = {
+        #         parameter.name: parameter.default
+        #         for parameter in model_entity.parameters
+        #     }
 
         # 剔除传递的多余的parameter，亦或者是少传递的参数使用默认值补上
-        parameters = {}
-        for parameter in model_entity.parameters:
-            # 从model_config中获取参数值，如果不存在则设置为默认值
-            parameter_value = model_config["parameters"].get(
-                parameter.name, parameter.default
-            )
+        # parameters = {}
+        # for parameter in model_entity.parameters:
+        #     # 从model_config中获取参数值，如果不存在则设置为默认值
+        #     parameter_value = model_config["parameters"].get(
+        #         parameter.name, parameter.default
+        #     )
 
-            # 判断参数是否必填
-            if parameter.required:
-                # 参数必填，则值不允许为None，如果为None则设置默认值
-                if parameter_value is None:
-                    parameter_value = parameter.default
-                else:
-                    # 值非空则校验数据类型是否正确，不正确则设置默认值
-                    if get_value_type(parameter_value) != parameter.type.value:
-                        parameter_value = parameter.default
-            else:
-                # 参数非必填，数据非空的情况下需要校验
-                if parameter_value is not None:
-                    if get_value_type(parameter_value) != parameter.type.value:
-                        parameter_value = parameter.default
+        #     # 判断参数是否必填
+        #     if parameter.required:
+        #         # 参数必填，则值不允许为None，如果为None则设置默认值
+        #         if parameter_value is None:
+        #             parameter_value = parameter.default
+        #         else:
+        #             # 值非空则校验数据类型是否正确，不正确则设置默认值
+        #             if get_value_type(parameter_value) != parameter.type.value:
+        #                 parameter_value = parameter.default
+        #     else:
+        #         # 参数非必填，数据非空的情况下需要校验
+        #         if parameter_value is not None:
+        #             if get_value_type(parameter_value) != parameter.type.value:
+        #                 parameter_value = parameter.default
 
-            # 判断参数是否存在options，如果存在则数值必须在options中选择
-            if parameter.options and parameter_value not in parameter.options:
-                parameter_value = parameter.default
+        #     # 判断参数是否存在options，如果存在则数值必须在options中选择
+        #     if parameter.options and parameter_value not in parameter.options:
+        #         parameter_value = parameter.default
 
-            # 参数类型为int/float，如果存在min/max时候需要校验
-            if (
-                parameter.type in [ModelParameterType.INT, ModelParameterType.FLOAT]
-                and parameter_value is not None
-            ):
-                # 校验数值的min/max
-                if (parameter.min and parameter_value < parameter.min) or (
-                    parameter.max and parameter_value > parameter.max
-                ):
-                    parameter_value = parameter.default
+        #     # 参数类型为int/float，如果存在min/max时候需要校验
+        #     if (
+        #         parameter.type in [ModelParameterType.INT, ModelParameterType.FLOAT]
+        #         and parameter_value is not None
+        #     ):
+        #         # 校验数值的min/max
+        #         if (parameter.min and parameter_value < parameter.min) or (
+        #             parameter.max and parameter_value > parameter.max
+        #         ):
+        #             parameter_value = parameter.default
 
-            parameters[parameter.name] = parameter_value
+        #     parameters[parameter.name] = parameter_value
 
-        # 完成数据校验，赋值parameters参数
-        model_config["parameters"] = parameters
+        # # 完成数据校验，赋值parameters参数
+        # model_config["parameters"] = parameters
 
         return model_config

@@ -72,6 +72,12 @@ class Router:
             methods=["POST"],
         )
 
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/publish",
+            view_func=self.app_handler.publish,
+            methods=["POST"],
+        )
+
         # 知识库模块
         bp.add_url_rule(
             "/datasets",

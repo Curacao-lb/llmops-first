@@ -1,16 +1,26 @@
 from pkg.sqlalchemy import SQLAlchemy
 from injector import inject
 from dataclasses import dataclass
+from datetime import datetime
+
 from internal.exception import (
     NotFoundException,
     UnauthorizedException,
     ValidateException,
     FailException,
 )
-from internal.model import Account, App, AppConfigVersion, ApiTool, Dataset
+from internal.model import (
+    Account,
+    App,
+    AppConfigVersion,
+    ApiTool,
+    Dataset,
+    AppConfig,
+    AppDatasetJoin,
+)
 from internal.schema.app_schema import GetAppsWithPageReq
 from pkg.paginator import Paginator
-from sqlalchemy import desc
+from sqlalchemy import func, desc
 from typing import Any
 from uuid import UUID
 from internal.schema.app_schema import CreateAppReq
@@ -585,3 +595,122 @@ class AppService(BaseService):
                     raise ValidateException("输入审核预设响应不能为空")
 
         return draft_app_config
+
+    def update_draft_app_config(
+        self, app_id: UUID, draft_app_config: dict[str, Any], account: Account
+    ) -> AppConfigVersion:
+        """根据传递的应用id+草稿配置修改指定应用的最新草稿"""
+
+        # 1.获取应用信息并校验
+        app = self.get_app(app_id, account)
+
+        # 2.校验传递的草稿配置信息
+        draft_app_config = self._validate_draft_app_config(draft_app_config, account)
+
+        # 3.获取当前应用的最新草稿信息
+        draft_app_config_record = app.draft_app_config
+        self.update(
+            draft_app_config_record,
+            updated_at=datetime.now(),
+            **draft_app_config,
+        )
+        if app.status == AppStatus.PUBLISHED:
+            self.update(app, status=AppStatus.REPUBLISH)
+        return draft_app_config_record
+
+    def publish_draft_app_config(self, app_id: UUID, account: Account) -> App:
+        """根据传递的应用id+账号，发布/更新指定的应用草稿配置为运行时配置"""
+        # 1.获取应用的信息以及草稿信息
+        app = self.get_app(app_id, account)
+        draft_app_config = self.get_draft_app_config(app_id, account)
+        # get_draft_app_config 返回的是给前端使用的展示数据。为避免泄露模型
+        # API Key，其中不会包含 model_config；发布时需从已校验并回写的草稿记录
+        # 中读取。同时 workflows 当前也未包含在展示数据中，兼容从草稿记录读取。
+        draft_app_config_record = app.draft_app_config
+        model_config = (
+            draft_app_config_record.model_config
+            if draft_app_config_record and draft_app_config_record.model_config
+            else DEFAULT_APP_CONFIG["model_config"]
+        )
+        workflows = (
+            draft_app_config_record.workflows
+            if draft_app_config_record and draft_app_config_record.workflows
+            else []
+        )
+
+        # 2.创建应用运行配置（在这里暂时不删除历史的运行配置）
+        app_config = self.create(
+            AppConfig,
+            app_id=app_id,
+            model_config=model_config,
+            dialog_round=draft_app_config["dialog_round"],
+            preset_prompt=draft_app_config["preset_prompt"],
+            tools=[
+                {
+                    "type": tool["type"],
+                    "provider_id": tool["provider"]["id"],
+                    "tool_id": tool["tool"]["name"],
+                    "params": tool["tool"]["params"],
+                }
+                for tool in draft_app_config["tools"]
+            ],
+            # workflows=[workflow["id"] for workflow in draft_app_config["workflows"]],
+            workflows=workflows,
+            retrieval_config=draft_app_config["retrieval_config"],
+            long_term_memory=draft_app_config["long_term_memory"],
+            opening_statement=draft_app_config["opening_statement"],
+            opening_questions=draft_app_config["opening_questions"],
+            speech_to_text=draft_app_config["speech_to_text"],
+            text_to_speech=draft_app_config["text_to_speech"],
+            suggested_after_answer=draft_app_config["suggested_after_answer"],
+            review_config=draft_app_config["review_config"],
+            multimodal=draft_app_config["multimodal"],
+            agents=[app["id"] for app in draft_app_config["agents"]],
+        )
+
+        # 3.更新应用关联的运行时配置以及状态
+        self.update(app, app_config_id=app_config.id, status=AppStatus.PUBLISHED)
+
+        # 4.先删除原有的知识库关联记录
+        with self.db.auto_commit():
+            self.db.session.query(AppDatasetJoin).filter(
+                AppDatasetJoin.app_id == app_id,
+            ).delete()
+
+        # 5.新增新的知识库关联记录
+        for dataset in draft_app_config["datasets"]:
+            self.create(AppDatasetJoin, app_id=app_id, dataset_id=dataset["id"])
+
+        # 获取应用草稿记录，并移除id、version、config_type、updated_at、created_at字段
+        draft_app_config_copy = app.draft_app_config.__dict__.copy()
+        remove_fields(
+            draft_app_config_copy,
+            [
+                "id",
+                "version",
+                "config_type",
+                "updated_at",
+                "created_at",
+                "_sa_instance_state",
+            ],
+        )
+
+        # 获取当前最大的发布版本
+        max_version = (
+            self.db.session.query(func.coalesce(func.max(AppConfigVersion.version), 0))
+            .filter(
+                AppConfigVersion.app_id == app_id,
+                AppConfigVersion.config_type == AppConfigType.PUBLISHED,
+            )
+            .scalar()
+        )
+
+        # 新增发布历史配置
+        self.create(
+            AppConfigVersion,
+            version=max_version + 1,
+            config_type=AppConfigType.PUBLISHED,
+            **draft_app_config_copy,
+        )
+
+        return app
