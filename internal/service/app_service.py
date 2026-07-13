@@ -1,38 +1,41 @@
-from pkg.sqlalchemy import SQLAlchemy
-from injector import inject
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
+from uuid import UUID
 
+from injector import inject
+from sqlalchemy import desc, func
+
+from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
+from internal.entity.app_entity import DEFAULT_APP_CONFIG, AppConfigType, AppStatus
+from internal.entity.dataset_entity import RetrievalStrategy
 from internal.exception import (
+    FailException,
     NotFoundException,
     UnauthorizedException,
     ValidateException,
-    FailException,
 )
+from internal.lib.helper import remove_fields
 from internal.model import (
     Account,
-    App,
-    AppConfigVersion,
     ApiTool,
-    Dataset,
+    App,
     AppConfig,
+    AppConfigVersion,
     AppDatasetJoin,
+    Dataset,
 )
-from internal.schema.app_schema import GetAppsWithPageReq
+from internal.schema.app_schema import (
+    CreateAppReq,
+    GetAppsWithPageReq,
+    GetPublishHistoriesWithPageReq,
+)
 from pkg.paginator import Paginator
-from sqlalchemy import func, desc
-from typing import Any
-from uuid import UUID
-from internal.schema.app_schema import CreateAppReq
-import uuid
-from internal.entity.app_entity import AppStatus, AppConfigType, DEFAULT_APP_CONFIG
-from .base_service import BaseService
+from pkg.sqlalchemy import SQLAlchemy
+
 from .app_config_service import AppConfigService
-from internal.lib.helper import remove_fields, get_value_type, generate_random_string
-from internal.core.language_model import LanguageModelManager
-from internal.core.language_model.entities.model_entity import ModelParameterType
-from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
-from internal.entity.dataset_entity import RetrievalStrategy
+from .base_service import BaseService
 
 # from internal.entity.audio_entity import ALLOWED_AUDIO_VOICES
 
@@ -408,7 +411,7 @@ class AppService(BaseService):
             for dataset_id in datasets:
                 try:
                     UUID(dataset_id)
-                except Exception as e:
+                except Exception:
                     raise ValidateException("知识库列表参数必须是UUID")
             # 8.4 判断是否传递了重复的知识库
             if len(set(datasets)) != len(datasets):
@@ -714,3 +717,46 @@ class AppService(BaseService):
         )
 
         return app
+
+    def cancel_publish_app_config(self, app_id: UUID, account: Account) -> App:
+        """根据传递的应用id+账号，取消发布指定的应用配置"""
+        # 获取应用信息并校验权限
+        app = self.get_app(app_id, account)
+
+        # 检测下当前应用的状态是否为已发布
+        if app.status == AppStatus.DRAFT:
+            raise FailException("当前应用未发布，请核实后重试")
+
+        # 修改账号的发布状态，并清空关联配置id
+        self.update(app, status=AppStatus.DRAFT, app_config_id=None)
+
+        # 删除应用关联的知识库信息
+        with self.db.auto_commit():
+            self.db.session.query(AppDatasetJoin).filter(
+                AppDatasetJoin.app_id == app_id,
+            ).delete()
+
+        return app
+
+    def get_publish_histories_with_page(
+        self, app_id: UUID, req: GetPublishHistoriesWithPageReq, account: Account
+    ) -> tuple[list[AppConfigVersion], Paginator]:
+        """根据传递的应用id+请求数据，获取指定应用的发布历史配置列表信息"""
+        # 获取应用信息并校验权限
+        self.get_app(app_id, account)
+
+        # 构建分页器
+        paginator = Paginator(db=self.db, req=req)
+
+        # 执行分页并获取数据
+        app_config_versions = paginator.paginate(
+            self.db.session.query(AppConfigVersion)
+            .filter(
+                AppConfigVersion.app_id == app_id,
+                AppConfigVersion.config_type == AppConfigType.PUBLISHED,
+            )
+            # 按照版本进行倒序排列输出
+            .order_by(desc("version"))
+        )
+
+        return app_config_versions, paginator

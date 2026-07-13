@@ -6,7 +6,8 @@ from wtforms.validators import (
     Length,
     URL,
     Optional,
-    AnyOf, NumberRange,
+    AnyOf,
+    NumberRange,
 )
 
 from internal.entity.dataset_entity import RetrievalStrategy
@@ -17,22 +18,34 @@ from pkg.paginator import PaginatorReq
 
 class CreateDatasetReq(FlaskForm):
     """创建知识库请求"""
-    name = StringField("name", validators=[
-        DataRequired("知识库名称不能为空"),
-        Length(max=100, message="知识库名称长度不能超过100字符"),
-    ])
-    icon = StringField("icon", validators=[
-        DataRequired("知识库图标不能为空"),
-        URL("知识库图标必须是图片URL地址"),
-    ])
-    description = StringField("description", default="", validators=[
-        Optional(),
-        Length(max=2000, message="知识库描述长度不能超过2000字符")
-    ])
+
+    name = StringField(
+        "name",
+        validators=[
+            DataRequired("知识库名称不能为空"),
+            Length(max=100, message="知识库名称长度不能超过100字符"),
+        ],
+    )
+    icon = StringField(
+        "icon",
+        validators=[
+            DataRequired("知识库图标不能为空"),
+            URL("知识库图标必须是图片URL地址"),
+        ],
+    )
+    description = StringField(
+        "description",
+        default="",
+        validators=[
+            Optional(),
+            Length(max=2000, message="知识库描述长度不能超过2000字符"),
+        ],
+    )
 
 
 class GetDatasetResp(Schema):
     """获取知识库详情响应结构"""
+
     id = fields.UUID(dump_default="")
     name = fields.String(dump_default="")
     icon = fields.String(dump_default="")
@@ -62,29 +75,46 @@ class GetDatasetResp(Schema):
 
 class UpdateDatasetReq(FlaskForm):
     """更新知识库请求"""
-    name = StringField("name", validators=[
-        DataRequired("知识库名称不能为空"),
-        Length(max=100, message="知识库名称长度不能超过100字符"),
-    ])
-    icon = StringField("icon", validators=[
-        DataRequired("知识库图标不能为空"),
-        URL("知识库图标必须是图片URL地址"),
-    ])
-    description = StringField("description", default="", validators=[
-        Optional(),
-        Length(max=2000, message="知识库描述长度不能超过2000字符")
-    ])
+
+    name = StringField(
+        "name",
+        validators=[
+            DataRequired("知识库名称不能为空"),
+            Length(max=100, message="知识库名称长度不能超过100字符"),
+        ],
+    )
+    icon = StringField(
+        "icon",
+        validators=[
+            DataRequired("知识库图标不能为空"),
+            URL("知识库图标必须是图片URL地址"),
+        ],
+    )
+    description = StringField(
+        "description",
+        default="",
+        validators=[
+            Optional(),
+            Length(max=2000, message="知识库描述长度不能超过2000字符"),
+        ],
+    )
 
 
 class GetDatasetsWithPageReq(PaginatorReq):
     """获取知识库分页列表请求数据"""
-    search_word = StringField("search_word", default="", validators=[
-        Optional(),
-    ])
+
+    search_word = StringField(
+        "search_word",
+        default="",
+        validators=[
+            Optional(),
+        ],
+    )
 
 
 class GetDatasetsWithPageResp(Schema):
     """获取知识库分页列表响应数据"""
+
     id = fields.UUID(dump_default="")
     name = fields.String(dump_default="")
     icon = fields.String(dump_default="")
@@ -112,25 +142,39 @@ class GetDatasetsWithPageResp(Schema):
 
 class HitReq(FlaskForm):
     """知识库召回测试请求"""
-    query = StringField("query", validators=[
-        DataRequired("查询语句不能为空"),
-        Length(max=200, message="查询语句的最大长度不能超过200")
-    ])
-    retrieval_strategy = StringField("retrieval_strategy", validators=[
-        DataRequired("检索策略不能为空"),
-        AnyOf([item.value for item in RetrievalStrategy], message="检索策略格式错误")
-    ])
-    k = IntegerField("k", validators=[
-        DataRequired("最大召回数量不能为空"),
-        NumberRange(min=1, max=10, message="最大召回数量的范围在1-10")
-    ])
-    score = FloatField("score", validators=[
-        NumberRange(min=0, max=0.99, message="最小匹配度范围在0-0.99")
-    ])
+
+    query = StringField(
+        "query",
+        validators=[
+            DataRequired("查询语句不能为空"),
+            Length(max=200, message="查询语句的最大长度不能超过200"),
+        ],
+    )
+    retrieval_strategy = StringField(
+        "retrieval_strategy",
+        validators=[
+            DataRequired("检索策略不能为空"),
+            AnyOf(
+                [item.value for item in RetrievalStrategy], message="检索策略格式错误"
+            ),
+        ],
+    )
+    k = IntegerField(
+        "k",
+        validators=[
+            DataRequired("最大召回数量不能为空"),
+            NumberRange(min=1, max=10, message="最大召回数量的范围在1-10"),
+        ],
+    )
+    score = FloatField(
+        "score",
+        validators=[NumberRange(min=0, max=0.99, message="最小匹配度范围在0-0.99")],
+    )
 
 
 class GetDatasetQueriesResp(Schema):
     """获取知识库最近查询响应结构"""
+
     id = fields.UUID(dump_default="")
     dataset_id = fields.UUID(dump_default="")
     query = fields.String(dump_default="")

@@ -67,7 +67,9 @@ class AccountHandler:
         req = UpdateAvatarReq()
         if not req.validate():
             return validate_error_json(req.errors)
-        self.account_service.update_account(account=current_user, avatar=req.avatar.data)
+        self.account_service.update_account(
+            account=current_user, avatar=req.avatar.data
+        )
 
         return success_message("更新账号头像成功")
 

@@ -15,7 +15,4 @@ class JiebaService:
 
     @classmethod
     def extract_keywords(cls, text: str, max_keyword_pre_chunk: int = 10) -> list[str]:
-        return jieba.analyse.extract_tags(
-            sentence=text,
-            topK=max_keyword_pre_chunk
-        )
+        return jieba.analyse.extract_tags(sentence=text, topK=max_keyword_pre_chunk)

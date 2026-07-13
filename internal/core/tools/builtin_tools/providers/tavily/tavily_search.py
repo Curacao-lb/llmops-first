@@ -27,6 +27,7 @@ try:
 except Exception:  # pragma: no cover
     TavilySearchResults = None  # type: ignore
 
+
 def add_attribute(attr_name: str, attr_value: Any):
     """
     简单装饰器：给函数挂载属性。

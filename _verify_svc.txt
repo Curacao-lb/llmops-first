@@ -1,0 +1,62 @@
+=== pyright ===
+/Users/luobin/project/llmops/llmops-api/internal/service/app_service.py
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:73:17 - error: No parameter named "id" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:74:17 - error: No parameter named "account_id" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:75:17 - error: No parameter named "name" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:76:17 - error: No parameter named "en_name" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:77:17 - error: No parameter named "icon" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:78:17 - error: No parameter named "description" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:79:17 - error: No parameter named "status" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:86:17 - error: No parameter named "id" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:87:17 - error: No parameter named "app_id" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:88:17 - error: No parameter named "version" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:89:17 - error: No parameter named "config_type" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:128:17 - error: No parameter named "id" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:129:17 - error: No parameter named "app_id" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:130:17 - error: No parameter named "version" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:131:17 - error: No parameter named "config_type" (reportCallIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:153:17 - error: Cannot assign to attribute "name" for class "App"
+    Expression of type "Literal['robin的机器人']" cannot be assigned to attribute "name" of class "App"
+      "Literal['robin的机器人']" is not assignable to "Column[str]" (reportAttributeAccessIssue)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:620:12 - error: Invalid conditional operand of type "ColumnElement[bool]"
+    Method __bool__ for type "ColumnElement[bool]" returns type "NoReturn" rather than "bool" (reportGeneralTypeIssues)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:622:16 - error: Type "AppConfigVersion | None" is not assignable to return type "AppConfigVersion"
+    Type "AppConfigVersion | None" is not assignable to type "AppConfigVersion"
+      "None" is not assignable to "AppConfigVersion" (reportReturnType)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:635:16 - error: Invalid conditional operand of type "Column[Any] | None"
+    Method __bool__ for type "Column[Any]" returns type "NoReturn" rather than "bool" (reportGeneralTypeIssues)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:640:16 - error: Invalid conditional operand of type "Column[Any] | None"
+    Method __bool__ for type "Column[Any]" returns type "NoReturn" rather than "bool" (reportGeneralTypeIssues)
+  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:727:12 - error: Invalid conditional operand of type "ColumnElement[bool]"
+    Method __bool__ for type "ColumnElement[bool]" returns type "NoReturn" rather than "bool" (reportGeneralTypeIssues)
+21 errors, 0 warnings, 0 informations
+=== ruff ===
+B904 Within an `except` clause, raise exceptions with `raise ... from err` or `raise ... from None` to distinguish them from errors in exception handling
+   --> internal/service/app_service.py:415:21
+    |
+413 |                     UUID(dataset_id)
+414 |                 except Exception:
+415 |                     raise ValidateException("知识库列表参数必须是UUID")
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+416 |             # 8.4 判断是否传递了重复的知识库
+417 |             if len(set(datasets)) != len(datasets):
+    |
+
+C403 Unnecessary list comprehension (rewrite as a set comprehension)
+   --> internal/service/app_service.py:428:28
+    |
+426 |                   .all()
+427 |               )
+428 |               dataset_sets = set(
+    |  ____________________________^
+429 | |                 [str(dataset_record.id) for dataset_record in dataset_records]
+430 | |             )
+    | |_____________^
+431 |               draft_app_config["datasets"] = [
+432 |                   dataset_id for dataset_id in datasets if dataset_id in dataset_sets
+    |
+help: Rewrite as a set comprehension
+
+Found 2 errors.
+No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+ruff_exit=1

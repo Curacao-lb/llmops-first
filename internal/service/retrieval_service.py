@@ -29,27 +29,33 @@ class RetrievalService(BaseService):
     jieba_service: JiebaService
 
     def search_in_datasets(
-            self,
-            query: str,
-            dataset_ids: list[UUID],
-            account_id: UUID,
-            retrieval_strategy: str = RetrievalStrategy.SEMANTIC,
-            k: int = 4,
-            score: float = 0,
-            retrival_source: str = RetrievalSource.HIT_TESTING,
+        self,
+        query: str,
+        dataset_ids: list[UUID],
+        account_id: UUID,
+        retrieval_strategy: str = RetrievalStrategy.SEMANTIC,
+        k: int = 4,
+        score: float = 0,
+        retrival_source: str = RetrievalSource.HIT_TESTING,
     ) -> list[LCDocument]:
         """根据传递的query+知识库列表执行检索，并返回检索的文档+得分数据（如果为全文检索，得分为0）"""
 
         # 校验权限，更新知识库id
-        datasets = self.db.session.query(Dataset).filter(
-            Dataset.id.in_(dataset_ids),
-            Dataset.account_id == account_id
-        ).all()
+        datasets = (
+            self.db.session.query(Dataset)
+            .filter(Dataset.id.in_(dataset_ids), Dataset.account_id == account_id)
+            .all()
+        )
         if datasets is None or len(datasets) == 0:
             raise NotFoundException("当前无知识库可执行检索")
         dataset_ids = [dataset.id for dataset in datasets]
 
-        from internal.core.retrievers import SemanticRetriever, FullTextRetriever, RAGFusionRetriever
+        from internal.core.retrievers import (
+            SemanticRetriever,
+            FullTextRetriever,
+            RAGFusionRetriever,
+        )
+
         # 构建不同检索器
         semantic_retriever = SemanticRetriever(
             dataset_ids=dataset_ids,
@@ -57,19 +63,16 @@ class RetrievalService(BaseService):
             search_kwargs={
                 "k": k,
                 "score_threshold": score,
-            }
+            },
         )
         full_text_retriever = FullTextRetriever(
             db=self.db,
             dataset_ids=dataset_ids,
             jieba_service=self.jieba_service,
-            search_kwargs={
-                "k": k
-            }
+            search_kwargs={"k": k},
         )
         hybrid_retriever = EnsembleRetriever(
-            retrievers=[semantic_retriever, full_text_retriever],
-            weights=[0.5, 0.5]
+            retrievers=[semantic_retriever, full_text_retriever], weights=[0.5, 0.5]
         )
 
         retriever = self.vector_database_service.vector_store.as_retriever(
@@ -87,7 +90,7 @@ class RetrievalService(BaseService):
         rag_fusion_retriever = RAGFusionRetriever.from_llm(
             retriever=retriever,
             llm=ChatOpenAI(model="gpt-4o", temperature=0),
-            include_original=True
+            include_original=True,
         )
 
         # 执行检索
@@ -102,7 +105,9 @@ class RetrievalService(BaseService):
             lc_documents = hybrid_retriever.invoke(query)[:k]
 
         # 添加知识库查询记录
-        unique_dataset_ids = list(set(str(lc_document.metadata["dataset_id"]) for lc_document in lc_documents))
+        unique_dataset_ids = list(
+            set(str(lc_document.metadata["dataset_id"]) for lc_document in lc_documents)
+        )
         for dataset_id in unique_dataset_ids:
             self.create(
                 DatasetQuery,
@@ -117,7 +122,14 @@ class RetrievalService(BaseService):
         with self.db.auto_commit():
             stmt = (
                 update(Segment)
-                .where(Segment.id.in_([lc_document.metadata["segment_id"] for lc_document in lc_documents]))
+                .where(
+                    Segment.id.in_(
+                        [
+                            lc_document.metadata["segment_id"]
+                            for lc_document in lc_documents
+                        ]
+                    )
+                )
                 .values(hit_count=Segment.hit_count + 1)
             )
             self.db.session.execute(stmt)
@@ -125,19 +137,20 @@ class RetrievalService(BaseService):
         return lc_documents
 
     def create_langchain_tool_from_search(
-            self,
-            flask_app: Flask,
-            dataset_ids: list[UUID],
-            account_id: UUID,
-            retrieval_strategy: str = RetrievalStrategy.SEMANTIC,
-            k: int = 4,
-            score: float = 0,
-            retrival_source: str = RetrievalSource.HIT_TESTING,
+        self,
+        flask_app: Flask,
+        dataset_ids: list[UUID],
+        account_id: UUID,
+        retrieval_strategy: str = RetrievalStrategy.SEMANTIC,
+        k: int = 4,
+        score: float = 0,
+        retrival_source: str = RetrievalSource.HIT_TESTING,
     ) -> BaseTool:
         """根据传递的参数构建一个LangChain知识库搜索工具"""
 
         class DatasetRetrievalInput(BaseModel):
             """知识库检索工具输入结构"""
+
             query: str = Field(description="知识库搜索query语句，类型为字符串")
 
         @tool(DATASET_RETRIEVAL_TOOL_NAME, args_schema=DatasetRetrievalInput)

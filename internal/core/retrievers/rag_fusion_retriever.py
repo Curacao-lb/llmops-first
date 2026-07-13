@@ -8,6 +8,7 @@ from langchain_core.documents import Document
 
 class RAGFusionRetriever(MultiQueryRetriever):
     """RAG多查询结果融合检索器"""
+
     k: int = 4
 
     def __init__(self, k: int = 4, **kwargs):
@@ -15,7 +16,7 @@ class RAGFusionRetriever(MultiQueryRetriever):
         self.k = k
 
     def retrieve_documents(
-            self, queries: List[str], run_manager: CallbackManagerForRetrieverRun
+        self, queries: List[str], run_manager: CallbackManagerForRetrieverRun
     ) -> List[List]:
         """重写检索文档，返回二层嵌套的列表"""
         documents = []
@@ -44,16 +45,18 @@ class RAGFusionRetriever(MultiQueryRetriever):
                         "doc": doc,
                     }
                 # 计算多结果得分，排名越小越靠前，k为控制权重的参数
-                fused_scores[doc_str]['score'] += 1 / (rank + 60)
+                fused_scores[doc_str]["score"] += 1 / (rank + 60)
 
         # 提取得分并进行排序
         reranked_results = []
 
-        sorted_result = sorted(fused_scores.items(), key=lambda x: x[1]['score'], reverse=True)
+        sorted_result = sorted(
+            fused_scores.items(), key=lambda x: x[1]["score"], reverse=True
+        )
         for _, doc_score in sorted_result:
-            doc = doc_score['doc']
-            score = doc_score['score']
-            doc.metadata['score'] = score
+            doc = doc_score["doc"]
+            score = doc_score["score"]
+            doc.metadata["score"] = score
             reranked_results.append(doc)
 
         return reranked_results

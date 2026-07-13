@@ -6,7 +6,7 @@ from redis import Redis
 
 from internal.entity.cache_entity import (
     LOCK_KEYWORD_TABLE_UPDATE_KEYWORD_TABLE,
-    LOCK_EXPIRE_TIME
+    LOCK_EXPIRE_TIME,
 )
 from internal.model import KeywordTable, Segment
 from pkg.sqlalchemy import SQLAlchemy
@@ -20,17 +20,25 @@ class KeywordTableService(BaseService):
     redis_client: Redis
 
     def get_keyword_table_from_dataset_id(self, dataset_id: UUID) -> KeywordTable:
-        keyword_table = self.db.session.query(KeywordTable).filter(
-            KeywordTable.dataset_id == dataset_id
-        ).one_or_none()
+        keyword_table = (
+            self.db.session.query(KeywordTable)
+            .filter(KeywordTable.dataset_id == dataset_id)
+            .one_or_none()
+        )
         if keyword_table is None:
-            keyword_table = self.create(KeywordTable, dataset_id=dataset_id, keyword_table={})
+            keyword_table = self.create(
+                KeywordTable, dataset_id=dataset_id, keyword_table={}
+            )
 
         return keyword_table
 
-    def delete_keyword_table_from_ids(self, dataset_id: UUID, segment_ids: list[UUID]) -> None:
+    def delete_keyword_table_from_ids(
+        self, dataset_id: UUID, segment_ids: list[UUID]
+    ) -> None:
         # 删除知识库表的多余数据
-        cache_key = LOCK_KEYWORD_TABLE_UPDATE_KEYWORD_TABLE.format(dataset_id=dataset_id)
+        cache_key = LOCK_KEYWORD_TABLE_UPDATE_KEYWORD_TABLE.format(
+            dataset_id=dataset_id
+        )
         with self.redis_client.lock(str(cache_key), timeout=LOCK_EXPIRE_TIME):
             # 获取关键词表
             keyword_table_record = self.get_keyword_table_from_dataset_id(dataset_id)
@@ -42,7 +50,9 @@ class KeywordTableService(BaseService):
             for keyword, ids in keyword_table.items():
                 ids_set = set(ids)
                 if segment_ids_to_delete.intersection(ids_set):
-                    keyword_table[keyword] = list(ids_set.difference(segment_ids_to_delete))
+                    keyword_table[keyword] = list(
+                        ids_set.difference(segment_ids_to_delete)
+                    )
                     if not keyword_table[keyword]:
                         keywords_to_delete.add(keyword)
             # 检测空关键词并删除
@@ -52,20 +62,30 @@ class KeywordTableService(BaseService):
             # 将数据更新到关键词表
             self.update(keyword_table_record, keyword_table=keyword_table)
 
-    def add_keyword_table_from_ids(self, dataset_id: UUID, segment_ids: list[UUID]) -> None:
+    def add_keyword_table_from_ids(
+        self, dataset_id: UUID, segment_ids: list[UUID]
+    ) -> None:
         # 1.新增知识库关键词表里多余的数据，该操作需要上锁，避免在并发的情况下拿到错误的数据
-        cache_key = LOCK_KEYWORD_TABLE_UPDATE_KEYWORD_TABLE.format(dataset_id=dataset_id)
+        cache_key = LOCK_KEYWORD_TABLE_UPDATE_KEYWORD_TABLE.format(
+            dataset_id=dataset_id
+        )
         with self.redis_client.lock(cache_key, timeout=LOCK_EXPIRE_TIME):
             # 2.获取指定知识库的关键词比哦啊
             keyword_table_record = self.get_keyword_table_from_dataset_id(dataset_id)
             keyword_table = {
-                field: set(value) for field, value in keyword_table_record.keyword_table.items()
+                field: set(value)
+                for field, value in keyword_table_record.keyword_table.items()
             }
 
             # 3.根据segment_ids查找片段的关键词信息
-            segments = self.db.session.query(Segment).with_entities(Segment.id, Segment.keywords).filter(
-                Segment.id.in_(segment_ids),
-            ).all()
+            segments = (
+                self.db.session.query(Segment)
+                .with_entities(Segment.id, Segment.keywords)
+                .filter(
+                    Segment.id.in_(segment_ids),
+                )
+                .all()
+            )
 
             # 4.循环将新关键词添加到关键词表中
             for id, keywords in segments:
@@ -77,5 +97,7 @@ class KeywordTableService(BaseService):
             # 5.更新关键词表
             self.update(
                 keyword_table_record,
-                keyword_table={field: list(value) for field, value in keyword_table.items()}
+                keyword_table={
+                    field: list(value) for field, value in keyword_table.items()
+                },
             )

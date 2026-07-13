@@ -12,9 +12,7 @@ from sqlalchemy import func
 from weaviate.classes.query import Filter
 
 from internal.core.file_extractor import FileExtractor
-from internal.entity.cache_entity import (
-    LOCK_DOCUMENT_UPDATE_ENABLED
-)
+from internal.entity.cache_entity import LOCK_DOCUMENT_UPDATE_ENABLED
 from internal.entity.dataset_entity import DocumentStatus, SegmentStatus
 from internal.exception import NotFoundException
 from internal.lib.helper import generate_text_hash
@@ -42,16 +40,16 @@ class IndexingService(BaseService):
 
     def build_documents(self, document_ids: list[UUID]) -> None:
         # 根据传递的文档id获取所有文档
-        documents = self.db.session.query(Document).filter(
-            Document.id.in_(document_ids)
-        ).all()
+        documents = (
+            self.db.session.query(Document).filter(Document.id.in_(document_ids)).all()
+        )
         for document in documents:
             try:
                 # 更新状态和时间
                 self.update(
                     document,
                     status=DocumentStatus.PARSING,
-                    processing_started_at=datetime.now()
+                    processing_started_at=datetime.now(),
                 )
                 # 执行文档加载，更新文档状态和时间
                 lc_documents = self._parsing(document)
@@ -62,7 +60,9 @@ class IndexingService(BaseService):
                 # 存储操作
                 self._completed(document, lc_segments)
             except Exception as e:
-                logging.exception("构建文档发生错误信息，错误信息：%(error)s", {"error": e})
+                logging.exception(
+                    "构建文档发生错误信息，错误信息：%(error)s", {"error": e}
+                )
                 self.update(
                     document,
                     status=DocumentStatus.ERROR,
@@ -74,13 +74,20 @@ class IndexingService(BaseService):
         cache_key = LOCK_DOCUMENT_UPDATE_ENABLED.format(document_id=document_id)
         document = self.get(Document, document_id)
         if document is None:
-            logging.exception("当前文档不存在, 文档id: %(document_id)s", {"document_id": document_id})
+            logging.exception(
+                "当前文档不存在, 文档id: %(document_id)s", {"document_id": document_id}
+            )
             raise NotFoundException("该文档不存在")
 
-        segments = self.db.session.query(Segment).with_entities(Segment.id, Segment.node_id, Segment.enabled).filter(
-            Segment.document_id == document_id,
-            Segment.status == SegmentStatus.COMPLETED
-        ).all()
+        segments = (
+            self.db.session.query(Segment)
+            .with_entities(Segment.id, Segment.node_id, Segment.enabled)
+            .filter(
+                Segment.document_id == document_id,
+                Segment.status == SegmentStatus.COMPLETED,
+            )
+            .all()
+        )
 
         segment_ids = [id for id, _, _ in segments]
         node_ids = [node_id for _, node_id, _ in segments]
@@ -92,31 +99,41 @@ class IndexingService(BaseService):
                         uuid=node_id,
                         properties={
                             "document_enabled": document.enabled,
-                        }
+                        },
                     )
                 except Exception as e:
                     with self.db.auto_commit():
                         self.db.session.query(Segment).filter(
                             Segment.node_id == node_id
-                        ).update({
-                            "error": str(e),
-                            "status": SegmentStatus.ERROR,
-                            "enabled": False,
-                            "disabled_at": datetime.now(),
-                            "stopped_at": datetime.now()
-                        })
+                        ).update(
+                            {
+                                "error": str(e),
+                                "status": SegmentStatus.ERROR,
+                                "enabled": False,
+                                "disabled_at": datetime.now(),
+                                "stopped_at": datetime.now(),
+                            }
+                        )
 
             if document.enabled is True:
                 # 禁用改为启用，新增关键词
-                enabled_segment_ids = [id for id, _, enabled in segments if enabled is True]
-                self.keyword_table_service.add_keyword_table_from_ids(document.dataset_id, enabled_segment_ids)
+                enabled_segment_ids = [
+                    id for id, _, enabled in segments if enabled is True
+                ]
+                self.keyword_table_service.add_keyword_table_from_ids(
+                    document.dataset_id, enabled_segment_ids
+                )
             else:
                 # 启用改为禁用，删除关键词
-                self.keyword_table_service.delete_keyword_table_from_ids(document.dataset_id, segment_ids)
+                self.keyword_table_service.delete_keyword_table_from_ids(
+                    document.dataset_id, segment_ids
+                )
 
         except Exception as e:
-            logging.exception("修改向量数据库文档启用状态失败，文档ID：%(document_id)s, 错误信息: %(error)s",
-                              {"document_id": document_id, "error": e})
+            logging.exception(
+                "修改向量数据库文档启用状态失败，文档ID：%(document_id)s, 错误信息: %(error)s",
+                {"document_id": document_id, "error": e},
+            )
             origin_enabled = not document.enabled
             self.update(
                 document,
@@ -129,9 +146,13 @@ class IndexingService(BaseService):
     def delete_document(self, dataset_id: UUID, document_id: UUID) -> None:
         # 查找该文档下的所有片段id列表
         segment_ids = [
-            id for id, in self.db.session.query(Segment).with_entities(Segment.id).filter(
+            id
+            for (id,) in self.db.session.query(Segment)
+            .with_entities(Segment.id)
+            .filter(
                 Segment.document_id == document_id,
-            ).all()
+            )
+            .all()
         ]
 
         # 删除向量数据库相关文档
@@ -145,7 +166,9 @@ class IndexingService(BaseService):
             ).delete()
 
         # 删除关键词记录
-        self.keyword_table_service.delete_keyword_table_from_ids(dataset_id, segment_ids)
+        self.keyword_table_service.delete_keyword_table_from_ids(
+            dataset_id, segment_ids
+        )
 
     def _completed(self, document: Document, lc_segments: list[LCDocument]) -> None:
         """存储文档片段到向量数据库，并完成状态更新"""
@@ -157,32 +180,34 @@ class IndexingService(BaseService):
         # 调用向量数据库，每次存储10条数据，避免一次传递过多的数据
         try:
             for i in range(0, len(lc_segments), 10):
-                chunks = lc_segments[i:i + 10]
+                chunks = lc_segments[i : i + 10]
                 ids = [chunk.metadata["node_id"] for chunk in chunks]
                 self.vector_database_service.vector_store.add_documents(chunks, ids=ids)
                 with self.db.auto_commit():
                     self.db.session.query(Segment).filter(
                         Segment.node_id.in_(ids)
-                    ).update({
-                        "status": SegmentStatus.COMPLETED,
-                        "completed_at": datetime.now(),
-                        "enabled": True,
-                    })
+                    ).update(
+                        {
+                            "status": SegmentStatus.COMPLETED,
+                            "completed_at": datetime.now(),
+                            "enabled": True,
+                        }
+                    )
         except Exception as e:
             logging.exception(
                 "构建文档片段索引发生异常, 错误信息: %(error)s",
                 {"error": e},
             )
             with self.db.auto_commit():
-                self.db.session.query(Segment).filter(
-                    Segment.node_id.in_(ids)
-                ).update({
-                    "status": SegmentStatus.ERROR,
-                    "completed_at": None,
-                    "stopped_at": datetime.now(),
-                    "enabled": False,
-                    "error": str(e),
-                })
+                self.db.session.query(Segment).filter(Segment.node_id.in_(ids)).update(
+                    {
+                        "status": SegmentStatus.ERROR,
+                        "completed_at": None,
+                        "stopped_at": datetime.now(),
+                        "enabled": False,
+                        "error": str(e),
+                    }
+                )
 
         # 更新文档的状态数据
         self.update(
@@ -201,12 +226,17 @@ class IndexingService(BaseService):
                 {
                     "keywords": keywords,
                     "status": SegmentStatus.INDEXING,
-                    "indexing_completed_at": datetime.now()
+                    "indexing_completed_at": datetime.now(),
                 }
             )
-            keyword_table_record = self.keyword_table_service.get_keyword_table_from_dataset_id(document.dataset_id)
+            keyword_table_record = (
+                self.keyword_table_service.get_keyword_table_from_dataset_id(
+                    document.dataset_id
+                )
+            )
             keyword_table = {
-                field: set(value) for field, value in keyword_table_record.keyword_table.items()
+                field: set(value)
+                for field, value in keyword_table_record.keyword_table.items()
             }
             for keyword in keywords:
                 if keyword not in keyword_table:
@@ -215,7 +245,9 @@ class IndexingService(BaseService):
 
             self.update(
                 keyword_table_record,
-                keyword_table={field: list(value) for field, value in keyword_table.items()}
+                keyword_table={
+                    field: list(value) for field, value in keyword_table.items()
+                },
             )
 
         self.update(
@@ -232,13 +264,17 @@ class IndexingService(BaseService):
 
         self.update(
             document,
-            character_count=sum([len(lc_document.page_content) for lc_document in lc_documents]),
+            character_count=sum(
+                [len(lc_document.page_content) for lc_document in lc_documents]
+            ),
             status=DocumentStatus.SPLITTING,
-            parsing_completed_at=datetime.now()
+            parsing_completed_at=datetime.now(),
         )
         return lc_documents
 
-    def _splitting(self, document: Document, lc_documents: list[LCDocument]) -> list[LCDocument]:
+    def _splitting(
+        self, document: Document, lc_documents: list[LCDocument]
+    ) -> list[LCDocument]:
         # 根据process_rule获取文本分割器
         process_rule = document.process_rule
         text_splitter = self.process_rule_service.get_text_splitter_by_process_rule(
@@ -247,15 +283,20 @@ class IndexingService(BaseService):
         )
         # 根据process_rule规则消除多余的字符串
         for lc_document in lc_documents:
-            lc_document.page_content = self.process_rule_service.clean_text_by_process_rule(
-                lc_document.page_content,
-                process_rule
+            lc_document.page_content = (
+                self.process_rule_service.clean_text_by_process_rule(
+                    lc_document.page_content, process_rule
+                )
             )
         # 分割文档列表为片段
         lc_segments = text_splitter.split_documents(lc_documents)
-        position = self.db.session.query(func.coalesce(func.max(Segment.position), 0)).filter(
-            Segment.document_id == document.id,
-        ).scalar()
+        position = (
+            self.db.session.query(func.coalesce(func.max(Segment.position), 0))
+            .filter(
+                Segment.document_id == document.id,
+            )
+            .scalar()
+        )
 
         segments = []
         for lc_segment in lc_segments:
@@ -295,10 +336,10 @@ class IndexingService(BaseService):
     @classmethod
     def _clean_extra_text(cls, text: str) -> str:
         """清除过滤传递的多余空白字符串"""
-        text = re.sub(r'<\|', '<', text)
-        text = re.sub(r'\|>', '>', text)
-        text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\xEF\xBF\xBE]', '', text)
-        text = re.sub('\uFFFE', '', text)  # 删除零宽非标记字符
+        text = re.sub(r"<\|", "<", text)
+        text = re.sub(r"\|>", ">", text)
+        text = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\xEF\xBF\xBE]", "", text)
+        text = re.sub("\ufffe", "", text)  # 删除零宽非标记字符
         return text
 
     def delete_dataset(self, dataset_id: UUID) -> None:

@@ -15,6 +15,7 @@ COLLECTION_NAME = "Dataset"
 @dataclass
 class VectorDatabaseService:
     """向量数据库服务"""
+
     embeddings_service: EmbeddingsService
     weaviate: FlaskWeaviate
 
@@ -24,7 +25,7 @@ class VectorDatabaseService:
             client=self.weaviate.client,
             index_name=COLLECTION_NAME,
             text_key="text",
-            embedding=self.embeddings_service.embeddings
+            embedding=self.embeddings_service.embeddings,
         )
 
     def get_retriever(self) -> VectorStoreRetriever:

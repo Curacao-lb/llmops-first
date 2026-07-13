@@ -103,7 +103,7 @@ class OpenAPISchema(BaseModel):
             # 校验operationId在所有接口中必须唯一
             if interface["operation"]["operationId"] in operation_ids:
                 raise ValidateException(
-                    f"operationId: {interface["operation"]["operationId"]} 必须唯一"
+                    f"operationId: {interface['operation']['operationId']} 必须唯一"
                 )
 
             operation_ids.append(interface["operation"]["operationId"])

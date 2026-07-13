@@ -1,27 +1,23 @@
-from flask import Flask, Blueprint, send_from_directory
+from dataclasses import dataclass
+
+from flask import Blueprint, Flask, send_from_directory
+from injector import inject
 
 # 使用魔术变量（__all__），这里就可以导入 AppHandler
 from internal.handler import (
-    AppHandler,
-    BuiltinToolHandler,
+    AccountHandler,
     ApiToolHandler,
+    AppHandler,
+    AuthHandler,
+    BuiltinToolHandler,
     DatasetHandler,
     OAuthHandler,
-    AccountHandler,
-    AuthHandler,
     UploadFileHandler,
 )
 from internal.service import CosService
-from dataclasses import dataclass
-
-"""
-    下面注释的代码
-    由dataclass替代
-    dataclass 可以自动生成 __init__，减少样板代码：
-"""
-from injector import inject
 
 
+# dataclass 可以自动生成 __init__，减少样板代码，替代下方注释掉的手写 __init__。
 @inject
 @dataclass
 class Router:
@@ -75,6 +71,20 @@ class Router:
         bp.add_url_rule(
             "/apps/<uuid:app_id>/publish",
             view_func=self.app_handler.publish,
+            methods=["POST"],
+        )
+
+        # 取消发布接口
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/cancel-publish",
+            view_func=self.app_handler.cancel_publish,
+            methods=["POST"],
+        )
+
+        # 获取应用的发布历史列表接口
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/publish-histories",
+            view_func=self.app_handler.get_publish_histories_with_page,
             methods=["POST"],
         )
 

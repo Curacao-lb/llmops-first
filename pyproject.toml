@@ -1,0 +1,80 @@
+# ---------------------------------------------------------------------------
+# Ruff: 代码检查(lint) + 格式化(format),用于替代 pylint / flake8 / isort / black
+# 文档: https://docs.astral.sh/ruff/
+# ---------------------------------------------------------------------------
+[tool.ruff]
+# 目标 Python 版本(本项目 venv 为 3.13)
+target-version = "py313"
+# 单行最大长度,与 black 默认一致,保持既有格式稳定
+line-length = 88
+
+# 不做检查/格式化的目录
+extend-exclude = [
+    "venv",
+    ".venv",
+    "chroma_db",
+    "storage",
+    "study",
+    "migrations",
+    "*.pyi",
+]
+
+[tool.ruff.lint]
+# 启用的规则集(按需增减即可)
+select = [
+    "E",    # pycodestyle 错误
+    "W",    # pycodestyle 警告
+    "F",    # pyflakes:未使用的导入/变量、未定义名字等
+    "I",    # isort:import 排序与分组
+    "B",    # flake8-bugbear:常见 bug 模式
+    "C4",   # flake8-comprehensions:更好的推导式写法
+    "UP",   # pyupgrade:使用更新的语法
+    "SIM",  # flake8-simplify:可简化的写法
+    # "N",  # pep8-naming:命名规范(存量代码可能报较多,按需开启)
+]
+ignore = [
+    "E501",  # 行太长:交给格式化器处理,不重复报
+    "B008",  # 不在参数默认值里调用函数:依赖注入/Flask 场景常见,放行
+]
+
+[tool.ruff.lint.per-file-ignores]
+# __init__.py 里通常用于重导出,允许“看似未使用”的导入
+"**/__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+# 项目自有顶层包,import 分组时归入 first-party
+known-first-party = ["internal", "app", "config", "pkg"]
+
+[tool.ruff.format]
+# 与 black 一致的风格
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+# ---------------------------------------------------------------------------
+# Pyright: 类型检查 + 语言特性(补全/跳转/悬浮),替代 Jedi
+# 文档: https://microsoft.github.io/pyright/
+# ---------------------------------------------------------------------------
+[tool.pyright]
+pythonVersion = "3.13"
+# 类型检查严格程度:off / basic / standard / strict
+typeCheckingMode = "basic"
+
+# 解释器所在虚拟环境:位于项目上一级目录的 .venv(与 .vscode/settings.json 保持一致)
+venvPath = ".."
+venv = ".venv"
+
+# 需要分析的目录
+include = ["internal", "app", "config", "pkg", "run.py"]
+exclude = [
+    "**/__pycache__",
+    "venv",
+    ".venv",
+    "chroma_db",
+    "storage",
+    "study",
+    "test",
+]
+
+# 第三方库缺少类型存根时不报噪音
+reportMissingTypeStubs = false

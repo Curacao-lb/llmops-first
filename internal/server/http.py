@@ -33,7 +33,7 @@ class Http(Flask):
         # 中间件
         middlware: Middleware,
         router: Router,
-        **kwargs
+        **kwargs,
     ):
         # 使用super去调用父类的构造函数,将整个参数进行实例化。
         # 要不然的话继承别人,如果你不去实现它的构造函数是很容易出错的。

@@ -28,13 +28,14 @@ from internal.service import CosService
 @dataclass
 class FileExtractor:
     """文件提取提，用于将远程文件、upload_file记录加载成LangChain对应的文档或字符串"""
+
     cos_service: CosService
 
     def load(
-            self,
-            upload_file: UploadFile,
-            return_text: bool = False,
-            is_unstructured: bool = True,
+        self,
+        upload_file: UploadFile,
+        return_text: bool = False,
+        is_unstructured: bool = True,
     ) -> Union[list[LCDocument], str]:
         """加载传入的upload_file记录，返回LangChain文档列表或者字符串"""
         # 创建一个临时的文件夹
@@ -49,7 +50,9 @@ class FileExtractor:
             return self.load_from_file(file_path, return_text, is_unstructured)
 
     @classmethod
-    def load_from_url(cls, url: str, return_text: bool = False) -> Union[list[LCDocument], str]:
+    def load_from_url(
+        cls, url: str, return_text: bool = False
+    ) -> Union[list[LCDocument], str]:
         """从传入的URL中去加载数据，返回LangChain文档列表或者字符串"""
         # 下载远程URL的文件到本地
         response = requests.get(url)
@@ -65,10 +68,10 @@ class FileExtractor:
 
     @classmethod
     def load_from_file(
-            cls,
-            file_path: str,
-            return_text: bool = False,
-            is_unstructured: bool = True,
+        cls,
+        file_path: str,
+        return_text: bool = False,
+        is_unstructured: bool = True,
     ) -> Union[list[LCDocument], str]:
         """从本地文件中加载数据，返回LangChain文档列表或者字符串"""
         # 获取文件的扩展名
@@ -93,7 +96,15 @@ class FileExtractor:
         elif file_extension in [".doc", "docx"]:
             loader = UnstructuredWordDocumentLoader(file_path)
         else:
-            loader = UnstructuredFileLoader(file_path) if is_unstructured else TextLoader(file_path)
+            loader = (
+                UnstructuredFileLoader(file_path)
+                if is_unstructured
+                else TextLoader(file_path)
+            )
 
         # 返回加载的文档列表或者文本
-        return delimiter.join([document.page_content for document in loader.load()]) if return_text else loader.load()
+        return (
+            delimiter.join([document.page_content for document in loader.load()])
+            if return_text
+            else loader.load()
+        )

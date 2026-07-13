@@ -1,11 +1,10 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField
-from wtforms.validators import DataRequired, Length, Optional, URL
 from marshmallow import Schema, fields, pre_dump
+from wtforms import StringField
+from wtforms.validators import URL, DataRequired, Length, Optional
 
-from internal.model import App
+from internal.model import App, AppConfigVersion
 from pkg.paginator import PaginatorReq
-from internal.lib.helper import datetime_to_timestamp
 
 
 class GetAppsWithPageReq(PaginatorReq):
@@ -94,7 +93,9 @@ class GetAppResp(Schema):
         return {
             "id": data.id,
             "debug_conversation_id": (
-                data.debug_conversation_id if data.debug_conversation_id else ""
+                data.debug_conversation_id
+                if data.debug_conversation_id is not None
+                else ""
             ),
             "name": data.name,
             "en_name": data.en_name,
@@ -102,11 +103,33 @@ class GetAppResp(Schema):
             "description": data.description,
             "status": data.status,
             "draft_updated_at": (
-                datetime_to_timestamp(draft_app_config.updated_at)
+                int(draft_app_config.updated_at.timestamp())
                 if draft_app_config is not None
                 else 0
             ),
-            "updated_at": datetime_to_timestamp(data.updated_at),
-            "created_at": datetime_to_timestamp(data.created_at),
+            "updated_at": int(data.updated_at.timestamp()),
+            "created_at": int(data.created_at.timestamp()),
             "mode": data.mode,
+        }
+
+
+class GetPublishHistoriesWithPageReq(PaginatorReq):
+    """获取应用发布历史配置分页列表请求"""
+
+    ...
+
+
+class GetPublishHistoriesWithPageResp(Schema):
+    """获取应用发布历史配置列表分页数据"""
+
+    id = fields.UUID(dump_default="")
+    version = fields.Integer(dump_default=0)
+    created_at = fields.Integer(dump_default=0)
+
+    @pre_dump
+    def process_data(self, data: AppConfigVersion, **kwargs):
+        return {
+            "id": data.id,
+            "version": data.version,
+            "created_at": int(data.created_at.timestamp()),
         }
