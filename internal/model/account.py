@@ -2,24 +2,25 @@ import uuid
 from datetime import datetime
 
 from flask import current_app
-
 from flask_login import UserMixin
 from sqlalchemy import (
-    Column,
     UUID,
-    String,
+    Column,
     DateTime,
-    text,
     PrimaryKeyConstraint,
     # Index,
+    String,
+    text,
 )
 
 from internal.entity.conversation_entity import InvokeFrom
 from internal.extension.database_extension import db
+
+from .base import BaseModel
 from .conversation import Conversation
 
 
-class Account(UserMixin, db.Model):
+class Account(UserMixin, BaseModel):
     """账号模型"""
 
     __tablename__ = "account"
@@ -98,7 +99,7 @@ class Account(UserMixin, db.Model):
         return conversation
 
 
-class AccountOAuth(db.Model):
+class AccountOAuth(BaseModel):
     """账号与第三方授权认证记录表"""
 
     __tablename__ = "account_oauth"

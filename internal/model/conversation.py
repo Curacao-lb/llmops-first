@@ -1,27 +1,28 @@
 from datetime import datetime
 
 from sqlalchemy import (
-    Column,
     UUID,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    Integer,
+    Numeric,
+    PrimaryKeyConstraint,
     String,
     Text,
-    Integer,
-    DateTime,
-    Boolean,
-    Numeric,
-    Float,
-    text,
     func,
-    PrimaryKeyConstraint,
-    Index,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from internal.extension.database_extension import db
 
+from .base import BaseModel
 
-class Conversation(db.Model):
+
+class Conversation(BaseModel):
     """交流会话模型"""
 
     __tablename__ = "conversation"
@@ -74,7 +75,7 @@ class Conversation(db.Model):
         return False if message_count > 1 else True
 
 
-class Message(db.Model):
+class Message(BaseModel):
     """交流消息模型"""
 
     __tablename__ = "message"
@@ -178,7 +179,7 @@ class Message(db.Model):
         return db.session.query(Conversation).get(self.conversation_id)
 
 
-class MessageAgentThought(db.Model):
+class MessageAgentThought(BaseModel):
     """智能体消息推理模型，用于记录Agent生成最终消息答案时"""
 
     __tablename__ = "message_agent_thought"

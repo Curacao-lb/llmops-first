@@ -1,11 +1,12 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField
-from wtforms.validators import DataRequired, Length
-from .schema import ListField
-from wtforms.validators import DataRequired, Length, URL, Optional
 from marshmallow import Schema, fields, pre_dump
-from internal.model import ApiToolProvider, ApiTool
+from wtforms import StringField
+from wtforms.validators import URL, DataRequired, Length, Optional, ValidationError
+
+from internal.model import ApiTool, ApiToolProvider
 from pkg.paginator import PaginatorReq
+
+from .schema import ListField
 
 
 # 定义方法和对应的请求名保持一致

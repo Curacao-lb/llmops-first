@@ -1,18 +1,20 @@
 from sqlalchemy import (
-    Column,
     UUID,
-    String,
+    Column,
     DateTime,
-    Text,
     PrimaryKeyConstraint,
-    Index,
+    String,
+    Text,
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
+
 from internal.extension.database_extension import db
 
+from .base import BaseModel
 
-class ApiToolProvider(db.Model):
+
+class ApiToolProvider(BaseModel):
     """接口工具提供者模型"""
 
     __tablename__ = "api_tool_provider"
@@ -48,7 +50,7 @@ class ApiToolProvider(db.Model):
         return db.session.query(ApiTool).filter_by(provider_id=self.id).all()
 
 
-class ApiTool(db.Model):
+class ApiTool(BaseModel):
     """API工具表模型"""
 
     __tablename__ = "api_tool"

@@ -1,20 +1,20 @@
 from datetime import datetime
 
 from sqlalchemy import (
-    Column,
     UUID,
-    String,
-    Integer,
+    Column,
     DateTime,
-    text,
-    PrimaryKeyConstraint,
     Index,
+    Integer,
+    PrimaryKeyConstraint,
+    String,
+    text,
 )
 
-from internal.extension.database_extension import db
+from .base import BaseModel
 
 
-class UploadFile(db.Model):
+class UploadFile(BaseModel):
     """上传文件模型"""
 
     __tablename__ = "upload_file"

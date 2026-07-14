@@ -412,7 +412,7 @@ class AppService(BaseService):
                 try:
                     UUID(dataset_id)
                 except Exception:
-                    raise ValidateException("知识库列表参数必须是UUID")
+                    raise ValidateException("知识库列表参数必须是UUID") from None
             # 8.4 判断是否传递了重复的知识库
             if len(set(datasets)) != len(datasets):
                 raise ValidateException("绑定知识库存在重复")
@@ -425,9 +425,9 @@ class AppService(BaseService):
                 )
                 .all()
             )
-            dataset_sets = set(
-                [str(dataset_record.id) for dataset_record in dataset_records]
-            )
+            dataset_sets = {
+                str(dataset_record.id) for dataset_record in dataset_records
+            }
             draft_app_config["datasets"] = [
                 dataset_id for dataset_id in datasets if dataset_id in dataset_sets
             ]
@@ -610,8 +610,8 @@ class AppService(BaseService):
         # 2.校验传递的草稿配置信息
         draft_app_config = self._validate_draft_app_config(draft_app_config, account)
 
-        # 3.获取当前应用的最新草稿信息
-        draft_app_config_record = app.draft_app_config
+        # 3.获取当前应用的最新草稿信息（不存在时创建默认草稿，确保有目标记录可更新）
+        draft_app_config_record = self.get_draft_app_config_in_get_app(app)
         self.update(
             draft_app_config_record,
             updated_at=datetime.now(),

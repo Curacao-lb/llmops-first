@@ -1,7 +1,11 @@
+from collections.abc import Generator
+from dataclasses import dataclass, field
+from typing import Any
+
+from flask import Response as FlaskResponse
+from flask import jsonify, stream_with_context
+
 from .http_code import HttpCode
-from typing import Any, Union, Generator
-from dataclasses import field, dataclass
-from flask import jsonify, stream_with_context, Response as FlaskResponse
 
 
 @dataclass
@@ -33,17 +37,17 @@ def json(data: Response = None):
     return response, 200
 
 
-def success_json(data: Response = None):
+def success_json(data: Any = None):
     """成功的数据响应接口"""
     return json(Response(code=HttpCode.SUCCESS, data=data, message=""))
 
 
-def fail_json(data: Response = None):
+def fail_json(data: Any = None):
     """失败的数据响应接口"""
     return json(Response(code=HttpCode.FAIL, data=data, message=""))
 
 
-def validate_error_json(errors: Response = None):
+def validate_error_json(errors: Any = None):
     """验证错误的数据响应接口"""
     # 获取 errors 字典的第一个 key（第一个出错的字段名）
 
@@ -100,7 +104,7 @@ def server_error_message(msg: str = ""):
     return message(HttpCode.SERVER_ERROR, msg=msg)
 
 
-def compact_generate_response(response: Union[Response, Generator]) -> FlaskResponse:
+def compact_generate_response(response: Response | Generator) -> FlaskResponse:
     """统一合并处理块输出以及流式事件输出"""
     # 1.检测下是否为块输出（Response）
     if isinstance(response, Response):

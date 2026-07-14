@@ -1,26 +1,28 @@
 from datetime import datetime
 
 from sqlalchemy import (
-    Column,
     UUID,
+    Boolean,
+    Column,
+    DateTime,
+    Index,
+    Integer,
+    PrimaryKeyConstraint,
     String,
     Text,
-    Integer,
-    Boolean,
-    DateTime,
-    text,
     func,
-    PrimaryKeyConstraint,
-    Index,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 
 from internal.extension.database_extension import db
+
 from .app import AppDatasetJoin
+from .base import BaseModel
 from .upload_file import UploadFile
 
 
-class Dataset(db.Model):
+class Dataset(BaseModel):
     """知识库表"""
 
     __tablename__ = "dataset"
@@ -85,7 +87,7 @@ class Dataset(db.Model):
         )
 
 
-class Document(db.Model):
+class Document(BaseModel):
     """文档表模型"""
 
     __tablename__ = "document"
@@ -173,7 +175,7 @@ class Document(db.Model):
         )
 
 
-class Segment(db.Model):
+class Segment(BaseModel):
     """片段表模型"""
 
     __tablename__ = "segment"
@@ -223,7 +225,7 @@ class Segment(db.Model):
         return db.session.query(Document).get(self.document_id)
 
 
-class KeywordTable(db.Model):
+class KeywordTable(BaseModel):
     """关键词表模型"""
 
     __tablename__ = "keyword_table"
@@ -246,7 +248,7 @@ class KeywordTable(db.Model):
     )
 
 
-class DatasetQuery(db.Model):
+class DatasetQuery(BaseModel):
     """知识库查询表模型"""
 
     __tablename__ = "dataset_query"
@@ -278,7 +280,7 @@ class DatasetQuery(db.Model):
     )
 
 
-class ProcessRule(db.Model):
+class ProcessRule(BaseModel):
     """文档处理规则表模型"""
 
     __tablename__ = "process_rule"

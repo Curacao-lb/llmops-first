@@ -1,4 +1,86 @@
-=== pyright ===
+=== pyright: app_service + app model ===
+/Users/luobin/project/llmops/llmops-api/internal/model/app.py
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:46:9 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:46:16 - error: "uuid" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:46:29 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:55:17 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:55:24 - error: "uuid" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:55:37 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:56:20 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:56:27 - error: "uuid" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:56:47 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:59:26 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:59:33 - error: "uuid" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:59:53 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:62:28 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:62:35 - error: "uuid" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:62:55 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:67:11 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:67:25 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:70:14 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:70:28 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:75:11 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:75:25 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:80:18 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:80:32 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:84:12 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:84:33 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:89:17 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:89:36 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:97:17 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:97:36 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:102:13 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:102:27 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:106:11 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:106:25 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:220:9 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:220:16 - error: "uuid" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:220:29 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:223:13 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:223:20 - error: "uuid" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:223:33 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:224:19 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:224:34 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:227:19 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:227:33 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:230:20 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:230:34 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:233:12 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:233:27 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:236:13 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:236:28 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:239:16 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:239:31 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:242:15 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:242:30 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:245:23 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:245:38 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:248:23 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:248:38 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:251:24 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:251:38 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:254:24 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:254:39 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:257:21 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:257:36 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:260:17 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:260:32 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:263:21 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:263:36 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:266:17 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:266:32 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:269:29 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:269:44 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:274:20 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:274:35 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:277:14 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:277:28 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:280:18 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:280:32 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:283:17 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:283:36 - error: "mapped_column" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:289:17 - error: "Mapped" is not defined (reportUndefinedVariable)
+  /Users/luobin/project/llmops/llmops-api/internal/model/app.py:289:36 - error: "mapped_column" is not defined (reportUndefinedVariable)
 /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py
   /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:73:17 - error: No parameter named "id" (reportCallIssue)
   /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:74:17 - error: No parameter named "account_id" (reportCallIssue)
@@ -15,48 +97,880 @@
   /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:129:17 - error: No parameter named "app_id" (reportCallIssue)
   /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:130:17 - error: No parameter named "version" (reportCallIssue)
   /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:131:17 - error: No parameter named "config_type" (reportCallIssue)
-  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:153:17 - error: Cannot assign to attribute "name" for class "App"
-    Expression of type "Literal['robin的机器人']" cannot be assigned to attribute "name" of class "App"
-      "Literal['robin的机器人']" is not assignable to "Column[str]" (reportAttributeAccessIssue)
-  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:620:12 - error: Invalid conditional operand of type "ColumnElement[bool]"
-    Method __bool__ for type "ColumnElement[bool]" returns type "NoReturn" rather than "bool" (reportGeneralTypeIssues)
-  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:622:16 - error: Type "AppConfigVersion | None" is not assignable to return type "AppConfigVersion"
-    Type "AppConfigVersion | None" is not assignable to type "AppConfigVersion"
-      "None" is not assignable to "AppConfigVersion" (reportReturnType)
-  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:635:16 - error: Invalid conditional operand of type "Column[Any] | None"
-    Method __bool__ for type "Column[Any]" returns type "NoReturn" rather than "bool" (reportGeneralTypeIssues)
-  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:640:16 - error: Invalid conditional operand of type "Column[Any] | None"
-    Method __bool__ for type "Column[Any]" returns type "NoReturn" rather than "bool" (reportGeneralTypeIssues)
-  /Users/luobin/project/llmops/llmops-api/internal/service/app_service.py:727:12 - error: Invalid conditional operand of type "ColumnElement[bool]"
-    Method __bool__ for type "ColumnElement[bool]" returns type "NoReturn" rather than "bool" (reportGeneralTypeIssues)
-21 errors, 0 warnings, 0 informations
-=== ruff ===
-B904 Within an `except` clause, raise exceptions with `raise ... from err` or `raise ... from None` to distinguish them from errors in exception handling
-   --> internal/service/app_service.py:415:21
+96 errors, 0 warnings, 0 informations
+=== ruff: app_service + app model ===
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:46:9
+   |
+45 |     # 主键: 应用唯一标识符,使用 UUID 格式,自动生成
+46 |     id: Mapped[uuid.UUID] = mapped_column(
+   |         ^^^^^^
+47 |         UUID,
+48 |         # primary_key=True,
+   |
+
+F821 Undefined name `uuid`
+  --> internal/model/app.py:46:16
+   |
+45 |     # 主键: 应用唯一标识符,使用 UUID 格式,自动生成
+46 |     id: Mapped[uuid.UUID] = mapped_column(
+   |                ^^^^
+47 |         UUID,
+48 |         # primary_key=True,
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:46:29
+   |
+45 |     # 主键: 应用唯一标识符,使用 UUID 格式,自动生成
+46 |     id: Mapped[uuid.UUID] = mapped_column(
+   |                             ^^^^^^^^^^^^^
+47 |         UUID,
+48 |         # primary_key=True,
+   |
+
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:55:17
+   |
+54 |     # 外键: 关联的账户 ID,标识应用的所有者
+55 |     account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 创建账号id
+   |                 ^^^^^^
+56 |     app_config_id: Mapped[uuid.UUID | None] = mapped_column(
+57 |         UUID, nullable=True
+   |
+
+F821 Undefined name `uuid`
+  --> internal/model/app.py:55:24
+   |
+54 |     # 外键: 关联的账户 ID,标识应用的所有者
+55 |     account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 创建账号id
+   |                        ^^^^
+56 |     app_config_id: Mapped[uuid.UUID | None] = mapped_column(
+57 |         UUID, nullable=True
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:55:37
+   |
+54 |     # 外键: 关联的账户 ID,标识应用的所有者
+55 |     account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 创建账号id
+   |                                     ^^^^^^^^^^^^^
+56 |     app_config_id: Mapped[uuid.UUID | None] = mapped_column(
+57 |         UUID, nullable=True
+   |
+
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:56:20
+   |
+54 |     # 外键: 关联的账户 ID,标识应用的所有者
+55 |     account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 创建账号id
+56 |     app_config_id: Mapped[uuid.UUID | None] = mapped_column(
+   |                    ^^^^^^
+57 |         UUID, nullable=True
+58 |     )  # 发布配置id，当值为空时代表没有发布
+   |
+
+F821 Undefined name `uuid`
+  --> internal/model/app.py:56:27
+   |
+54 |     # 外键: 关联的账户 ID,标识应用的所有者
+55 |     account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 创建账号id
+56 |     app_config_id: Mapped[uuid.UUID | None] = mapped_column(
+   |                           ^^^^
+57 |         UUID, nullable=True
+58 |     )  # 发布配置id，当值为空时代表没有发布
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:56:47
+   |
+54 |     # 外键: 关联的账户 ID,标识应用的所有者
+55 |     account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 创建账号id
+56 |     app_config_id: Mapped[uuid.UUID | None] = mapped_column(
+   |                                               ^^^^^^^^^^^^^
+57 |         UUID, nullable=True
+58 |     )  # 发布配置id，当值为空时代表没有发布
+   |
+
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:59:26
+   |
+57 |         UUID, nullable=True
+58 |     )  # 发布配置id，当值为空时代表没有发布
+59 |     draft_app_config_id: Mapped[uuid.UUID | None] = mapped_column(
+   |                          ^^^^^^
+60 |         UUID, nullable=True
+61 |     )  # 关联的草稿配置id
+   |
+
+F821 Undefined name `uuid`
+  --> internal/model/app.py:59:33
+   |
+57 |         UUID, nullable=True
+58 |     )  # 发布配置id，当值为空时代表没有发布
+59 |     draft_app_config_id: Mapped[uuid.UUID | None] = mapped_column(
+   |                                 ^^^^
+60 |         UUID, nullable=True
+61 |     )  # 关联的草稿配置id
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:59:53
+   |
+57 |         UUID, nullable=True
+58 |     )  # 发布配置id，当值为空时代表没有发布
+59 |     draft_app_config_id: Mapped[uuid.UUID | None] = mapped_column(
+   |                                                     ^^^^^^^^^^^^^
+60 |         UUID, nullable=True
+61 |     )  # 关联的草稿配置id
+   |
+
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:62:28
+   |
+60 |         UUID, nullable=True
+61 |     )  # 关联的草稿配置id
+62 |     debug_conversation_id: Mapped[uuid.UUID | None] = mapped_column(
+   |                            ^^^^^^
+63 |         UUID, nullable=True
+64 |     )  # 应用调试会话id，为None则代表没有会话信息
+   |
+
+F821 Undefined name `uuid`
+  --> internal/model/app.py:62:35
+   |
+60 |         UUID, nullable=True
+61 |     )  # 关联的草稿配置id
+62 |     debug_conversation_id: Mapped[uuid.UUID | None] = mapped_column(
+   |                                   ^^^^
+63 |         UUID, nullable=True
+64 |     )  # 应用调试会话id，为None则代表没有会话信息
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:62:55
+   |
+60 |         UUID, nullable=True
+61 |     )  # 关联的草稿配置id
+62 |     debug_conversation_id: Mapped[uuid.UUID | None] = mapped_column(
+   |                                                       ^^^^^^^^^^^^^
+63 |         UUID, nullable=True
+64 |     )  # 应用调试会话id，为None则代表没有会话信息
+   |
+
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:67:11
+   |
+66 |     # 应用名称: 最大 255 字符,默认为空字符串
+67 |     name: Mapped[str] = mapped_column(
+   |           ^^^^^^
+68 |         String(255), server_default=("''::character varying"), nullable=False
+69 |     )
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:67:25
+   |
+66 |     # 应用名称: 最大 255 字符,默认为空字符串
+67 |     name: Mapped[str] = mapped_column(
+   |                         ^^^^^^^^^^^^^
+68 |         String(255), server_default=("''::character varying"), nullable=False
+69 |     )
+   |
+
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:70:14
+   |
+68 |         String(255), server_default=("''::character varying"), nullable=False
+69 |     )
+70 |     en_name: Mapped[str] = mapped_column(
+   |              ^^^^^^
+71 |         String(255), nullable=False, server_default=text("''::character varying")
+72 |     )  # 应用英文名字
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:70:28
+   |
+68 |         String(255), server_default=("''::character varying"), nullable=False
+69 |     )
+70 |     en_name: Mapped[str] = mapped_column(
+   |                            ^^^^^^^^^^^^^
+71 |         String(255), nullable=False, server_default=text("''::character varying")
+72 |     )  # 应用英文名字
+   |
+
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:75:11
+   |
+74 |     # 应用图标: 存储图标 URL 或路径,最大 255 字符
+75 |     icon: Mapped[str] = mapped_column(
+   |           ^^^^^^
+76 |         String(255), server_default=("''::character varying"), nullable=False
+77 |     )
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:75:25
+   |
+74 |     # 应用图标: 存储图标 URL 或路径,最大 255 字符
+75 |     icon: Mapped[str] = mapped_column(
+   |                         ^^^^^^^^^^^^^
+76 |         String(255), server_default=("''::character varying"), nullable=False
+77 |     )
+   |
+
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:80:18
+   |
+79 |     # 应用描述: 使用 Text 类型支持长文本,默认为空字符串
+80 |     description: Mapped[str] = mapped_column(
+   |                  ^^^^^^
+81 |         Text, server_default=("''::text"), nullable=False
+82 |     )
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:80:32
+   |
+79 |     # 应用描述: 使用 Text 类型支持长文本,默认为空字符串
+80 |     description: Mapped[str] = mapped_column(
+   |                                ^^^^^^^^^^^^^
+81 |         Text, server_default=("''::text"), nullable=False
+82 |     )
+   |
+
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:84:12
+   |
+82 |     )
+83 |
+84 |     token: Mapped[str | None] = mapped_column(
+   |            ^^^^^^
+85 |         String(255), nullable=True, server_default=text("''::character varying")
+86 |     )  # 应用凭证信息
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:84:33
+   |
+82 |     )
+83 |
+84 |     token: Mapped[str | None] = mapped_column(
+   |                                 ^^^^^^^^^^^^^
+85 |         String(255), nullable=True, server_default=text("''::character varying")
+86 |     )  # 应用凭证信息
+   |
+
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:89:17
+   |
+88 |     # 更新时间: 记录最后一次修改时间,每次更新时自动更新
+89 |     updated_at: Mapped[datetime] = mapped_column(
+   |                 ^^^^^^
+90 |         DateTime,
+91 |         server_default=text("CURRENT_TIMESTAMP(0)"),
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:89:36
+   |
+88 |     # 更新时间: 记录最后一次修改时间,每次更新时自动更新
+89 |     updated_at: Mapped[datetime] = mapped_column(
+   |                                    ^^^^^^^^^^^^^
+90 |         DateTime,
+91 |         server_default=text("CURRENT_TIMESTAMP(0)"),
+   |
+
+F821 Undefined name `Mapped`
+  --> internal/model/app.py:97:17
+   |
+96 |     # 创建时间: 记录应用创建时间,只在创建时设置一次
+97 |     created_at: Mapped[datetime] = mapped_column(
+   |                 ^^^^^^
+98 |         DateTime, server_default=text("CURRENT_TIMESTAMP(0)"), nullable=False
+99 |     )
+   |
+
+F821 Undefined name `mapped_column`
+  --> internal/model/app.py:97:36
+   |
+96 |     # 创建时间: 记录应用创建时间,只在创建时设置一次
+97 |     created_at: Mapped[datetime] = mapped_column(
+   |                                    ^^^^^^^^^^^^^
+98 |         DateTime, server_default=text("CURRENT_TIMESTAMP(0)"), nullable=False
+99 |     )
+   |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:102:13
     |
-413 |                     UUID(dataset_id)
-414 |                 except Exception:
-415 |                     raise ValidateException("知识库列表参数必须是UUID")
-    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-416 |             # 8.4 判断是否传递了重复的知识库
-417 |             if len(set(datasets)) != len(datasets):
+101 |     # 尝试新增一个字段：status
+102 |     status: Mapped[str] = mapped_column(
+    |             ^^^^^^
+103 |         String(50), server_default=("''::character varying"), nullable=False
+104 |     )
     |
 
-C403 Unnecessary list comprehension (rewrite as a set comprehension)
-   --> internal/service/app_service.py:428:28
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:102:27
     |
-426 |                   .all()
-427 |               )
-428 |               dataset_sets = set(
-    |  ____________________________^
-429 | |                 [str(dataset_record.id) for dataset_record in dataset_records]
-430 | |             )
-    | |_____________^
-431 |               draft_app_config["datasets"] = [
-432 |                   dataset_id for dataset_id in datasets if dataset_id in dataset_sets
+101 |     # 尝试新增一个字段：status
+102 |     status: Mapped[str] = mapped_column(
+    |                           ^^^^^^^^^^^^^
+103 |         String(50), server_default=("''::character varying"), nullable=False
+104 |     )
     |
-help: Rewrite as a set comprehension
 
-Found 2 errors.
-No fixes available (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:106:11
+    |
+104 |     )
+105 |
+106 |     mode: Mapped[int] = mapped_column(
+    |           ^^^^^^
+107 |         Integer, nullable=False, server_default=text("0")
+108 |     )  # 模式 0:单agent模式 1:supervisor模式
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:106:25
+    |
+104 |     )
+105 |
+106 |     mode: Mapped[int] = mapped_column(
+    |                         ^^^^^^^^^^^^^
+107 |         Integer, nullable=False, server_default=text("0")
+108 |     )  # 模式 0:单agent模式 1:supervisor模式
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:220:9
+    |
+218 |     )
+219 |
+220 |     id: Mapped[uuid.UUID] = mapped_column(
+    |         ^^^^^^
+221 |         UUID, nullable=False, server_default=text("uuid_generate_v4()")
+222 |     )  # 配置id
+    |
+
+F821 Undefined name `uuid`
+   --> internal/model/app.py:220:16
+    |
+218 |     )
+219 |
+220 |     id: Mapped[uuid.UUID] = mapped_column(
+    |                ^^^^
+221 |         UUID, nullable=False, server_default=text("uuid_generate_v4()")
+222 |     )  # 配置id
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:220:29
+    |
+218 |     )
+219 |
+220 |     id: Mapped[uuid.UUID] = mapped_column(
+    |                             ^^^^^^^^^^^^^
+221 |         UUID, nullable=False, server_default=text("uuid_generate_v4()")
+222 |     )  # 配置id
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:223:13
+    |
+221 |         UUID, nullable=False, server_default=text("uuid_generate_v4()")
+222 |     )  # 配置id
+223 |     app_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 关联应用id
+    |             ^^^^^^
+224 |     model_config: Mapped[dict] = mapped_column(
+225 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    |
+
+F821 Undefined name `uuid`
+   --> internal/model/app.py:223:20
+    |
+221 |         UUID, nullable=False, server_default=text("uuid_generate_v4()")
+222 |     )  # 配置id
+223 |     app_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 关联应用id
+    |                    ^^^^
+224 |     model_config: Mapped[dict] = mapped_column(
+225 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:223:33
+    |
+221 |         UUID, nullable=False, server_default=text("uuid_generate_v4()")
+222 |     )  # 配置id
+223 |     app_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 关联应用id
+    |                                 ^^^^^^^^^^^^^
+224 |     model_config: Mapped[dict] = mapped_column(
+225 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:224:19
+    |
+222 |     )  # 配置id
+223 |     app_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 关联应用id
+224 |     model_config: Mapped[dict] = mapped_column(
+    |                   ^^^^^^
+225 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+226 |     )  # 模型配置
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:224:34
+    |
+222 |     )  # 配置id
+223 |     app_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 关联应用id
+224 |     model_config: Mapped[dict] = mapped_column(
+    |                                  ^^^^^^^^^^^^^
+225 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+226 |     )  # 模型配置
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:227:19
+    |
+225 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+226 |     )  # 模型配置
+227 |     dialog_round: Mapped[int] = mapped_column(
+    |                   ^^^^^^
+228 |         Integer, nullable=False, server_default=text("0")
+229 |     )  # 鞋带上下文轮数
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:227:33
+    |
+225 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+226 |     )  # 模型配置
+227 |     dialog_round: Mapped[int] = mapped_column(
+    |                                 ^^^^^^^^^^^^^
+228 |         Integer, nullable=False, server_default=text("0")
+229 |     )  # 鞋带上下文轮数
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:230:20
+    |
+228 |         Integer, nullable=False, server_default=text("0")
+229 |     )  # 鞋带上下文轮数
+230 |     preset_prompt: Mapped[str] = mapped_column(
+    |                    ^^^^^^
+231 |         Text, nullable=False, server_default=text("''::text")
+232 |     )  # 人设与回复逻辑
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:230:34
+    |
+228 |         Integer, nullable=False, server_default=text("0")
+229 |     )  # 鞋带上下文轮数
+230 |     preset_prompt: Mapped[str] = mapped_column(
+    |                                  ^^^^^^^^^^^^^
+231 |         Text, nullable=False, server_default=text("''::text")
+232 |     )  # 人设与回复逻辑
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:233:12
+    |
+231 |         Text, nullable=False, server_default=text("''::text")
+232 |     )  # 人设与回复逻辑
+233 |     tools: Mapped[list] = mapped_column(
+    |            ^^^^^^
+234 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+235 |     )  # 应用关联的工具列表
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:233:27
+    |
+231 |         Text, nullable=False, server_default=text("''::text")
+232 |     )  # 人设与回复逻辑
+233 |     tools: Mapped[list] = mapped_column(
+    |                           ^^^^^^^^^^^^^
+234 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+235 |     )  # 应用关联的工具列表
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:236:13
+    |
+234 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+235 |     )  # 应用关联的工具列表
+236 |     agents: Mapped[list] = mapped_column(
+    |             ^^^^^^
+237 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+238 |     )  # 应用关联的agent列表
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:236:28
+    |
+234 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+235 |     )  # 应用关联的工具列表
+236 |     agents: Mapped[list] = mapped_column(
+    |                            ^^^^^^^^^^^^^
+237 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+238 |     )  # 应用关联的agent列表
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:239:16
+    |
+237 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+238 |     )  # 应用关联的agent列表
+239 |     workflows: Mapped[list] = mapped_column(
+    |                ^^^^^^
+240 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+241 |     )  # 应用关联的工作流列表
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:239:31
+    |
+237 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+238 |     )  # 应用关联的agent列表
+239 |     workflows: Mapped[list] = mapped_column(
+    |                               ^^^^^^^^^^^^^
+240 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+241 |     )  # 应用关联的工作流列表
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:242:15
+    |
+240 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+241 |     )  # 应用关联的工作流列表
+242 |     datasets: Mapped[list] = mapped_column(
+    |               ^^^^^^
+243 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+244 |     )  # 应用关联的知识库列表
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:242:30
+    |
+240 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+241 |     )  # 应用关联的工作流列表
+242 |     datasets: Mapped[list] = mapped_column(
+    |                              ^^^^^^^^^^^^^
+243 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+244 |     )  # 应用关联的知识库列表
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:245:23
+    |
+243 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+244 |     )  # 应用关联的知识库列表
+245 |     retrieval_config: Mapped[dict] = mapped_column(
+    |                       ^^^^^^
+246 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+247 |     )  # 检索配置
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:245:38
+    |
+243 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+244 |     )  # 应用关联的知识库列表
+245 |     retrieval_config: Mapped[dict] = mapped_column(
+    |                                      ^^^^^^^^^^^^^
+246 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+247 |     )  # 检索配置
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:248:23
+    |
+246 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+247 |     )  # 检索配置
+248 |     long_term_memory: Mapped[dict] = mapped_column(
+    |                       ^^^^^^
+249 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+250 |     )  # 长期记忆配置
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:248:38
+    |
+246 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+247 |     )  # 检索配置
+248 |     long_term_memory: Mapped[dict] = mapped_column(
+    |                                      ^^^^^^^^^^^^^
+249 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+250 |     )  # 长期记忆配置
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:251:24
+    |
+249 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+250 |     )  # 长期记忆配置
+251 |     opening_statement: Mapped[str] = mapped_column(
+    |                        ^^^^^^
+252 |         Text, nullable=False, server_default=text("''::text")
+253 |     )  # 开场白文案
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:251:38
+    |
+249 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+250 |     )  # 长期记忆配置
+251 |     opening_statement: Mapped[str] = mapped_column(
+    |                                      ^^^^^^^^^^^^^
+252 |         Text, nullable=False, server_default=text("''::text")
+253 |     )  # 开场白文案
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:254:24
+    |
+252 |         Text, nullable=False, server_default=text("''::text")
+253 |     )  # 开场白文案
+254 |     opening_questions: Mapped[list] = mapped_column(
+    |                        ^^^^^^
+255 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+256 |     )  # 开场白建议问题列表
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:254:39
+    |
+252 |         Text, nullable=False, server_default=text("''::text")
+253 |     )  # 开场白文案
+254 |     opening_questions: Mapped[list] = mapped_column(
+    |                                       ^^^^^^^^^^^^^
+255 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+256 |     )  # 开场白建议问题列表
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:257:21
+    |
+255 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+256 |     )  # 开场白建议问题列表
+257 |     speech_to_text: Mapped[dict] = mapped_column(
+    |                     ^^^^^^
+258 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+259 |     )  # 语音转文本配置
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:257:36
+    |
+255 |         JSONB, nullable=False, server_default=text("'[]'::jsonb")
+256 |     )  # 开场白建议问题列表
+257 |     speech_to_text: Mapped[dict] = mapped_column(
+    |                                    ^^^^^^^^^^^^^
+258 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+259 |     )  # 语音转文本配置
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:260:17
+    |
+258 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+259 |     )  # 语音转文本配置
+260 |     multimodal: Mapped[dict] = mapped_column(
+    |                 ^^^^^^
+261 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+262 |     )  # 开启多模态
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:260:32
+    |
+258 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+259 |     )  # 语音转文本配置
+260 |     multimodal: Mapped[dict] = mapped_column(
+    |                                ^^^^^^^^^^^^^
+261 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+262 |     )  # 开启多模态
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:263:21
+    |
+261 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+262 |     )  # 开启多模态
+263 |     text_to_speech: Mapped[dict] = mapped_column(
+    |                     ^^^^^^
+264 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+265 |     )  # 文本转语音配置
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:263:36
+    |
+261 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+262 |     )  # 开启多模态
+263 |     text_to_speech: Mapped[dict] = mapped_column(
+    |                                    ^^^^^^^^^^^^^
+264 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+265 |     )  # 文本转语音配置
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:266:17
+    |
+264 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+265 |     )  # 文本转语音配置
+266 |     mcp_server: Mapped[dict] = mapped_column(
+    |                 ^^^^^^
+267 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+268 |     )  # mcp配置
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:266:32
+    |
+264 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+265 |     )  # 文本转语音配置
+266 |     mcp_server: Mapped[dict] = mapped_column(
+    |                                ^^^^^^^^^^^^^
+267 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+268 |     )  # mcp配置
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:269:29
+    |
+267 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+268 |     )  # mcp配置
+269 |     suggested_after_answer: Mapped[dict] = mapped_column(
+    |                             ^^^^^^
+270 |         JSONB,
+271 |         nullable=False,
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:269:44
+    |
+267 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+268 |     )  # mcp配置
+269 |     suggested_after_answer: Mapped[dict] = mapped_column(
+    |                                            ^^^^^^^^^^^^^
+270 |         JSONB,
+271 |         nullable=False,
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:274:20
+    |
+272 |         server_default=text("'{\"enable\": true}'::jsonb"),
+273 |     )  # 回答后生成建议问题
+274 |     review_config: Mapped[dict] = mapped_column(
+    |                    ^^^^^^
+275 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+276 |     )  # 审核配置
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:274:35
+    |
+272 |         server_default=text("'{\"enable\": true}'::jsonb"),
+273 |     )  # 回答后生成建议问题
+274 |     review_config: Mapped[dict] = mapped_column(
+    |                                   ^^^^^^^^^^^^^
+275 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+276 |     )  # 审核配置
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:277:14
+    |
+275 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+276 |     )  # 审核配置
+277 |     version: Mapped[int] = mapped_column(
+    |              ^^^^^^
+278 |         Integer, nullable=False, server_default=text("0")
+279 |     )  # 发布版本号
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:277:28
+    |
+275 |         JSONB, nullable=False, server_default=text("'{}'::jsonb")
+276 |     )  # 审核配置
+277 |     version: Mapped[int] = mapped_column(
+    |                            ^^^^^^^^^^^^^
+278 |         Integer, nullable=False, server_default=text("0")
+279 |     )  # 发布版本号
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:280:18
+    |
+278 |         Integer, nullable=False, server_default=text("0")
+279 |     )  # 发布版本号
+280 |     config_type: Mapped[str] = mapped_column(
+    |                  ^^^^^^
+281 |         String(255), nullable=False, server_default=text("''::character varying")
+282 |     )  # 配置类型
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:280:32
+    |
+278 |         Integer, nullable=False, server_default=text("0")
+279 |     )  # 发布版本号
+280 |     config_type: Mapped[str] = mapped_column(
+    |                                ^^^^^^^^^^^^^
+281 |         String(255), nullable=False, server_default=text("''::character varying")
+282 |     )  # 配置类型
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:283:17
+    |
+281 |         String(255), nullable=False, server_default=text("''::character varying")
+282 |     )  # 配置类型
+283 |     updated_at: Mapped[datetime] = mapped_column(
+    |                 ^^^^^^
+284 |         DateTime,
+285 |         nullable=False,
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:283:36
+    |
+281 |         String(255), nullable=False, server_default=text("''::character varying")
+282 |     )  # 配置类型
+283 |     updated_at: Mapped[datetime] = mapped_column(
+    |                                    ^^^^^^^^^^^^^
+284 |         DateTime,
+285 |         nullable=False,
+    |
+
+F821 Undefined name `Mapped`
+   --> internal/model/app.py:289:17
+    |
+287 |         onupdate=datetime.now,
+288 |     )
+289 |     created_at: Mapped[datetime] = mapped_column(
+    |                 ^^^^^^
+290 |         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
+291 |     )
+    |
+
+F821 Undefined name `mapped_column`
+   --> internal/model/app.py:289:36
+    |
+287 |         onupdate=datetime.now,
+288 |     )
+289 |     created_at: Mapped[datetime] = mapped_column(
+    |                                    ^^^^^^^^^^^^^
+290 |         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
+291 |     )
+    |
+
+Found 81 errors.
 ruff_exit=1

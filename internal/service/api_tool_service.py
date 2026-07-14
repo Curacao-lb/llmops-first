@@ -1,21 +1,21 @@
+import json
 from dataclasses import dataclass
-from internal.exception import ValidateException, NotFoundException
+from typing import Any, cast
+from uuid import UUID
+
+from injector import inject
+from sqlalchemy import desc
+
 from internal.core.tools.api_tools.entites import OpenAPISchema, ToolEntity
 from internal.core.tools.api_tools.providers import ApiProviderManager
-from internal.model import ApiTool, ApiToolProvider, Account
+from internal.exception import NotFoundException, ValidateException
+from internal.model import Account, ApiTool, ApiToolProvider
 from internal.schema.api_tool_schema import (
     CreateApiToolReq,
     GetApiToolProvidersWithPageReq,
     UpdateApiToolProviderReq,
 )
 from pkg.paginator import Paginator
-from typing import Any
-from sqlalchemy import desc
-
-from uuid import UUID
-
-from injector import inject
-import json
 
 from .base_service import BaseService
 
@@ -45,7 +45,7 @@ class ApiToolService(BaseService):
         """根据传递的请求创建自定义API工具"""
 
         # 1.检验并提取openapi_schema对应的数据
-        openapi_schema = self.parse_openapi_schema(req.openapi_schema.data)
+        openapi_schema = self.parse_openapi_schema(cast(str, req.openapi_schema.data))
 
         # 2.查询当前登录的账号是否已经创建了同名的工具提供者,如果是则抛出错误
         api_tool_provider = (
@@ -118,7 +118,7 @@ class ApiToolService(BaseService):
     ) -> ApiTool:
         """根据传递的provider_id+tool_name获取对应工具的参数详情信息"""
 
-        api_tool = (
+        api_tool: Any = (
             self.db.session.query(ApiTool)
             .filter_by(
                 provider_id=provider_id,
@@ -151,7 +151,7 @@ class ApiToolService(BaseService):
         api_tool_provider = self.get(ApiToolProvider, provider_id)
         if api_tool_provider is None or api_tool_provider.account_id != account.id:
             raise ValidateException("该工具提供者不存在")
-        openapi_schema = self.parse_openapi_schema(req.openapi_schema.data)
+        openapi_schema = self.parse_openapi_schema(cast(str, req.openapi_schema.data))
         check_api_tool_provider = (
             self.db.session.query(ApiToolProvider)
             .filter(
@@ -198,7 +198,7 @@ class ApiToolService(BaseService):
         provider_id = "cf2d6d2d-7e8f-4b15-b966-880116172dc0"
         tool_name = "get_weather"
 
-        api_tool = (
+        api_tool: Any = (
             self.db.session.query(ApiTool)
             .filter(ApiTool.provider_id == provider_id, ApiTool.name == tool_name)
             .one_or_none()
