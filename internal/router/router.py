@@ -88,6 +88,13 @@ class Router:
             methods=["POST"],
         )
 
+        # 回退指定的历史配置到草稿
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/fallback-history",
+            view_func=self.app_handler.fallback_history_to_draft,
+            methods=["POST"],
+        )
+
         # 知识库模块
         bp.add_url_rule(
             "/datasets",

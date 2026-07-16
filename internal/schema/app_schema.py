@@ -1,7 +1,9 @@
+from uuid import UUID
+
 from flask_wtf import FlaskForm
 from marshmallow import Schema, fields, pre_dump
 from wtforms import StringField
-from wtforms.validators import URL, DataRequired, Length, Optional
+from wtforms.validators import URL, DataRequired, Length, Optional, ValidationError
 
 from internal.model import App, AppConfigVersion
 from pkg.paginator import PaginatorReq
@@ -133,3 +135,19 @@ class GetPublishHistoriesWithPageResp(Schema):
             "version": data.version,
             "created_at": int(data.created_at.timestamp()),
         }
+
+
+class FallbackHistoryToDraftReq(FlaskForm):
+    """回退历史版本到草稿请求结构体"""
+
+    app_config_version_id = StringField(
+        "app_config_version_id", validators=[DataRequired("回退配置版本id不能为空")]
+    )
+
+    # 自动发现并执行 validate_<字段名> 方法的是 WTForms 的校验机制
+    def validate_app_config_version_id(self, field: StringField) -> None:
+        """校验回退配置版本id"""
+        try:
+            UUID(field.data)
+        except Exception:
+            raise ValidationError("回退配置版本id必须为UUID")  # noqa: B904
