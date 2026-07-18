@@ -17,9 +17,11 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from internal.entity.app_entity import AppConfigType
+from internal.entity.conversation_entity import InvokeFrom
 from internal.extension.database_extension import db
 
 from .base import BaseModel
+from .conversation import Conversation
 
 
 class App(BaseModel):
@@ -125,6 +127,40 @@ class App(BaseModel):
             )
             .one_or_none()
         )
+
+    @property
+    def debug_conversation(self) -> "Conversation":
+        """新建多一个只读属性，用来获取应用的调试会话记录"""
+        # 根据debug_conversation_id获取调试会话记录
+        debug_conversation = None
+        if self.debug_conversation_id is not None:
+            debug_conversation = (
+                db.session.query(Conversation)
+                .filter(
+                    Conversation.id == self.debug_conversation_id,
+                    Conversation.invoke_from == InvokeFrom.DEBUGGER,
+                )
+                .one_or_none()
+            )
+
+        # 检测数据是否存在，如果不存在则创建
+        if not self.debug_conversation_id or not debug_conversation:
+            # 开启数据库自动提交上下文
+            with db.auto_commit():
+                # 创建应用调试会话记录并刷新获取会话id
+                debug_conversation = Conversation(
+                    app_id=self.id,
+                    name="New Conversation",
+                    invoke_from=InvokeFrom.DEBUGGER,
+                    created_by=self.account_id,
+                )
+                db.session.add(debug_conversation)
+                db.session.flush()
+
+                # 更新当前记录的debug_conversation_id
+                self.debug_conversation_id = debug_conversation.id
+
+        return debug_conversation
 
 
 class AppConfig(BaseModel):

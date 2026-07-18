@@ -72,7 +72,7 @@ class Conversation(BaseModel):
             )
             .scalar()
         )
-        return False if message_count > 1 else True
+        return message_count <= 1
 
 
 class Message(BaseModel):
@@ -169,7 +169,7 @@ class Message(BaseModel):
         lazy="selectin",
         passive_deletes="all",
         uselist=True,
-        foreign_keys=[id],
+        foreign_keys="MessageAgentThought.message_id",
         primaryjoin="MessageAgentThought.message_id == Message.id",
     )
 

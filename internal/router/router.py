@@ -95,6 +95,24 @@ class Router:
             methods=["POST"],
         )
 
+        # 获取指定应用的调试会话长期记忆
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/summary",
+            view_func=self.app_handler.get_debug_conversation_summary,
+        )
+        # 更新指定应用的调试会话长期记忆
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/summary",
+            methods=["POST"],
+            view_func=self.app_handler.update_debug_conversation_summary,
+        )
+        # 根据传递的应用id，删除指定的应用调试会话
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/conversations/delete-debug-conversation",
+            methods=["POST"],
+            view_func=self.app_handler.delete_debug_conversation,
+        )
+
         # 知识库模块
         bp.add_url_rule(
             "/datasets",
