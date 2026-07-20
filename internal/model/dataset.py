@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 from sqlalchemy import (
@@ -14,6 +15,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
 
 from internal.extension.database_extension import db
 
@@ -31,7 +33,9 @@ class Dataset(BaseModel):
         Index("dataset_account_id_name_idx", "account_id", "name"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
     account_id = Column(UUID, nullable=False)
     name = Column(
         String(255), nullable=False, server_default=text("''::character varying")

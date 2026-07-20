@@ -11,11 +11,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy import update
 
 from internal.core.agent.entities.agent_entity import DATASET_RETRIEVAL_TOOL_NAME
-from internal.entity.dataset_entity import RetrievalStrategy, RetrievalSource
+from internal.entity.dataset_entity import RetrievalSource, RetrievalStrategy
 from internal.exception import NotFoundException
 from internal.lib.helper import combine_documents
 from internal.model import Dataset, DatasetQuery, Segment
 from pkg.sqlalchemy import SQLAlchemy
+
 from .base_service import BaseService
 from .jieba_service import JiebaService
 from .vector_database_service import VectorDatabaseService
@@ -50,10 +51,22 @@ class RetrievalService(BaseService):
             raise NotFoundException("当前无知识库可执行检索")
         dataset_ids = [dataset.id for dataset in datasets]
 
+        # 空知识库尚未向 Weaviate 写入 metadata schema，直接检索会因过滤字段不存在而报错。
+        has_enabled_segment = (
+            self.db.session.query(Segment.id)
+            .filter(
+                Segment.dataset_id.in_(dataset_ids),
+                Segment.enabled.is_(True),
+            )
+            .first()
+        )
+        if has_enabled_segment is None:
+            return []
+
         from internal.core.retrievers import (
-            SemanticRetriever,
             FullTextRetriever,
             RAGFusionRetriever,
+            SemanticRetriever,
         )
 
         # 构建不同检索器
@@ -105,9 +118,9 @@ class RetrievalService(BaseService):
             lc_documents = hybrid_retriever.invoke(query)[:k]
 
         # 添加知识库查询记录
-        unique_dataset_ids = list(
-            set(str(lc_document.metadata["dataset_id"]) for lc_document in lc_documents)
-        )
+        unique_dataset_ids = {
+            str(lc_document.metadata["dataset_id"]) for lc_document in lc_documents
+        }
         for dataset_id in unique_dataset_ids:
             self.create(
                 DatasetQuery,

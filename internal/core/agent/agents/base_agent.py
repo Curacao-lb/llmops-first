@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-import uuid
 from abc import abstractmethod
-from threading import Thread
-from typing import Optional, Any, Iterator
+from typing import Any
 
-from langchain_core.load import Serializable
-from langchain_core.runnables import Runnable, RunnableConfig
 from langchain_core.language_models import BaseLanguageModel
+from langchain_core.load import Serializable
 from langchain_core.messages import AnyMessage
+from langchain_core.runnables import Runnable
 from langgraph.graph.state import CompiledStateGraph
 from pydantic import PrivateAttr
 
-from internal.core.agent.entities.agent_entity import AgentConfig, AgentState
+from internal.core.agent.entities.agent_entity import AgentConfig
 
 # from internal.core.agent.entities.queue_entity import (
 #     AgentResult,
@@ -20,35 +18,40 @@ from internal.core.agent.entities.agent_entity import AgentConfig, AgentState
 #     QueueEvent,
 # )
 # from internal.core.language_model.entities.model_entity import BaseLanguageModel
-from internal.exception import FailException
-
-# from .agent_queue_manager import AgentQueueManager
+from .agent_queue_manager import AgentQueueManager
 
 
 class BaseAgent(Serializable, Runnable):
     """基于Runnable的基础智能体基类"""
 
-    name: Optional[str] = None
+    name: str | None = None
     llm: BaseLanguageModel
     agent_config: AgentConfig
     _agent: CompiledStateGraph = PrivateAttr(None)
-    # _agent_queue_manager: AgentQueueManager = PrivateAttr(None)
+    _agent_queue_manager: AgentQueueManager = PrivateAttr(None)
     collaborative_agent: dict[str, Any] = None
-    description: Optional[str] = None
-    zh_name: Optional[str] = None
+    description: str | None = None
+    zh_name: str | None = None
 
     # class Config:
     #     arbitrary_types_allowed = True
 
     def __init__(
-        self, llm: BaseLanguageModel, agent_config: AgentConfig, *args, **kwargs
+        self,
+        llm: BaseLanguageModel,
+        agent_config: AgentConfig,
+        *args,
+        **kwargs,
     ):
         # 构造函数，初始化智能体图结构程序
         super().__init__(*args, llm=llm, agent_config=agent_config, **kwargs)
         self._agent = self._build_agent()
-        # self._agent_queue_manager = AgentQueueManager(
-        #     user_id=agent_config.user_id, invoke_from=agent_config.invoke_from
-        # )
+        self._agent_queue_manager = AgentQueueManager(
+            user_id=agent_config.user_id,
+            # task_id=task_id,
+            invoke_from=agent_config.invoke_from,
+            # redis_client=redis_client,
+        )
 
     @abstractmethod
     def run(
@@ -166,9 +169,9 @@ class BaseAgent(Serializable, Runnable):
 
     #     yield from self._agent_queue_manager.listen(input["task_id"])
 
-    # @property
-    # def agent_queue_manager(self) -> AgentQueueManager:
-    #     return self._agent_queue_manager
+    @property
+    def agent_queue_manager(self) -> AgentQueueManager:
+        return self._agent_queue_manager
 
     # @property
     # def graph(self) -> CompiledStateGraph:

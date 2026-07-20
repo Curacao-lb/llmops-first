@@ -1,8 +1,8 @@
 from uuid import UUID
 
+from langchain_core.language_models import BaseLanguageModel
 from langchain_core.messages import AnyMessage
 from langchain_core.tools import BaseTool
-from langchain_core.language_models import BaseLanguageModel
 from langgraph.graph import MessagesState
 from pydantic import BaseModel, Field
 
@@ -123,8 +123,8 @@ class AgentConfig(BaseModel):
 class AgentState(MessagesState):
     """智能体状态类"""
 
-    # task_id: UUID
-    # iteration_count: int  # 迭代次数,默认0
+    task_id: UUID
+    iteration_count: int  # 迭代次数,默认0
     history: list[AnyMessage]  # 短期记忆(历史记录)
     long_term_memory: str  # 长期记忆
 

@@ -1,37 +1,29 @@
 # import asyncio
 import json
 import logging
+import uuid
 from typing import Any
 
-# import re
-# import time
-# import uuid
-# from typing import Literal
-
-from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import (
+    AnyMessage,
     HumanMessage,
-    SystemMessage,
     RemoveMessage,
+    SystemMessage,
     ToolMessage,
-    AIMessage,
 )
-from langchain_core.messages import messages_to_dict, AnyMessage, HumanMessage
-
+from langchain_core.runnables import RunnableConfig
 from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from internal.core.agent.entities.agent_entity import (
-    AgentState,
     AGENT_SYSTEM_PROMPT_TEMPLATE,
     DATASET_RETRIEVAL_TOOL_NAME,
-    MAX_ITERATION_RESPONSE,
+    AgentState,
 )
-
-# from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
-# from internal.core.language_model.entities.model_entity import ModelFeature
+from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
 from internal.exception import FailException
+
 from .base_agent import BaseAgent
 
 
@@ -261,7 +253,7 @@ class FunctionCallAgent(BaseAgent):
             # ModelFeature.TOOL_CALL in llm.features
             # and
             hasattr(llm, "bind_tools")
-            and callable(getattr(llm, "bind_tools"))
+            and callable(llm.bind_tools)
             and len(self.agent_config.tools) > 0
         ):
             llm = llm.bind_tools(self.agent_config.tools)
@@ -452,30 +444,30 @@ class FunctionCallAgent(BaseAgent):
             )
 
             # 判断执行工具的名字，提交不同事件，涵盖智能体动作以及知识库检索
-            # event = (
-            #     QueueEvent.AGENT_ACTION
-            #     if tool_call["name"] != DATASET_RETRIEVAL_TOOL_NAME
-            #     else QueueEvent.DATASET_RETRIEVAL
-            # )
-            # self.agent_queue_manager.publish(
-            #     state["task_id"],
-            #     AgentThought(
-            #         id=id,
-            #         task_id=state["task_id"],
-            #         event=event,
-            #         observation=json.dumps(tool_result, ensure_ascii=False),
-            #         tool=tool_call["name"],
-            #         tool_input=tool_call["args"],
-            #         latency=(time.perf_counter() - start_at),
-            #     ),
-            # )
+            event = (
+                QueueEvent.AGENT_ACTION
+                if tool_call["name"] != DATASET_RETRIEVAL_TOOL_NAME
+                else QueueEvent.DATASET_RETRIEVAL
+            )
+            self.agent_queue_manager.publish(
+                state["task_id"],
+                AgentThought(
+                    id=uuid.uuid4(),
+                    task_id=state["task_id"],
+                    event=event,
+                    observation=json.dumps(tool_result, ensure_ascii=False),
+                    tool=tool_call["name"],
+                    tool_input=tool_call["args"],
+                    latency=0,
+                ),
+            )
 
         return {
             "messages": messages,
-            # "iteration_count": state["iteration_count"],
-            # "task_id": state["task_id"],
-            # "history": state["history"],
-            # "long_term_memory": state["long_term_memory"],
+            "iteration_count": state["iteration_count"],
+            "task_id": state["task_id"],
+            "history": state["history"],
+            "long_term_memory": state["long_term_memory"],
         }
 
     @classmethod

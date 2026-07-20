@@ -8,7 +8,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, cast
 
-from flask import request
+from flask import current_app, request
 from flask_login import current_user, login_required
 from injector import inject
 
@@ -21,7 +21,7 @@ from internal.schema.app_schema import (
     GetPublishHistoriesWithPageResp,
     UpdateDebugConversationSummaryReq,
 )
-from internal.service import AppService
+from internal.service import AppService, RetrievalService
 from pkg.paginator import PageModel
 from pkg.response import (
     success_json,
@@ -36,11 +36,34 @@ class AppHandler:
     """应用控制器：处理应用的增删改查与会话调试相关接口。"""
 
     app_service: AppService
+    retrieval_service: RetrievalService
 
     @login_required
     def ping(self):
         """探活接口：返回固定的 pong 响应，用于联调验证服务是否正常。"""
-        return success_message("pong")
+        from internal.entity.dataset_entity import RetrievalSource, RetrievalStrategy
+
+        account = cast(Account, current_user)
+        dataset_retrieval = self.retrieval_service.create_langchain_tool_from_search(
+            flask_app=current_app,
+            dataset_ids=[
+                uuid.UUID("854ba4fa-51d9-40be-8f38-57d6e3e72ad4"),
+                uuid.UUID("9c58c437-0375-4fdc-b6e5-c1ee3387caf9"),
+            ],
+            account_id=cast(uuid.UUID, account.id),
+            retrieval_strategy=RetrievalStrategy.SEMANTIC,
+            k=10,
+            score=0.5,
+            retrival_source=RetrievalSource.HIT_TESTING,
+        )
+
+        print("工具名称：", dataset_retrieval.name)
+        print("工具描述：", dataset_retrieval.description)
+        print("工具参数：", dataset_retrieval.args)
+
+        content = dataset_retrieval.invoke({"query": "能简单介绍一下什么是LLMOps吗"})
+
+        return success_json({"content": content})
 
     @login_required
     def create_app(self):
