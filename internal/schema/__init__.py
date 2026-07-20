@@ -1,16 +1,15 @@
 # app package
-from .schema import ListField
-from .oauth_schema import AuthorizeReq, AuthorizeResp
 from .account_schema import (
     GetCurrentUserResp,
-    UpdatePasswordReq,
-    UpdateNameReq,
-    UpdateAvatarReq,
     RegisterReq,
     SendVerificationCodeReq,
+    UpdateAvatarReq,
+    UpdateNameReq,
+    UpdatePasswordReq,
 )
-
 from .auth_schema import PasswordLoginReq, PasswordLoginResp
+from .oauth_schema import AuthorizeReq, AuthorizeResp
+from .schema import ListField
 
 __all___ = [
     "ListField",
@@ -24,4 +23,5 @@ __all___ = [
     "SendVerificationCodeReq",
     "PasswordLoginReq",
     "PasswordLoginResp",
+    "DebugChatReq",
 ]

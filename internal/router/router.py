@@ -113,6 +113,13 @@ class Router:
             view_func=self.app_handler.delete_debug_conversation,
         )
 
+        # 应用调试对话
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/completions",
+            methods=["POST"],
+            view_func=self.app_handler.debug_chat,
+        )
+
         # 知识库模块
         bp.add_url_rule(
             "/datasets",

@@ -1,4 +1,5 @@
 from .account_service import AccountService
+from .agent_service import AgentService
 from .api_tool_service import ApiToolService
 from .app_config_service import AppConfigService
 from .app_service import AppService
@@ -31,4 +32,5 @@ __all__ = [
     # "ApiKeyService",
     "OAuthService",
     "AppConfigService",
+    "AgentService",
 ]

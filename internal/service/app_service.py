@@ -1,15 +1,28 @@
+import json
+import time
 import uuid
+from collections.abc import Generator
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 from uuid import UUID
 
+from flask import current_app
 from injector import inject
+from langchain_core.messages import HumanMessage
+from langchain_openai import ChatOpenAI
 from sqlalchemy import desc, func
 
+from internal.core.agent.agents.function_call_agent import FunctionCallAgent
+from internal.core.agent.entities.agent_entity import AgentConfig
+from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
+from internal.core.memory import TokenBufferMemory
+from internal.core.tools.api_tools.entites.tool_entity import ToolEntity
+from internal.core.tools.api_tools.providers import ApiProviderManager
 from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
 from internal.entity.app_entity import DEFAULT_APP_CONFIG, AppConfigType, AppStatus
-from internal.entity.dataset_entity import RetrievalStrategy
+from internal.entity.conversation_entity import InvokeFrom, MessageStatus
+from internal.entity.dataset_entity import RetrievalSource, RetrievalStrategy
 from internal.exception import (
     FailException,
     NotFoundException,
@@ -27,8 +40,10 @@ from internal.model import (
     Conversation,
     Dataset,
 )
+from internal.model.conversation import Message
 from internal.schema.app_schema import (
     CreateAppReq,
+    DebugChatReq,
     GetAppsWithPageReq,
     GetPublishHistoriesWithPageReq,
 )
@@ -37,8 +52,7 @@ from pkg.sqlalchemy import SQLAlchemy
 
 from .app_config_service import AppConfigService
 from .base_service import BaseService
-
-# from internal.entity.audio_entity import ALLOWED_AUDIO_VOICES
+from .retrieval_service import RetrievalService
 
 
 @inject
@@ -50,6 +64,9 @@ class AppService(BaseService):
     app_config_service: AppConfigService
     # language_model_manager: LanguageModelManager
     builtin_provider_manager: BuiltinProviderManager
+    api_provider_manager: ApiProviderManager
+    retrieval_service: RetrievalService
+    # agent_service: AgentService
 
     def get_apps_with_page(
         self, req: GetAppsWithPageReq, account: Account
@@ -851,3 +868,322 @@ class AppService(BaseService):
         self.update(app, debug_conversation_id=None)
 
         return app
+
+    def debug_chat(
+        self, app_id: UUID, req: DebugChatReq, account: Account
+    ) -> Generator:
+        """根据传递的应用id+提问query向特定的应用发起会话调试"""
+
+        # 1.获取应用信息并校验权限
+        app = self.get_app(app_id, account)
+
+        # 2.获取应用的最新草稿配置信息
+        draft_app_config = self.get_draft_app_config(app_id, account)
+
+        # 3.获取当前应用的调试会话信息
+        debug_conversation = app.debug_conversation
+
+        model_config = draft_app_config["model_config"]
+        llm = ChatOpenAI(
+            model=model_config["model"],
+            api_key=model_config.get("apiKey"),
+            base_url=model_config.get("baseUrl"),
+            **model_config["parameters"],
+        )
+
+        # 实例化 tokenBufferMemory用于提取短期记忆
+        token_buffer_memory = TokenBufferMemory(
+            db=self.db, conversation=debug_conversation, model_instance=llm
+        )
+
+        history = token_buffer_memory.get_history_prompt_messages(
+            message_limit=draft_app_config["dialog_round"]
+        )
+
+        # 将草稿配置中的tools转换成为Langchain工具
+        tools = []
+        for tool in draft_app_config["tools"]:
+            # 根据不同的工具类型执行不同的操作
+            if tool["type"] == "builtin_tool":
+                # 内置工具，通过builtin_provider_manager获取工具实例
+                builtin_tool = self.builtin_provider_manager.get_tool(
+                    tool["provider"]["id"], tool["tool"]["name"]
+                )
+                if not builtin_tool:
+                    continue
+                tools.append(builtin_tool(**tool["tool"]["params"]))
+            else:
+                # API工具，首先根据id找到ApiTool记录，然后创建实例
+                api_tool = (
+                    self.db.session.query(ApiTool)
+                    .filter(
+                        ApiTool.id == tool["tool"]["id"],
+                        ApiTool.account_id == account.id,
+                    )
+                    .one_or_none()
+                )
+                if not api_tool:
+                    continue
+                tools.append(
+                    self.api_provider_manager.get_tool(
+                        ToolEntity(
+                            id=str(api_tool.id),
+                            name=api_tool.name,
+                            url=api_tool.url,
+                            method=api_tool.method,
+                            description=api_tool.description,
+                            headers=api_tool.provider.headers,
+                            parameters=api_tool.parameters,
+                        )
+                    )
+                )
+
+        # 10.检测是否关联了知识库
+        if draft_app_config["datasets"]:
+            # 11.构建Langchain知识库检索工具
+            dataset_retrieval = (
+                self.retrieval_service.create_langchain_tool_from_search(
+                    flask_app=current_app._get_current_object(),
+                    dataset_ids=[
+                        dataset["id"] for dataset in draft_app_config["datasets"]
+                    ],
+                    account_id=app.account_id,
+                    retrival_source=RetrievalSource.APP,
+                    **draft_app_config["retrieval_config"],
+                )
+            )
+            tools.append(dataset_retrieval)
+
+        agent_config = AgentConfig(
+            user_id=account.id,
+            invoke_from=InvokeFrom.DEBUGGER,
+            llm=llm,
+            preset_prompt=draft_app_config["preset_prompt"],
+            enable_long_term_memory=draft_app_config["long_term_memory"]["enable"],
+            tools=tools,
+        )
+        agent = FunctionCallAgent(
+            llm=llm,
+            agent_config=agent_config,
+            name=app.en_name or app.name,
+        )
+
+        task_id = uuid.uuid4()
+        human_content: str | list[dict[str, Any]] = req.query.data
+        if (
+            draft_app_config["multimodal"]["enable"]
+            and len(req.image_urls.data) > 0
+        ):
+            human_content = [
+                {"type": "text", "text": req.query.data},
+                *[
+                    {"type": "image_url", "image_url": {"url": image_url}}
+                    for image_url in req.image_urls.data
+                ],
+            ]
+
+        # Agent构建成功后再创建消息，避免配置错误留下空消息
+        message = self.create(
+            Message,
+            app_id=app_id,
+            conversation_id=debug_conversation.id,
+            invoke_from=InvokeFrom.DEBUGGER,
+            created_by=account.id,
+            query=req.query.data,
+            image_urls=req.image_urls.data,
+            status=MessageStatus.NORMAL,
+        )
+
+        answer = ""
+        error = ""
+        status = MessageStatus.STOP
+        start_at = time.perf_counter()
+
+        try:
+            for agent_queue_event in agent.stream(
+                {
+                    "messages": [HumanMessage(content=human_content)],
+                    "task_id": task_id,
+                    "iteration_count": 0,
+                    "history": history,
+                    "long_term_memory": debug_conversation.summary,
+                }
+            ):
+                if agent_queue_event.event == QueueEvent.AGENT_MESSAGE:
+                    answer += agent_queue_event.answer
+                elif agent_queue_event.event == QueueEvent.AGENT_END:
+                    status = MessageStatus.NORMAL
+                elif agent_queue_event.event == QueueEvent.ERROR:
+                    status = MessageStatus.ERROR
+                    error = agent_queue_event.observation
+                elif agent_queue_event.event == QueueEvent.TIMEOUT:
+                    status = MessageStatus.TIMEOUT
+
+                event = (
+                    agent_queue_event.event.value
+                    if isinstance(agent_queue_event.event, QueueEvent)
+                    else agent_queue_event.event
+                )
+                data = {
+                    "id": str(agent_queue_event.id),
+                    "conversation_id": str(debug_conversation.id),
+                    "message_id": str(message.id),
+                    "task_id": str(agent_queue_event.task_id),
+                    "event": event,
+                    "thought": agent_queue_event.thought,
+                    "observation": agent_queue_event.observation,
+                    "tool": agent_queue_event.tool,
+                    "tool_input": agent_queue_event.tool_input,
+                    "answer": agent_queue_event.answer,
+                    "latency": agent_queue_event.latency,
+                }
+                yield f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+        except Exception as exc:
+            status = MessageStatus.ERROR
+            error = str(exc)
+            error_event = AgentThought(
+                id=uuid.uuid4(),
+                task_id=task_id,
+                event=QueueEvent.ERROR,
+                observation=error,
+            )
+            data = {
+                "id": str(error_event.id),
+                "conversation_id": str(debug_conversation.id),
+                "message_id": str(message.id),
+                "task_id": str(task_id),
+                "event": QueueEvent.ERROR.value,
+                "thought": "",
+                "observation": error,
+                "tool": "",
+                "tool_input": {},
+                "answer": "",
+                "latency": time.perf_counter() - start_at,
+            }
+            yield (
+                f"event: {QueueEvent.ERROR.value}\n"
+                f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+            )
+        finally:
+            self.update(
+                message,
+                answer=answer,
+                status=status,
+                error=error,
+                latency=time.perf_counter() - start_at,
+            )
+
+        # try:
+        #     agent, history, llm = self.agent_service.create_agent(
+        #         draft_app_config, app, InvokeFrom.DEBUGGER, debug_conversation
+        #     )
+
+        #     for agent_thought in agent.stream(
+        #         {
+        #             "messages": [
+        #                 llm.convert_to_human_message(
+        #                     req.query.data,
+        #                     req.image_urls.data,
+        #                     draft_app_config["multimodal"]["enable"],
+        #                 )
+        #             ],
+        #             "history": history,
+        #             "long_term_memory": debug_conversation.summary,
+        #         }
+        #     ):
+        #         event_id = str(agent_thought.id)
+
+        #         if agent_thought.event != QueueEvent.PING:
+        #             if agent_thought.event == QueueEvent.AGENT_MESSAGE:
+        #                 if event_id not in agent_thoughts:
+        #                     # 初始化智能体消息
+        #                     agent_thoughts[event_id] = agent_thought
+        #                 else:
+        #                     # 叠加智能体消息
+        #                     agent_thoughts[event_id] = agent_thoughts[
+        #                         event_id
+        #                     ].model_copy(
+        #                         update={
+        #                             "thought": agent_thoughts[event_id].thought
+        #                             + agent_thought.thought,
+        #                             "message": agent_thought.message,
+        #                             "message_token_count": agent_thought.message_token_count,
+        #                             "message_unit_price": agent_thought.message_unit_price,
+        #                             "message_price_unit": agent_thought.message_price_unit,
+        #                             "answer": agent_thoughts[event_id].answer
+        #                             + agent_thought.answer,
+        #                             "answer_token_count": agent_thought.answer_token_count,
+        #                             "answer_unit_price": agent_thought.answer_unit_price,
+        #                             "answer_price_unit": agent_thought.answer_price_unit,
+        #                             "total_token_count": agent_thought.total_token_count,
+        #                             "total_price": agent_thought.total_price,
+        #                             "latency": agent_thought.latency,
+        #                         }
+        #                     )
+        #             else:
+        #                 agent_thoughts[event_id] = agent_thought
+
+        #         data = {
+        #             **agent_thought.model_dump(
+        #                 include={
+        #                     "event",
+        #                     "thought",
+        #                     "observation",
+        #                     "tool",
+        #                     "tool_input",
+        #                     "answer",
+        #                     "total_token_count",
+        #                     "total_price",
+        #                     "latency",
+        #                 }
+        #             ),
+        #             "id": event_id,
+        #             "conversation_id": str(debug_conversation.id),
+        #             "message_id": str(message.id),
+        #             "task_id": str(agent_thought.task_id),
+        #         }
+        #         yield f"event: {agent_thought.event}\ndata:{json.dumps(data)}\n\n"
+        # except Exception as e:
+        #     logging.exception(f"执行出错, 错误信息: {str(e)}")
+        #     agent_thought = AgentThought(
+        #         id=uuid.uuid4(),
+        #         task_id=uuid.uuid4(),
+        #         event=QueueEvent.AGENT_MESSAGE,
+        #         observation="",
+        #         tool="",
+        #         tool_input={},
+        #         message=[],
+        #         answer="智能体校验失败,请检查配置后重试。",
+        #         thought="智能体校验失败,请检查配置后重试。",
+        #     )
+        #     agent_thoughts[agent_thought.id] = agent_thought
+        #     data = {
+        #         **agent_thought.model_dump(
+        #             include={
+        #                 "event",
+        #                 "thought",
+        #                 "observation",
+        #                 "tool",
+        #                 "tool_input",
+        #                 "answer",
+        #                 "total_token_count",
+        #                 "total_price",
+        #                 "latency",
+        #             }
+        #         ),
+        #         "id": str(agent_thought.id),
+        #         "conversation_id": str(debug_conversation.id),
+        #         "message_id": str(message.id),
+        #         "task_id": str(agent_thought.task_id),
+        #     }
+        #     yield f"event: {QueueEvent.AGENT_MESSAGE.value}\ndata:{json.dumps(data)}\n\n"
+
+        # 添加到数据库
+        # self.conversation_service.save_agent_thoughts(
+        #     account_id=account.id,
+        #     app_id=app.id,
+        #     app_config=draft_app_config,
+        #     conversation_id=debug_conversation.id,
+        #     message_id=message.id,
+        #     agent_thoughts=[agent_thought for agent_thought in agent_thoughts.values()],
+        # )

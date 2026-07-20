@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import uuid
 from abc import abstractmethod
+from collections.abc import Iterator
+from threading import Thread
 from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel
@@ -11,6 +14,7 @@ from langgraph.graph.state import CompiledStateGraph
 from pydantic import PrivateAttr
 
 from internal.core.agent.entities.agent_entity import AgentConfig
+from internal.exception import FailException
 
 # from internal.core.agent.entities.queue_entity import (
 #     AgentResult,
@@ -152,22 +156,30 @@ class BaseAgent(Serializable, Runnable):
 
     #     return agent_result
 
-    # def stream(
-    #     self,
-    #     input: AgentState,
-    #     config: Optional[RunnableConfig] = None,
-    #     **kwargs: Optional[Any],
-    # ) -> Iterator[AgentThought]:
-    #     if not self._agent:
-    #         raise FailException("智能体未成功构建，请核实后尝试")
+    def stream(
+        self,
+        input: dict[str, Any],
+        config: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> Iterator[Any]:
+        """在线程中执行Agent图，并通过队列返回流式事件。"""
+        if not self._agent:
+            raise FailException("智能体未成功构建，请核实后尝试")
 
-    #     input["task_id"] = input.get("task_id", uuid.uuid4())
-    #     input["history"] = input.get("history", [])
-    #     input["iteration_count"] = input.get("iteration_count", 0)
-    #     thread = Thread(target=self._agent.invoke, args=(input,))
-    #     thread.start()
+        input["task_id"] = input.get("task_id", uuid.uuid4())
+        input["history"] = input.get("history", [])
+        input["iteration_count"] = input.get("iteration_count", 0)
+        task_id = input["task_id"]
 
-    #     yield from self._agent_queue_manager.listen(input["task_id"])
+        def invoke_agent() -> None:
+            try:
+                self._agent.invoke(input, config=config, **kwargs)
+            except Exception as exc:
+                self._agent_queue_manager.publish_error(task_id, exc)
+
+        thread = Thread(target=invoke_agent, daemon=True)
+        thread.start()
+        yield from self._agent_queue_manager.listen(task_id)
 
     @property
     def agent_queue_manager(self) -> AgentQueueManager:

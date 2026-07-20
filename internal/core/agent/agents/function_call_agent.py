@@ -1,6 +1,7 @@
 # import asyncio
 import json
 import logging
+import time
 import uuid
 from typing import Any
 
@@ -159,15 +160,15 @@ class FunctionCallAgent(BaseAgent):
         # 1.根据传递的智能体配置 判断是否需要找回长期记忆
         if self.agent_config.enable_long_term_memory:
             long_term_memory = state["long_term_memory"]
-            # self.agent_queue_manager.publish(
-            #     state["task_id"],
-            #     AgentThought(
-            #         id=uuid.uuid4(),
-            #         task_id=state["task_id"],
-            #         event=QueueEvent.LONG_TERM_MEMORY_RECALL,
-            #         observation=long_term_memory,
-            #     ),
-            # )
+            self.agent_queue_manager.publish(
+                state["task_id"],
+                AgentThought(
+                    id=uuid.uuid4(),
+                    task_id=state["task_id"],
+                    event=QueueEvent.LONG_TERM_MEMORY_RECALL,
+                    observation=long_term_memory,
+                ),
+            )
 
         # 2.构建预设消息列表，并将 preset_prompt + long_term_memory 填充到系统消息中
         preset_messages = [
@@ -261,6 +262,8 @@ class FunctionCallAgent(BaseAgent):
         # 流式调用LLM输出对应内容
         gathered = None
         is_first_chunk = True
+        event_id = uuid.uuid4()
+        start_at = time.perf_counter()
         # generation_type = ""
         try:
             for chunk in llm.stream(state["messages"]):
@@ -286,6 +289,24 @@ class FunctionCallAgent(BaseAgent):
                     is_first_chunk = False
                 else:
                     gathered += chunk
+
+                if chunk.content:
+                    content = (
+                        chunk.content
+                        if isinstance(chunk.content, str)
+                        else json.dumps(chunk.content, ensure_ascii=False)
+                    )
+                    self.agent_queue_manager.publish(
+                        state["task_id"],
+                        AgentThought(
+                            id=event_id,
+                            task_id=state["task_id"],
+                            event=QueueEvent.AGENT_MESSAGE,
+                            thought=content,
+                            answer=content,
+                            latency=time.perf_counter() - start_at,
+                        ),
+                    )
 
                 # # 检测生成类型是工具参数还是文本生成
                 # if not generation_type:
@@ -404,6 +425,28 @@ class FunctionCallAgent(BaseAgent):
         #     "history": state["history"],
         #     "long_term_memory": state["long_term_memory"],
         # }
+
+        if gathered.tool_calls:
+            self.agent_queue_manager.publish(
+                state["task_id"],
+                AgentThought(
+                    id=event_id,
+                    task_id=state["task_id"],
+                    event=QueueEvent.AGENT_THOUGHT,
+                    thought=json.dumps(gathered.tool_calls, ensure_ascii=False),
+                    latency=time.perf_counter() - start_at,
+                ),
+            )
+        else:
+            self.agent_queue_manager.publish(
+                state["task_id"],
+                AgentThought(
+                    id=uuid.uuid4(),
+                    task_id=state["task_id"],
+                    event=QueueEvent.AGENT_END,
+                    latency=time.perf_counter() - start_at,
+                ),
+            )
 
         return {"messages": [gathered]}
 

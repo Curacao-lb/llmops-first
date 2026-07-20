@@ -76,7 +76,7 @@ class AppConfigService(BaseService):
 
         # 将数据转换成字典后返回
         return self._process_and_transformer_app_config(
-            # validate_model_config,
+            validate_model_config,
             tools,
             # workflows,
             datasets,
@@ -256,7 +256,7 @@ class AppConfigService(BaseService):
     @classmethod
     def _process_and_transformer_app_config(
         cls,
-        # model_config: dict[str, Any],
+        model_config: dict[str, Any],
         tools: list[dict],
         # workflows: list[dict],
         datasets: list[dict],
@@ -266,7 +266,7 @@ class AppConfigService(BaseService):
         """根据传递的插件列表、工作流列表、知识库列表以及应用配置创建字典信息"""
         return {
             "id": str(app_config.id),
-            # "model_config": model_config,
+            "model_config": model_config,
             "dialog_round": app_config.dialog_round,
             "preset_prompt": app_config.preset_prompt,
             "tools": tools,

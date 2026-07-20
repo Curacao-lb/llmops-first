@@ -15,6 +15,7 @@ from injector import inject
 from internal.model import Account
 from internal.schema.app_schema import (
     CreateAppReq,
+    DebugChatReq,
     FallbackHistoryToDraftReq,
     GetAppResp,
     GetPublishHistoriesWithPageReq,
@@ -28,6 +29,7 @@ from pkg.response import (
     success_message,
     validate_error_json,
 )
+from pkg.response.response import compact_generate_response
 
 
 @inject
@@ -202,3 +204,17 @@ class AppHandler:
             account=cast(Account, current_user),
         )
         return success_message("清空应用调试会话记录成功")
+
+    @login_required
+    def debug_chat(self, app_id: uuid.UUID):
+        """根据传递的应用id+query，发起调试对话"""
+        # 1.提取数据并校验数据
+        req = DebugChatReq()
+        if not req.validate():
+            return validate_error_json(req.errors)
+
+        # 2.调用服务发起会话调试
+        response = self.app_service.debug_chat(
+            app_id, req, account=cast(Account, current_user)
+        )
+        return compact_generate_response(response)

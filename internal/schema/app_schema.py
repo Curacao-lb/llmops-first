@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 from uuid import UUID
 
 from flask_wtf import FlaskForm
@@ -6,6 +7,7 @@ from wtforms import StringField
 from wtforms.validators import URL, DataRequired, Length, Optional, ValidationError
 
 from internal.model import App, AppConfigVersion
+from internal.schema.schema import ListField
 from pkg.paginator import PaginatorReq
 
 
@@ -157,3 +159,31 @@ class UpdateDebugConversationSummaryReq(FlaskForm):
     """更新应用调试会话长期记忆请求体"""
 
     summary = StringField("summary", default="")
+
+
+class DebugChatReq(FlaskForm):
+    """应用调试会话请求结构体"""
+
+    image_urls = ListField("image_urls", default=[])
+    query = StringField(
+        "query",
+        validators=[
+            DataRequired("用户提问query不能为空"),
+        ],
+    )
+
+    def validate_image_urls(self, field: ListField) -> None:
+        """校验传递的图片URL链接列表"""
+        # 校验数据类型，如果不是列表则设置默认值为空列表
+        if not isinstance(field.data, list):
+            field.data = []
+
+        # 校验数据的长度，最多不能超过5条URL记录
+        if len(field.data) > 5:
+            raise ValidationError("上传的文件数量不能超过5，请核实后重试")
+
+        # 循环校验image_url是否为URL
+        for image_url in field.data:
+            result = urlparse(image_url)
+            if not all([result.scheme, result.netloc]):
+                raise ValidationError("上传的文件URL地址格式错误，请核实后重试")
