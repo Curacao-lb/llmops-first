@@ -171,6 +171,10 @@ class BaseAgent(Serializable, Runnable):
         input["iteration_count"] = input.get("iteration_count", 0)
         task_id = input["task_id"]
 
+        # 在启动工作线程之前先创建好队列，避免工作线程(publish)与监听线程(listen)
+        # 并发懒创建出两个不同的队列，导致最早发布的事件(如长期记忆召回)丢失
+        self._agent_queue_manager.queue(task_id)
+
         def invoke_agent() -> None:
             try:
                 self._agent.invoke(input, config=config, **kwargs)

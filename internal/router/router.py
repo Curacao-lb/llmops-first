@@ -115,7 +115,7 @@ class Router:
 
         # 应用调试对话
         bp.add_url_rule(
-            "/apps/<uuid:app_id>/completions",
+            "/apps/<uuid:app_id>/conversations",
             methods=["POST"],
             view_func=self.app_handler.debug_chat,
         )

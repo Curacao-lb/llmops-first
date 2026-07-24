@@ -65,6 +65,7 @@ class Conversation(BaseModel):
 
     @property
     def is_new(self) -> bool:
+        """只读属性，用于判断该会话是否是第一次创建"""
         message_count = (
             db.session.query(func.count(Message.id))
             .filter(

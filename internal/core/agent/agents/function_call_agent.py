@@ -1,16 +1,20 @@
-# import asyncio
+import asyncio
 import json
 import logging
 import time
 import uuid
-from typing import Any
+from typing import Any, cast
 
+from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import (
+    AIMessage,
+    AIMessageChunk,
     AnyMessage,
     HumanMessage,
     RemoveMessage,
     SystemMessage,
     ToolMessage,
+    messages_to_dict,
 )
 from langchain_core.runnables import RunnableConfig
 from langgraph.constants import END
@@ -20,6 +24,7 @@ from langgraph.graph.state import CompiledStateGraph
 from internal.core.agent.entities.agent_entity import (
     AGENT_SYSTEM_PROMPT_TEMPLATE,
     DATASET_RETRIEVAL_TOOL_NAME,
+    MAX_ITERATION_RESPONSE,
     AgentState,
 )
 from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
@@ -34,7 +39,7 @@ class FunctionCallAgent(BaseAgent):
     def run(
         self,
         query: str,  # 用户提问的原始问题
-        history: list[AnyMessage] = None,  # 短期记忆
+        history: list[AnyMessage] | None = None,  # 短期记忆
         long_term_memory: str = "",  # 长期记忆
     ):
         """运行智能体应用，并使用yield关键字返回对应数据"""
@@ -48,6 +53,8 @@ class FunctionCallAgent(BaseAgent):
                 "messages": [HumanMessage(content=query)],
                 "history": history,
                 "long_term_memory": long_term_memory,
+                "task_id": uuid.uuid4(),
+                "iteration_count": 0,
             }
         )
 
@@ -154,7 +161,7 @@ class FunctionCallAgent(BaseAgent):
     #         "long_term_memory": state["long_term_memory"],
     #     }
 
-    def _long_term_memory_recall_node(self, state: AgentState) -> AgentState:
+    def _long_term_memory_recall_node(self, state: AgentState) -> dict[str, Any]:
         """长期记忆召回节点"""
         long_term_memory = ""
         # 1.根据传递的智能体配置 判断是否需要找回长期记忆
@@ -171,7 +178,7 @@ class FunctionCallAgent(BaseAgent):
             )
 
         # 2.构建预设消息列表，并将 preset_prompt + long_term_memory 填充到系统消息中
-        preset_messages = [
+        preset_messages: list[AnyMessage] = [
             SystemMessage(
                 AGENT_SYSTEM_PROMPT_TEMPLATE.format(
                     preset_prompt=self.agent_config.preset_prompt,
@@ -201,6 +208,8 @@ class FunctionCallAgent(BaseAgent):
             preset_messages.extend(history)
         # 6.拼接当前用户的提问信息
         human_message = state["messages"][-1]
+        # 消息进入state后会由langgraph的add_messages为其分配id，此处必然存在
+        assert human_message.id is not None
         preset_messages.append(HumanMessage(human_message.content))
 
         return {
@@ -212,83 +221,71 @@ class FunctionCallAgent(BaseAgent):
             # "long_term_memory": state["long_term_memory"],
         }
 
-    def _llm_node(self, state: AgentState) -> AgentState:
+    def _llm_node(self, state: AgentState) -> dict[str, Any]:
         """大语言模型节点"""
         # 检测当前Agent迭代次数是否符合需求
-        # if state["iteration_count"] > self.agent_config.max_iteration_count:
-        #     self.agent_queue_manager.publish(
-        #         state["task_id"],
-        #         AgentThought(
-        #             id=uuid.uuid4(),
-        #             task_id=state["task_id"],
-        #             event=QueueEvent.AGENT_MESSAGE,
-        #             thought=MAX_ITERATION_RESPONSE,
-        #             message=messages_to_dict(state["messages"]),
-        #             answer=MAX_ITERATION_RESPONSE,
-        #             latency=0,
-        #         ),
-        #     )
-        #     self.agent_queue_manager.publish(
-        #         state["task_id"],
-        #         AgentThought(
-        #             id=uuid.uuid4(),
-        #             task_id=state["task_id"],
-        #             event=QueueEvent.AGENT_END,
-        #         ),
-        #     )
-        #     return {
-        #         "messages": [AIMessage(MAX_ITERATION_RESPONSE)],
-        #         "task_id": state["task_id"],
-        #         "iteration_count": state["iteration_count"],
-        #         "history": state["history"],
-        #         "long_term_memory": state["long_term_memory"],
-        #     }
+        if state["iteration_count"] > self.agent_config.max_iteration_count:
+            self.agent_queue_manager.publish(
+                state["task_id"],
+                AgentThought(
+                    id=uuid.uuid4(),
+                    task_id=state["task_id"],
+                    event=QueueEvent.AGENT_MESSAGE,
+                    thought=MAX_ITERATION_RESPONSE,
+                    message=messages_to_dict(state["messages"]),
+                    answer=MAX_ITERATION_RESPONSE,
+                    latency=0,
+                ),
+            )
+            self.agent_queue_manager.publish(
+                state["task_id"],
+                AgentThought(
+                    id=uuid.uuid4(),
+                    task_id=state["task_id"],
+                    event=QueueEvent.AGENT_END,
+                ),
+            )
+            return {
+                "messages": [AIMessage(MAX_ITERATION_RESPONSE)],
+                "task_id": state["task_id"],
+                "iteration_count": state["iteration_count"],
+                "history": state["history"],
+                "long_term_memory": state["long_term_memory"],
+            }
 
         # 1.从智能体配置中提取大语言模型
         llm = self.agent_config.llm
-        # id = uuid.uuid4()
-        # start_at = time.perf_counter()
 
-        # 2.检测大语言模型实例是否有bind_tools方法，如果没有则不绑定，如果有还需要检测tools是否为空，不为空则绑定
-        if (
-            # ModelFeature.TOOL_CALL in llm.features
-            # and
-            hasattr(llm, "bind_tools")
-            and callable(llm.bind_tools)
-            and len(self.agent_config.tools) > 0
-        ):
+        # 2.检测大语言模型是否为聊天模型(支持bind_tools)，并且工具列表不为空时才绑定工具
+        if isinstance(llm, BaseChatModel) and len(self.agent_config.tools) > 0:
             llm = llm.bind_tools(self.agent_config.tools)
 
         # 流式调用LLM输出对应内容
-        gathered = None
-        is_first_chunk = True
+        gathered: AIMessageChunk | None = None
         event_id = uuid.uuid4()
         start_at = time.perf_counter()
         # generation_type = ""
         try:
-            for chunk in llm.stream(state["messages"]):
+            for raw_chunk in llm.stream(state["messages"]):
+                chunk = cast(AIMessageChunk, raw_chunk)
                 # 修复第三方api中转导致数据为None
-                # if chunk.usage_metadata is not None:
-                #     chunk.usage_metadata["input_tokens"] = (
-                #         0
-                #         if chunk.usage_metadata["input_tokens"] is None
-                #         else chunk.usage_metadata["input_tokens"]
-                #     )
-                #     chunk.usage_metadata["output_tokens"] = (
-                #         0
-                #         if chunk.usage_metadata["output_tokens"] is None
-                #         else chunk.usage_metadata["output_tokens"]
-                #     )
-                #     chunk.usage_metadata["total_tokens"] = (
-                #         0
-                #         if chunk.usage_metadata["total_tokens"] is None
-                #         else chunk.usage_metadata["total_tokens"]
-                #     )
-                if is_first_chunk:
-                    gathered = chunk
-                    is_first_chunk = False
-                else:
-                    gathered += chunk
+                if chunk.usage_metadata is not None:
+                    chunk.usage_metadata["input_tokens"] = (
+                        0
+                        if chunk.usage_metadata["input_tokens"] is None
+                        else chunk.usage_metadata["input_tokens"]
+                    )
+                    chunk.usage_metadata["output_tokens"] = (
+                        0
+                        if chunk.usage_metadata["output_tokens"] is None
+                        else chunk.usage_metadata["output_tokens"]
+                    )
+                    chunk.usage_metadata["total_tokens"] = (
+                        0
+                        if chunk.usage_metadata["total_tokens"] is None
+                        else chunk.usage_metadata["total_tokens"]
+                    )
+                gathered = chunk if gathered is None else gathered + chunk
 
                 if chunk.content:
                     content = (
@@ -426,6 +423,7 @@ class FunctionCallAgent(BaseAgent):
         #     "long_term_memory": state["long_term_memory"],
         # }
 
+        assert gathered is not None
         if gathered.tool_calls:
             self.agent_queue_manager.publish(
                 state["task_id"],
@@ -448,7 +446,10 @@ class FunctionCallAgent(BaseAgent):
                 ),
             )
 
-        return {"messages": [gathered]}
+        return {
+            "messages": [gathered],
+            "iteration_count": state["iteration_count"] + 1,
+        }
 
     def _tools_node(self, state: AgentState) -> AgentState:
         """工具执行节点"""
@@ -456,26 +457,25 @@ class FunctionCallAgent(BaseAgent):
         tools_by_name = {tool.name: tool for tool in self.agent_config.tools}
 
         # 2.提取消息中的工具调用参数
-        tool_calls = state["messages"][-1].tool_calls
+        last_message = state["messages"][-1]
+        tool_calls = (
+            last_message.tool_calls if isinstance(last_message, AIMessage) else []
+        )
 
         # 3.循环执行工具组装工具消息
         messages = []
         for tool_call in tool_calls:
-            # 创建智能体动作事件id并记录开始时间
-            # id = uuid.uuid4()
-            # start_at = time.perf_counter()
-
             try:
                 # 获取工具并调用工具
                 tool = tools_by_name[tool_call["name"]]
-                # try:
-                tool_result = tool.invoke(tool_call["args"])
-                # except NotImplementedError as e:
-                #     tool_result = asyncio.run(tool.ainvoke(tool_call["args"]))
+                try:
+                    tool_result = tool.invoke(tool_call["args"])
+                except NotImplementedError:
+                    tool_result = asyncio.run(tool.ainvoke(tool_call["args"]))
             except Exception as e:
                 # 添加错误工具信息
                 tool_result = f"工具执行出错: {str(e)}"
-                # logging.exception(f"工具执行出错, 错误信息: {str(e)}")
+                logging.exception("工具执行出错, 错误信息: %(error)s", {"error": str(e)})
 
             # 将工具消息添加到消息列表中
             messages.append(
@@ -520,7 +520,7 @@ class FunctionCallAgent(BaseAgent):
         ai_message = messages[-1]
 
         # 检测是否存在tool_calls参数，如果存在则执行tools节点，否则结束
-        if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
+        if isinstance(ai_message, AIMessage) and len(ai_message.tool_calls) > 0:
             return "tools"
         return END
 

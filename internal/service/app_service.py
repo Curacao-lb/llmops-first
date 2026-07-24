@@ -1,4 +1,5 @@
 import json
+import re
 import time
 import uuid
 from collections.abc import Generator
@@ -40,7 +41,7 @@ from internal.model import (
     Conversation,
     Dataset,
 )
-from internal.model.conversation import Message
+from internal.model.conversation import Message, MessageAgentThought
 from internal.schema.app_schema import (
     CreateAppReq,
     DebugChatReq,
@@ -52,6 +53,7 @@ from pkg.sqlalchemy import SQLAlchemy
 
 from .app_config_service import AppConfigService
 from .base_service import BaseService
+from .conversation_service import ConversationService
 from .retrieval_service import RetrievalService
 
 
@@ -67,6 +69,7 @@ class AppService(BaseService):
     api_provider_manager: ApiProviderManager
     retrieval_service: RetrievalService
     # agent_service: AgentService
+    conversation_service: ConversationService
 
     def get_apps_with_page(
         self, req: GetAppsWithPageReq, account: Account
@@ -880,8 +883,51 @@ class AppService(BaseService):
         # 2.获取应用的最新草稿配置信息
         draft_app_config = self.get_draft_app_config(app_id, account)
 
+        review_config = draft_app_config["review_config"]
+
         # 3.获取当前应用的调试会话信息
         debug_conversation = app.debug_conversation
+        task_id = uuid.uuid4()
+
+        # 4.检测是否开启输入审核，命中敏感词时直接返回预设回复
+        if review_config["enable"] and review_config["inputs_config"]["enable"]:
+            normalized_query = req.query.data.casefold()
+            contain_keyword = any(
+                keyword and keyword.casefold() in normalized_query
+                for keyword in review_config["keywords"]
+            )
+            if contain_keyword:
+                preset_response = review_config["inputs_config"]["preset_response"]
+                message = self.create(
+                    Message,
+                    app_id=app_id,
+                    conversation_id=debug_conversation.id,
+                    invoke_from=InvokeFrom.DEBUGGER,
+                    created_by=account.id,
+                    query=req.query.data,
+                    image_urls=req.image_urls.data,
+                    answer=preset_response,
+                    status=MessageStatus.NORMAL,
+                    latency=0,
+                )
+                event = QueueEvent.AGENT_MESSAGE.value
+                data = {
+                    "id": str(uuid.uuid4()),
+                    "conversation_id": str(debug_conversation.id),
+                    "message_id": str(message.id),
+                    "task_id": str(task_id),
+                    "event": event,
+                    "thought": preset_response,
+                    "observation": "",
+                    "tool": "",
+                    "tool_input": {},
+                    "answer": preset_response,
+                    "latency": 0,
+                }
+                yield (
+                    f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+                )
+                return
 
         model_config = draft_app_config["model_config"]
         llm = ChatOpenAI(
@@ -968,12 +1014,8 @@ class AppService(BaseService):
             name=app.en_name or app.name,
         )
 
-        task_id = uuid.uuid4()
         human_content: str | list[dict[str, Any]] = req.query.data
-        if (
-            draft_app_config["multimodal"]["enable"]
-            and len(req.image_urls.data) > 0
-        ):
+        if draft_app_config["multimodal"]["enable"] and len(req.image_urls.data) > 0:
             human_content = [
                 {"type": "text", "text": req.query.data},
                 *[
@@ -998,6 +1040,7 @@ class AppService(BaseService):
         error = ""
         status = MessageStatus.STOP
         start_at = time.perf_counter()
+        agent_thought = {}
 
         try:
             for agent_queue_event in agent.stream(
@@ -1009,8 +1052,70 @@ class AppService(BaseService):
                     "long_term_memory": debug_conversation.summary,
                 }
             ):
+                # 15.提取当前事件的增量内容
+                thought = agent_queue_event.thought
+                event_answer = agent_queue_event.answer
+                event_id = str(agent_queue_event.id)
+
+                # 16.检测是否开启输出审核
+                if (
+                    review_config["enable"]
+                    and review_config["outputs_config"]["enable"]
+                ):
+                    for keyword in review_config["keywords"]:
+                        if not keyword:
+                            continue
+                        thought = re.sub(
+                            re.escape(keyword), "**", thought, flags=re.IGNORECASE
+                        )
+                        event_answer = re.sub(
+                            re.escape(keyword),
+                            "**",
+                            event_answer,
+                            flags=re.IGNORECASE,
+                        )
+
+                # 17.将数据填充到 agent_thought 中，便于存储到数据库服务中
+                if agent_queue_event.event != QueueEvent.PING:
+                    # 18. 除了agent_message数据为叠加，其他均为覆盖
+                    if agent_queue_event.event == QueueEvent.AGENT_MESSAGE:
+                        if event_id not in agent_thought:
+                            # 19.初始化智能体消息事件
+                            agent_thought[event_id] = {
+                                "id": event_id,
+                                "event": agent_queue_event.event,
+                                "thought": agent_queue_event.thought,
+                                "observation": agent_queue_event.observation,
+                                "tool": agent_queue_event.tool,
+                                "tool_input": agent_queue_event.tool_input,
+                                "answer": agent_queue_event.answer,
+                                "latency": agent_queue_event.latency,
+                            }
+                        else:
+                            # 20.叠加智能体信息
+                            agent_thought[event_id] = {
+                                **agent_thought[event_id],
+                                "thought": agent_thought[event_id]["thought"]
+                                + agent_queue_event.thought,
+                                "answer": agent_thought[event_id]["answer"]
+                                + agent_queue_event.answer,
+                                "latency": agent_queue_event.latency,
+                            }
+                    else:
+                        # 21.处理其他类型事件的参数
+                        agent_thought[event_id] = {
+                            "id": event_id,
+                            "event": agent_queue_event.event,
+                            "thought": agent_queue_event.thought,
+                            "observation": agent_queue_event.observation,
+                            "tool": agent_queue_event.tool,
+                            "tool_input": agent_queue_event.tool_input,
+                            "answer": agent_queue_event.answer,
+                            "latency": agent_queue_event.latency,
+                        }
+
                 if agent_queue_event.event == QueueEvent.AGENT_MESSAGE:
-                    answer += agent_queue_event.answer
+                    answer += event_answer
                 elif agent_queue_event.event == QueueEvent.AGENT_END:
                     status = MessageStatus.NORMAL
                 elif agent_queue_event.event == QueueEvent.ERROR:
@@ -1025,16 +1130,16 @@ class AppService(BaseService):
                     else agent_queue_event.event
                 )
                 data = {
-                    "id": str(agent_queue_event.id),
+                    "id": event_id,
                     "conversation_id": str(debug_conversation.id),
                     "message_id": str(message.id),
                     "task_id": str(agent_queue_event.task_id),
-                    "event": event,
-                    "thought": agent_queue_event.thought,
+                    "event": agent_queue_event.event,
+                    "thought": thought,
                     "observation": agent_queue_event.observation,
                     "tool": agent_queue_event.tool,
                     "tool_input": agent_queue_event.tool_input,
-                    "answer": agent_queue_event.answer,
+                    "answer": answer,
                     "latency": agent_queue_event.latency,
                 }
                 yield f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
@@ -1178,12 +1283,159 @@ class AppService(BaseService):
         #     }
         #     yield f"event: {QueueEvent.AGENT_MESSAGE.value}\ndata:{json.dumps(data)}\n\n"
 
-        # 添加到数据库
-        # self.conversation_service.save_agent_thoughts(
-        #     account_id=account.id,
-        #     app_id=app.id,
-        #     app_config=draft_app_config,
-        #     conversation_id=debug_conversation.id,
-        #     message_id=message.id,
-        #     agent_thoughts=[agent_thought for agent_thought in agent_thoughts.values()],
-        # )
+        # 22.添加到数据库
+
+        # 定义变量存储推理位置及总耗时
+        position = 0
+        latency = 0
+
+        for key, item in agent_thought.items():
+            position += 1
+            latency += item["latency"]
+            # 创建智能体消息推理步骤
+            self.create(
+                MessageAgentThought,
+                app_id=app_id,
+                conversation_id=debug_conversation.id,
+                message_id=message.id,
+                invoke_from=InvokeFrom.DEBUGGER,
+                created_by=account.id,
+                position=position,
+                event=item["event"],
+                thought=item["thought"],
+                observation=item["observation"],
+                tool=item["tool"],
+                tool_input=item["tool_input"],
+                # 消息相关数据
+                message=item.get("message", []),
+                # message_token_count=item["message_token_count"],
+                # message_unit_price=item["message_unit_price"],
+                # message_price_unit=item["message_price_unit"],
+                # 答案相关字段
+                answer=item["answer"],
+                # answer_token_count=item["answer_token_count"],
+                # answer_unit_price=item["answer_unit_price"],
+                # answer_price_unit=item["answer_price_unit"],
+                # Agent推理统计相关
+                # total_token_count=item["total_token_count"],
+                # total_price=item["total_price"],
+                latency=item["latency"],
+            )
+            if item["event"] == QueueEvent.AGENT_MESSAGE:
+                self.update(
+                    message,
+                    message=item.get("message", []),
+                    answer=item["answer"],
+                    latency=latency,
+                )
+                if draft_app_config["long_term_memory"]["enable"]:
+                    new_summary = self.conversation_service.summary(
+                        str(req.query),
+                        item["answer"],
+                        str(debug_conversation.summary),
+                    )
+                    new_conversation_name = debug_conversation.name
+                    if debug_conversation.is_new:
+                       new_conversation_name = self.conversation_service.generate_conversation_name(str(req.query)) 
+
+                    self.update(debug_conversation, summary=new_summary, name=new_conversation_name) 
+
+
+        # 循环遍历所有的智能体推理过程执行存储操作
+        # for agent_thought in agent_thoughts:
+        #     # 存储长期记忆召回、推理、消息、动作、知识库检索等步骤
+        #     if agent_thought.event in [
+        #         QueueEvent.LONG_TERM_MEMORY_RECALL,
+        #         QueueEvent.AGENT_THOUGHT,
+        #         QueueEvent.AGENT_MESSAGE,
+        #         QueueEvent.AGENT_ACTION,
+        #         QueueEvent.AGENT_DISPATCH,
+        #         QueueEvent.DATASET_RETRIEVAL,
+        #     ]:
+        #         # 更新位置及总耗时
+        #         position += 1
+        #         latency += agent_thought.latency
+
+        #         # 创建智能体消息推理步骤
+        #         self.create(
+        #             MessageAgentThought,
+        #             app_id=app_id,
+        #             conversation_id=conversation.id,
+        #             message_id=message.id,
+        #             invoke_from=InvokeFrom.DEBUGGER,
+        #             created_by=account_id,
+        #             position=position,
+        #             event=agent_thought.event,
+        #             thought=agent_thought.thought,
+        #             observation=agent_thought.observation,
+        #             tool=agent_thought.tool,
+        #             tool_input=agent_thought.tool_input,
+        #             # 消息相关数据
+        #             message=agent_thought.message,
+        #             message_token_count=agent_thought.message_token_count,
+        #             message_unit_price=agent_thought.message_unit_price,
+        #             message_price_unit=agent_thought.message_price_unit,
+        #             # 答案相关字段
+        #             answer=agent_thought.answer,
+        #             answer_token_count=agent_thought.answer_token_count,
+        #             answer_unit_price=agent_thought.answer_unit_price,
+        #             answer_price_unit=agent_thought.answer_price_unit,
+        #             # Agent推理统计相关
+        #             total_token_count=agent_thought.total_token_count,
+        #             total_price=agent_thought.total_price,
+        #             latency=agent_thought.latency,
+        #         )
+
+        #     # 检测事件是否为Agent_message
+        #     if agent_thought.event == QueueEvent.AGENT_MESSAGE:
+        #         # 更新消息信息
+        #         self.update(
+        #             message,
+        #             # 消息相关字段
+        #             message=agent_thought.message,
+        #             message_token_count=agent_thought.message_token_count,
+        #             message_unit_price=agent_thought.message_unit_price,
+        #             message_price_unit=agent_thought.message_price_unit,
+        #             # 答案相关字段
+        #             answer=agent_thought.answer,
+        #             answer_token_count=agent_thought.answer_token_count,
+        #             answer_unit_price=agent_thought.answer_unit_price,
+        #             answer_price_unit=agent_thought.answer_price_unit,
+        #             # Agent推理统计相关
+        #             total_token_count=agent_thought.total_token_count,
+        #             total_price=agent_thought.total_price,
+        #             latency=latency,
+        #         )
+
+        #         # 检测是否开启长期记忆
+        #         if app_config["long_term_memory"]["enable"]:
+        #             Thread(
+        #                 target=self._generate_summary_and_update,
+        #                 kwargs={
+        #                     "flask_app": current_app._get_current_object(),
+        #                     "conversation_id": conversation.id,
+        #                     "query": message.query,
+        #                     "answer": agent_thought.answer,
+        #                 },
+        #             ).start()
+
+        #         # 处理生成新会话名称
+        #         if conversation.is_new:
+        #             self._generate_conversation_name_and_update(
+        #                 flask_app=current_app._get_current_object(),
+        #                 conversation_id=conversation.id,
+        #                 query=message.query,
+        #             )
+
+        #     # 判断是否为停止或者错误，如果是则需要更新消息状态
+        #     if agent_thought.event in [
+        #         QueueEvent.TIMEOUT,
+        #         QueueEvent.STOP,
+        #         QueueEvent.ERROR,
+        #     ]:
+        #         self.update(
+        #             message,
+        #             status=agent_thought.event,
+        #             error=agent_thought.observation,
+        #         )
+        #         break
