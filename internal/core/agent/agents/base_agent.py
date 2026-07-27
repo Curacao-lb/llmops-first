@@ -4,24 +4,24 @@ import uuid
 from abc import abstractmethod
 from collections.abc import Iterator
 from threading import Thread
-from typing import Any
+from typing import Any, Optional
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.load import Serializable
 from langchain_core.messages import AnyMessage
 from langchain_core.runnables import Runnable
-from langgraph.graph.state import CompiledStateGraph
+from langgraph.graph.state import CompiledStateGraph, RunnableConfig
 from pydantic import PrivateAttr
 
-from internal.core.agent.entities.agent_entity import AgentConfig
+from internal.core.agent.entities.agent_entity import AgentConfig, AgentState
 from internal.exception import FailException
 
-# from internal.core.agent.entities.queue_entity import (
-#     AgentResult,
-#     AgentThought,
-#     QueueEvent,
-# )
-# from internal.core.language_model.entities.model_entity import BaseLanguageModel
+from internal.core.agent.entities.queue_entity import (
+    AgentResult,
+    AgentThought,
+    QueueEvent,
+)
+from internal.core.language_model.entities.model_entity import BaseLanguageModel
 from .agent_queue_manager import AgentQueueManager
 
 
@@ -37,8 +37,9 @@ class BaseAgent(Serializable, Runnable):
     description: str | None = None
     zh_name: str | None = None
 
-    # class Config:
-    #     arbitrary_types_allowed = True
+    class Config:
+        # 字段允许接收任意类型，且不需要校验器
+        arbitrary_types_allowed = True
 
     def __init__(
         self,
@@ -77,6 +78,7 @@ class BaseAgent(Serializable, Runnable):
     #     config: Optional[RunnableConfig] = None,
     #     **kwargs: Optional[Any],
     # ) -> AgentResult:
+    #     """块内容响应，一次性生成完整内容后返回"""
     #     # 调用stream方法获取流式事件输出数据
     #     content = input["messages"][0].content
     #     query = ""
@@ -163,9 +165,13 @@ class BaseAgent(Serializable, Runnable):
         **kwargs: Any,
     ) -> Iterator[Any]:
         """在线程中执行Agent图，并通过队列返回流式事件。"""
+        """流式输出，每个node节点或者LLM每生成一个token则会返回相应内容"""
+
+        # 1.检测子类是否已构建Agent智能体，如果未构建则抛出错误
         if not self._agent:
             raise FailException("智能体未成功构建，请核实后尝试")
 
+        # 2.构建对应的任务id及数据初始化
         input["task_id"] = input.get("task_id", uuid.uuid4())
         input["history"] = input.get("history", [])
         input["iteration_count"] = input.get("iteration_count", 0)
@@ -181,8 +187,10 @@ class BaseAgent(Serializable, Runnable):
             except Exception as exc:
                 self._agent_queue_manager.publish_error(task_id, exc)
 
+        # 3.创建子线程并执行
         thread = Thread(target=invoke_agent, daemon=True)
         thread.start()
+        # 4.调用队列管理器监听数据并返回迭代器
         yield from self._agent_queue_manager.listen(task_id)
 
     @property

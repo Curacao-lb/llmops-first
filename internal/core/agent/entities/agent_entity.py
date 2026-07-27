@@ -6,7 +6,7 @@ from langchain_core.tools import BaseTool
 from langgraph.graph import MessagesState
 from pydantic import BaseModel, Field
 
-# from internal.entity.app_entity import DEFAULT_APP_CONFIG
+from internal.entity.app_entity import DEFAULT_APP_CONFIG
 from internal.entity.conversation_entity import InvokeFrom
 
 # from internal.core.language_model.entities.model_entity import BaseLanguageModel
@@ -115,15 +115,15 @@ class AgentConfig(BaseModel):
     tools: list[BaseTool] = Field(default_factory=list)
 
     # 审核配置
-    # review_config: dict = Field(
-    #     default_factory=lambda: DEFAULT_APP_CONFIG["review_config"]
-    # )
+    review_config: dict = Field(
+        default_factory=lambda: DEFAULT_APP_CONFIG["review_config"]
+    )
 
 
 class AgentState(MessagesState):
     """智能体状态类"""
 
-    task_id: UUID
+    task_id: UUID # 该次状态对应的任务ID，每次运行时会使用独立的任务ID
     iteration_count: int  # 迭代次数,默认0
     history: list[AnyMessage]  # 短期记忆(历史记录)
     long_term_memory: str  # 长期记忆

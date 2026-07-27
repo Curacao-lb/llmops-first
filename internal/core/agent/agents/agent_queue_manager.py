@@ -13,6 +13,7 @@ from internal.entity.conversation_entity import InvokeFrom
 
 
 class AgentQueueManager:
+    """智能体队列管理器"""
     user_id: UUID
     invoke_from: InvokeFrom
     redis_client: Redis
@@ -27,6 +28,7 @@ class AgentQueueManager:
         self.invoke_from = invoke_from
         self._queues = {}
 
+        # 内部初始化redis_client
         self.redis_client = injector.get(Redis)
 
     def listen(self, task_id: UUID) -> Generator:
@@ -84,10 +86,10 @@ class AgentQueueManager:
     def stop_listen(self, task_id: UUID) -> None:
         self.queue(task_id).put(None)
 
-    def publish(self, task_id: UUID, agent_though: AgentThought) -> None:
-        self.queue(task_id).put(agent_though)
+    def publish(self, task_id: UUID, agent_thought: AgentThought) -> None:
+        self.queue(task_id).put(agent_thought)
 
-        if agent_though.event in [
+        if agent_thought.event in [
             QueueEvent.STOP,
             QueueEvent.ERROR,
             QueueEvent.TIMEOUT,
@@ -114,9 +116,14 @@ class AgentQueueManager:
         return False
 
     def queue(self, task_id: UUID) -> Queue:
+        """根据传递的task_id获取对应的任务队列信息"""
+
         # 从队列字典中获取对应的任务队列信息
         q = self._queues.get(str(task_id))
+
+        # 检测队列是否存在，如果不存在则新建队列，并添加缓存标识
         if not q:
+            # 添加缓存键标识
             user_prefix = (
                 "account"
                 if self.invoke_from
@@ -124,12 +131,14 @@ class AgentQueueManager:
                 else "end-user"
             )
 
+            # 设置任务对应的缓存键，代表这次任务已经开始了
             self.redis_client.setex(
                 self.generate_task_belong_cache_key(task_id),
                 1800,
                 f"{user_prefix}-{str(self.user_id)}",
             )
 
+            # 将任务队列添加到队列字典中
             q = Queue()
             self._queues[str(task_id)] = q
         return q
