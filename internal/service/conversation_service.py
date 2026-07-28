@@ -1,22 +1,29 @@
 import logging
 from dataclasses import dataclass
+from threading import Thread
+from typing import Any, cast
+from uuid import UUID
 
+from flask import Flask, current_app
 from injector import inject
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
 # from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
+from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
 from internal.entity.conversation_entity import (
     CONVERSATION_NAME_TEMPLATE,
     SUGGESTED_QUESTIONS_TEMPLATE,
     SUMMARIZER_TEMPLATE,
     ConversationInfo,
+    InvokeFrom,
     SuggestedQuestions,
 )
 
 # from internal.model import Conversation, Message, MessageAgentThought, Account
 # from internal.schema.conversation_schema import GetConversationMessagesWithPageReq
+from internal.model.conversation import Conversation, Message, MessageAgentThought
 from pkg.sqlalchemy import SQLAlchemy
 
 from .base_service import BaseService
@@ -151,8 +158,8 @@ class ConversationService(BaseService):
             query = query[:300] + "...[TRUNCATED]..." + query[-300:]
         query = query.replace("\n", " ")
 
-        # 调用链并获取会话信息
-        conversation_info = chain.invoke({"query": query})
+        # 调用链并获取会话信息（结构化输出运行时返回ConversationInfo实例）
+        conversation_info = cast(ConversationInfo, chain.invoke({"query": query}))
 
         # 提取会话名称
         name = "新的会话"
@@ -182,8 +189,10 @@ class ConversationService(BaseService):
         structured_llm = llm.with_structured_output(SuggestedQuestions)
 
         chain = prompt | structured_llm
-        # 调用链获取建议问题列表
-        suggested_questions = chain.invoke({"histories": histories})
+        # 调用链获取建议问题列表（结构化输出运行时返回SuggestedQuestions实例）
+        suggested_questions = cast(
+            SuggestedQuestions, chain.invoke({"histories": histories})
+        )
         questions = []
         try:
             if suggested_questions and hasattr(suggested_questions, "questions"):
@@ -199,156 +208,165 @@ class ConversationService(BaseService):
 
         return questions
 
-    # def save_agent_thoughts(
-    #     self,
-    #     account_id: UUID,
-    #     app_id: UUID,
-    #     app_config: dict[str, Any],
-    #     conversation_id: UUID,
-    #     message_id: UUID,
-    #     agent_thoughts: list[AgentThought],
-    # ):
-    #     """存储智能体推理步骤消息"""
-    #     # 定义变量存储推理位置及总耗时
-    #     position = 0
-    #     latency = 0
+    def save_agent_thoughts(
+        self,
+        account_id: UUID,
+        app_id: UUID,
+        app_config: dict[str, Any],
+        conversation_id: UUID,
+        message_id: UUID,
+        agent_thoughts: list[AgentThought],
+    ):
+        """存储智能体推理步骤消息"""
+        # 定义变量存储推理位置及总耗时
+        position = 0
+        latency = 0
 
-    #     # 在子线程中重新查询conversation以及message，确保对象会被子线程的会话管理到
-    #     conversation = self.get(Conversation, conversation_id)
-    #     message = self.get(Message, message_id)
+        # 在子线程中重新查询conversation以及message，确保对象会被子线程的会话管理到
+        conversation = self.get(Conversation, conversation_id)
+        message = self.get(Message, message_id)
 
-    #     # 循环遍历所有的智能体推理过程执行存储操作
-    #     for agent_thought in agent_thoughts:
-    #         # 存储长期记忆召回、推理、消息、动作、知识库检索等步骤
-    #         if agent_thought.event in [
-    #             QueueEvent.LONG_TERM_MEMORY_RECALL,
-    #             QueueEvent.AGENT_THOUGHT,
-    #             QueueEvent.AGENT_MESSAGE,
-    #             QueueEvent.AGENT_ACTION,
-    #             QueueEvent.AGENT_DISPATCH,
-    #             QueueEvent.DATASET_RETRIEVAL,
-    #         ]:
-    #             # 更新位置及总耗时
-    #             position += 1
-    #             latency += agent_thought.latency
+        # 会话或消息不存在时无需执行任何存储操作
+        if conversation is None or message is None:
+            return
 
-    #             # 创建智能体消息推理步骤
-    #             self.create(
-    #                 MessageAgentThought,
-    #                 app_id=app_id,
-    #                 conversation_id=conversation.id,
-    #                 message_id=message.id,
-    #                 invoke_from=InvokeFrom.DEBUGGER,
-    #                 created_by=account_id,
-    #                 position=position,
-    #                 event=agent_thought.event,
-    #                 thought=agent_thought.thought,
-    #                 observation=agent_thought.observation,
-    #                 tool=agent_thought.tool,
-    #                 tool_input=agent_thought.tool_input,
-    #                 # 消息相关数据
-    #                 message=agent_thought.message,
-    #                 message_token_count=agent_thought.message_token_count,
-    #                 message_unit_price=agent_thought.message_unit_price,
-    #                 message_price_unit=agent_thought.message_price_unit,
-    #                 # 答案相关字段
-    #                 answer=agent_thought.answer,
-    #                 answer_token_count=agent_thought.answer_token_count,
-    #                 answer_unit_price=agent_thought.answer_unit_price,
-    #                 answer_price_unit=agent_thought.answer_price_unit,
-    #                 # Agent推理统计相关
-    #                 total_token_count=agent_thought.total_token_count,
-    #                 total_price=agent_thought.total_price,
-    #                 latency=agent_thought.latency,
-    #             )
+        # 缓存当前Flask应用对象，供子线程构建应用上下文使用
+        flask_app = current_app._get_current_object()  # type: ignore[attr-defined]
 
-    #         # 检测事件是否为Agent_message
-    #         if agent_thought.event == QueueEvent.AGENT_MESSAGE:
-    #             # 更新消息信息
-    #             self.update(
-    #                 message,
-    #                 # 消息相关字段
-    #                 message=agent_thought.message,
-    #                 message_token_count=agent_thought.message_token_count,
-    #                 message_unit_price=agent_thought.message_unit_price,
-    #                 message_price_unit=agent_thought.message_price_unit,
-    #                 # 答案相关字段
-    #                 answer=agent_thought.answer,
-    #                 answer_token_count=agent_thought.answer_token_count,
-    #                 answer_unit_price=agent_thought.answer_unit_price,
-    #                 answer_price_unit=agent_thought.answer_price_unit,
-    #                 # Agent推理统计相关
-    #                 total_token_count=agent_thought.total_token_count,
-    #                 total_price=agent_thought.total_price,
-    #                 latency=latency,
-    #             )
+        # 循环遍历所有的智能体推理过程执行存储操作
+        for agent_thought in agent_thoughts:
+            # 存储长期记忆召回、推理、消息、动作、知识库检索等步骤
+            if agent_thought.event in [
+                QueueEvent.LONG_TERM_MEMORY_RECALL,
+                QueueEvent.AGENT_THOUGHT,
+                QueueEvent.AGENT_MESSAGE,
+                QueueEvent.AGENT_ACTION,
+                QueueEvent.AGENT_DISPATCH,
+                QueueEvent.DATASET_RETRIEVAL,
+            ]:
+                # 更新位置及总耗时
+                position += 1
+                latency += agent_thought.latency
 
-    #             # 检测是否开启长期记忆
-    #             if app_config["long_term_memory"]["enable"]:
-    #                 Thread(
-    #                     target=self._generate_summary_and_update,
-    #                     kwargs={
-    #                         "flask_app": current_app._get_current_object(),
-    #                         "conversation_id": conversation.id,
-    #                         "query": message.query,
-    #                         "answer": agent_thought.answer,
-    #                     },
-    #                 ).start()
+                # 创建智能体消息推理步骤
+                self.create(
+                    MessageAgentThought,
+                    app_id=app_id,
+                    conversation_id=conversation.id,
+                    message_id=message.id,
+                    invoke_from=InvokeFrom.DEBUGGER,
+                    created_by=account_id,
+                    position=position,
+                    event=agent_thought.event,
+                    thought=agent_thought.thought,
+                    observation=agent_thought.observation,
+                    tool=agent_thought.tool,
+                    tool_input=agent_thought.tool_input,
+                    # 消息相关数据
+                    message=agent_thought.message,
+                    message_token_count=agent_thought.message_token_count,
+                    message_unit_price=agent_thought.message_unit_price,
+                    message_price_unit=agent_thought.message_price_unit,
+                    # 答案相关字段
+                    answer=agent_thought.answer,
+                    answer_token_count=agent_thought.answer_token_count,
+                    answer_unit_price=agent_thought.answer_unit_price,
+                    answer_price_unit=agent_thought.answer_price_unit,
+                    # Agent推理统计相关
+                    total_token_count=agent_thought.total_token_count,
+                    total_price=agent_thought.total_price,
+                    latency=agent_thought.latency,
+                )
 
-    #             # 处理生成新会话名称
-    #             if conversation.is_new:
-    #                 self._generate_conversation_name_and_update(
-    #                     flask_app=current_app._get_current_object(),
-    #                     conversation_id=conversation.id,
-    #                     query=message.query,
-    #                 )
+            # 检测事件是否为Agent_message
+            if agent_thought.event == QueueEvent.AGENT_MESSAGE:
+                # 更新消息信息
+                self.update(
+                    message,
+                    # 消息相关字段
+                    message=agent_thought.message,
+                    message_token_count=agent_thought.message_token_count,
+                    message_unit_price=agent_thought.message_unit_price,
+                    message_price_unit=agent_thought.message_price_unit,
+                    # 答案相关字段
+                    answer=agent_thought.answer,
+                    answer_token_count=agent_thought.answer_token_count,
+                    answer_unit_price=agent_thought.answer_unit_price,
+                    answer_price_unit=agent_thought.answer_price_unit,
+                    # Agent推理统计相关
+                    total_token_count=agent_thought.total_token_count,
+                    total_price=agent_thought.total_price,
+                    latency=latency,
+                )
 
-    #         # 判断是否为停止或者错误，如果是则需要更新消息状态
-    #         if agent_thought.event in [
-    #             QueueEvent.TIMEOUT,
-    #             QueueEvent.STOP,
-    #             QueueEvent.ERROR,
-    #         ]:
-    #             self.update(
-    #                 message,
-    #                 status=agent_thought.event,
-    #                 error=agent_thought.observation,
-    #             )
-    #             break
+                # 检测是否开启长期记忆
+                if app_config["long_term_memory"]["enable"]:
+                    Thread(
+                        target=self._generate_summary_and_update,
+                        kwargs={
+                            "flask_app": flask_app,
+                            "conversation_id": conversation.id,
+                            "query": message.query,
+                            "answer": agent_thought.answer,
+                        },
+                    ).start()
 
-    # def _generate_summary_and_update(
-    #     self,
-    #     flask_app: Flask,
-    #     conversation_id: UUID,
-    #     query: str,
-    #     answer: str,
-    # ):
-    #     with flask_app.app_context():
-    #         # 根据id获取会话
-    #         conversation = self.get(Conversation, conversation_id)
+                # 处理生成新会话名称
+                if conversation.is_new:
+                    self._generate_conversation_name_and_update(
+                        flask_app=flask_app,
+                        conversation_id=conversation.id,
+                        query=message.query,
+                    )
 
-    #         # 计算会话新摘要信息
-    #         new_summary = self.summary(query, answer, conversation.summary)
+            # 判断是否为停止或者错误，如果是则需要更新消息状态
+            if agent_thought.event in [
+                QueueEvent.TIMEOUT,
+                QueueEvent.STOP,
+                QueueEvent.ERROR,
+            ]:
+                self.update(
+                    message,
+                    status=agent_thought.event,
+                    error=agent_thought.observation,
+                )
+                break
 
-    #         # 更新会话的摘要信息
-    #         self.update(
-    #             conversation,
-    #             summary=new_summary,
-    #         )
+    def _generate_summary_and_update(
+        self,
+        flask_app: Flask,
+        conversation_id: UUID,
+        query: str,
+        answer: str,
+    ):
+        with flask_app.app_context():
+            # 根据id获取会话
+            conversation = self.get(Conversation, conversation_id)
+            if conversation is None:
+                return
 
-    # def _generate_conversation_name_and_update(
-    #     self, flask_app: Flask, conversation_id: UUID, query: str
-    # ) -> None:
-    #     """生成会话名字并更新"""
-    #     with flask_app.app_context():
-    #         # 根据会话id获取会话
-    #         conversation = self.get(Conversation, conversation_id)
+            # 计算会话新摘要信息
+            new_summary = self.summary(query, answer, cast(str, conversation.summary))
 
-    #         # 计算获取新会话名字
-    #         new_conversation_name = self.generate_conversation_name(query)
+            # 更新会话的摘要信息
+            self.update(
+                conversation,
+                summary=new_summary,
+            )
 
-    #         # 调用更新服务更新会话名称
-    #         self.update(
-    #             conversation,
-    #             name=new_conversation_name,
-    #         )
+    def _generate_conversation_name_and_update(
+        self, flask_app: Flask, conversation_id: UUID, query: str
+    ) -> None:
+        """生成会话名字并更新"""
+        with flask_app.app_context():
+            # 根据会话id获取会话
+            conversation = self.get(Conversation, conversation_id)
+
+            # 计算获取新会话名字
+            new_conversation_name = self.generate_conversation_name(query)
+
+            # 调用更新服务更新会话名称
+            self.update(
+                conversation,
+                name=new_conversation_name,
+            )

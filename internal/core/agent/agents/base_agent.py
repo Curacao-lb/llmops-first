@@ -8,7 +8,6 @@ from typing import Any, Optional
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.load import Serializable
-from langchain_core.messages import AnyMessage
 from langchain_core.runnables import Runnable
 from langgraph.graph.state import CompiledStateGraph, RunnableConfig
 from pydantic import PrivateAttr
@@ -57,16 +56,6 @@ class BaseAgent(Serializable, Runnable):
             invoke_from=agent_config.invoke_from,
             # redis_client=redis_client,
         )
-
-    @abstractmethod
-    def run(
-        self,
-        query: str,  # 用户提问的原始问题
-        history: list[AnyMessage] = None,  # 短期记忆
-        long_term_memory: str = "",  # 长期记忆
-    ):
-        """智能体运行函数，传递原始提问query，长短期记忆，并调用智能体生成相应内容"""
-        raise NotImplementedError("Agent智能体的run函数未实现")
 
     @abstractmethod
     def _build_agent(self) -> CompiledStateGraph:
