@@ -120,6 +120,13 @@ class Router:
             view_func=self.app_handler.debug_chat,
         )
 
+        # 停止某次应用调试对话
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/conversations/tasks/<uuid:task_id>/stop",
+            methods=["POST"],
+            view_func=self.app_handler.stop_debug
+        )
+
         # 知识库模块
         bp.add_url_rule(
             "/datasets",

@@ -10,6 +10,7 @@ from uuid import UUID
 from flask import current_app
 from injector import inject
 from langchain_core.messages import HumanMessage
+from internal.core.agent.agents.agent_queue_manager import AgentQueueManager
 from internal.core.language_model.entities.model_entity import ModelFeature
 from internal.core.language_model.providers.openai.chat import Chat
 from sqlalchemy import desc, func
@@ -1013,7 +1014,7 @@ class AppService(BaseService):
             account_id=cast(UUID, account.id),
             conversation_id=cast(UUID, debug_conversation.id),
             message_id=cast(UUID, message.id),
-            long_term_memory=debug_conversation.summary or "",
+            long_term_memory=cast(str, debug_conversation.summary) or "",
             draft_app_config=draft_app_config,
             task_id=task_id,
             agent=agent,
@@ -1170,4 +1171,14 @@ class AppService(BaseService):
             conversation_id=conversation_id,
             message_id=message_id,
             agent_thoughts=list(agent_thoughts.values()),
+        )
+
+    def stop_debug_chat(self, app_id: UUID, task_id: UUID, account: Account) -> None:
+        """根据传递的应用id+任务id+账号，停止某个应用的调试会话，中断流式事件"""
+        # 获取应用信息并校验权限
+        self.get_app(app_id, account)
+
+        # 2.调用智能体队列管理器停止特定任务
+        AgentQueueManager.set_stop_flag(
+            task_id, InvokeFrom.DEBUGGER, cast(UUID, account.id)
         )
