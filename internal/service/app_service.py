@@ -10,6 +10,7 @@ from uuid import UUID
 from flask import current_app
 from injector import inject
 from langchain_core.messages import HumanMessage
+from sqlalchemy.orm import joinedload
 from internal.core.agent.agents.agent_queue_manager import AgentQueueManager
 from internal.core.language_model.entities.model_entity import ModelFeature
 from internal.core.language_model.providers.openai.chat import Chat
@@ -47,6 +48,7 @@ from internal.schema.app_schema import (
     CreateAppReq,
     DebugChatReq,
     GetAppsWithPageReq,
+    GetDebugConversationMessagesWithPageReq,
     GetPublishHistoriesWithPageReq,
 )
 from pkg.paginator import Paginator
@@ -1182,3 +1184,36 @@ class AppService(BaseService):
         AgentQueueManager.set_stop_flag(
             task_id, InvokeFrom.DEBUGGER, cast(UUID, account.id)
         )
+
+    def get_debug_conversation_messages_with_page(
+            self,
+            app_id: UUID,
+            req: GetDebugConversationMessagesWithPageReq,
+            account: Account
+    ) -> tuple[list[Message], Paginator]:
+        """根据传递的应用id+请求数据，获取调试会话消息列表分页数据"""
+        # 获取应用信息并校验权限
+        app = self.get_app(app_id, account)
+
+        # 获取应用的调试会话
+        debug_conversation = app.debug_conversation
+
+        # 构建分页器并构建游标条件
+        paginator = Paginator(db=self.db, req=req)
+        filters = []
+        if req.created_at.data:
+            # 将时间戳转换成DateTime数据
+            created_at_datetime = datetime.fromtimestamp(req.created_at.data)
+            filters.append(Message.created_at <= created_at_datetime)
+
+        # 执行分页并查询数据
+        messages = paginator.paginate(
+            self.db.session.query(Message).options(joinedload(Message.agent_thoughts)).filter(
+                Message.conversation_id == debug_conversation.id,
+                Message.status.in_([MessageStatus.STOP, MessageStatus.NORMAL]),
+                Message.answer != "",
+                *filters,
+            ).order_by(desc("created_at"))
+        )
+
+        return messages, paginator

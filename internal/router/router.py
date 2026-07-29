@@ -127,6 +127,13 @@ class Router:
             view_func=self.app_handler.stop_debug
         )
 
+        # 获取应用的调试会话消息列表
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/conversations/messages",
+            methods=["GET"],
+            view_func=self.app_handler.get_debug_conversation_messages_with_page
+        )
+
         # 知识库模块
         bp.add_url_rule(
             "/datasets",
