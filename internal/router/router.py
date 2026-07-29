@@ -6,6 +6,7 @@ from injector import inject
 # 使用魔术变量（__all__），这里就可以导入 AppHandler
 from internal.handler import (
     AccountHandler,
+    AIHandler,
     ApiToolHandler,
     AppHandler,
     AuthHandler,
@@ -31,6 +32,7 @@ class Router:
     account_handler: AccountHandler
     auth_handler: AuthHandler
     upload_file_handler: UploadFileHandler
+    ai_handler: AIHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -124,14 +126,14 @@ class Router:
         bp.add_url_rule(
             "/apps/<uuid:app_id>/conversations/tasks/<uuid:task_id>/stop",
             methods=["POST"],
-            view_func=self.app_handler.stop_debug
+            view_func=self.app_handler.stop_debug,
         )
 
         # 获取应用的调试会话消息列表
         bp.add_url_rule(
             "/apps/<uuid:app_id>/conversations/messages",
             methods=["GET"],
-            view_func=self.app_handler.get_debug_conversation_messages_with_page
+            view_func=self.app_handler.get_debug_conversation_messages_with_page,
         )
 
         # 知识库模块
@@ -259,6 +261,22 @@ class Router:
             "/uploaded-files/<path:filename>",
             view_func=self.get_uploaded_file,
             methods=["GET"],
+        )
+
+        # AI辅助模块
+
+        # 利用AI优化预设Prompt
+        bp.add_url_rule(
+            "/ai/optimize-prompt",
+            methods=["POST"],
+            view_func=self.ai_handler.optimize_prompt,
+        )
+
+        # 根据传递的消息id获取建议问题列表
+        bp.add_url_rule(
+            "/ai/suggested-questions",
+            methods=["POST"],
+            view_func=self.ai_handler.generate_suggested_questions,
         )
 
         # 4.应用上去注册蓝图
