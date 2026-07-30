@@ -57,6 +57,14 @@ class Router:
             "/apps", view_func=self.app_handler.create_app, methods=["POST"]
         )
 
+        # 获取应用分页列表数据
+        bp.add_url_rule(
+            "/apps",
+            endpoint="get_apps_with_page",
+            view_func=self.app_handler.get_apps_with_page,
+            methods=["GET"],
+        )
+
         bp.add_url_rule("/apps/<uuid:app_id>", view_func=self.app_handler.get_app)
 
         bp.add_url_rule(

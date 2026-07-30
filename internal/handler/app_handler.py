@@ -18,11 +18,13 @@ from internal.schema.app_schema import (
     DebugChatReq,
     FallbackHistoryToDraftReq,
     GetAppResp,
+    GetAppsWithPageReq,
+    GetAppsWithPageResp,
+    GetDebugConversationMessagesWithPageReq,
     GetDebugConversationMessagesWithPageResp,
     GetPublishHistoriesWithPageReq,
     GetPublishHistoriesWithPageResp,
     UpdateDebugConversationSummaryReq,
-    GetDebugConversationMessagesWithPageReq
 )
 from internal.service import AppService, RetrievalService
 from pkg.paginator import PageModel
@@ -80,6 +82,25 @@ class AppHandler:
         # 2.调用服务创建应用信息
         app = self.app_service.create_app(req, account=cast(Account, current_user))
         return success_json({"id": app.id})
+
+    @login_required
+    def get_apps_with_page(self):
+        """获取当前登录账号的应用分页列表数据"""
+        # 1.提取请求数据并校验
+        req = GetAppsWithPageReq(request.args)
+        if not req.validate():
+            return validate_error_json(req.errors)
+
+        # 2.调用服务获取分页列表数据
+        apps, paginator = self.app_service.get_apps_with_page(
+            req, account=cast(Account, current_user)
+        )
+
+        # 3.序列化并返回分页列表数据
+        resp = GetAppsWithPageResp(many=True)
+        return success_json(
+            PageModel(list=cast(list[Any], resp.dump(apps)), paginator=paginator)
+        )
 
     @login_required
     def get_app(self, app_id: uuid.UUID):
@@ -236,6 +257,12 @@ class AppHandler:
         if not req.validate():
             return validate_error_json(req.errors)
 
-        messages, paginator = self.app_service.get_debug_conversation_messages_with_page(app_id,req,account=cast(Account,current_user))
+        messages, paginator = (
+            self.app_service.get_debug_conversation_messages_with_page(
+                app_id, req, account=cast(Account, current_user)
+            )
+        )
         resp = GetDebugConversationMessagesWithPageResp(many=True)
-        return success_json(PageModel(list=cast(list, resp.dump(messages)), paginator=paginator))
+        return success_json(
+            PageModel(list=cast(list, resp.dump(messages)), paginator=paginator)
+        )
