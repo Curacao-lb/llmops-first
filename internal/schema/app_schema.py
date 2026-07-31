@@ -6,7 +6,14 @@ from uuid import UUID
 from flask_wtf import FlaskForm
 from marshmallow import Schema, fields, pre_dump
 from wtforms import IntegerField, StringField
-from wtforms.validators import URL, DataRequired, Length, NumberRange, Optional, ValidationError
+from wtforms.validators import (
+    URL,
+    DataRequired,
+    Length,
+    NumberRange,
+    Optional,
+    ValidationError,
+)
 
 from internal.lib.helper import datetime_to_timestamp
 from internal.model import App, AppConfigVersion
@@ -195,13 +202,17 @@ class DebugChatReq(FlaskForm):
 
 class GetDebugConversationMessagesWithPageReq(PaginatorReq):
     """获取调试会话消息列表分页请求结构体"""
-    created_at = IntegerField("created_at", default=0, validators=[
-        Optional(),
-        NumberRange(min=0, message="created_at游标最小值为0")
-    ])
+
+    created_at = IntegerField(
+        "created_at",
+        default=0,
+        validators=[Optional(), NumberRange(min=0, message="created_at游标最小值为0")],
+    )
+
 
 class GetDebugConversationMessagesWithPageResp(Schema):
     """获取调试会话消息列表分页响应结构体"""
+
     id = fields.UUID(dump_default="")
     conversation_id = fields.UUID(dump_default="")
     query = fields.String(dump_default="")
@@ -222,16 +233,19 @@ class GetDebugConversationMessagesWithPageResp(Schema):
             "answer": data.answer,
             "total_token_count": data.total_token_count,
             "latency": data.latency,
-            "agent_thoughts": [{
-                "id": agent_thought.id,
-                "position": agent_thought.position,
-                "event": agent_thought.event,
-                "thought": agent_thought.thought,
-                "observation": agent_thought.observation,
-                "tool": agent_thought.tool,
-                "tool_input": agent_thought.tool_input,
-                "latency": agent_thought.latency,
-                "created_at": datetime_to_timestamp(agent_thought.created_at),
-            } for agent_thought in data.agent_thoughts],
+            "agent_thoughts": [
+                {
+                    "id": agent_thought.id,
+                    "position": agent_thought.position,
+                    "event": agent_thought.event,
+                    "thought": agent_thought.thought,
+                    "observation": agent_thought.observation,
+                    "tool": agent_thought.tool,
+                    "tool_input": agent_thought.tool_input,
+                    "latency": agent_thought.latency,
+                    "created_at": datetime_to_timestamp(agent_thought.created_at),
+                }
+                for agent_thought in data.agent_thoughts
+            ],
             "created_at": datetime_to_timestamp(cast(datetime, data.created_at)),
         }

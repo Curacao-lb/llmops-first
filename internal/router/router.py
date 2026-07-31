@@ -7,6 +7,7 @@ from injector import inject
 from internal.handler import (
     AccountHandler,
     AIHandler,
+    ApiKeyHandler,
     ApiToolHandler,
     AppHandler,
     AuthHandler,
@@ -33,6 +34,7 @@ class Router:
     auth_handler: AuthHandler
     upload_file_handler: UploadFileHandler
     ai_handler: AIHandler
+    api_key_handler: ApiKeyHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -285,6 +287,38 @@ class Router:
             "/ai/suggested-questions",
             methods=["POST"],
             view_func=self.ai_handler.generate_suggested_questions,
+        )
+
+        # API 密钥模块
+
+        # 获取API密钥分页列表数据
+        bp.add_url_rule(
+            "/openapi/api-keys", view_func=self.api_key_handler.get_api_keys_with_page
+        )
+
+        # 新增、修改API密钥接口，修改状态
+        bp.add_url_rule(
+            "/openapi/api-keys",
+            methods=["POST"],
+            view_func=self.api_key_handler.create_api_key,
+        )
+
+        bp.add_url_rule(
+            "/openapi/api-keys/<uuid:api_key_id>",
+            methods=["POST"],
+            view_func=self.api_key_handler.update_api_key,
+        )
+
+        bp.add_url_rule(
+            "/openapi/api-keys/<uuid:api_key_id>/is-active",
+            methods=["POST"],
+            view_func=self.api_key_handler.update_api_key_is_active,
+        )
+
+        bp.add_url_rule(
+            "/openapi/api-keys/<uuid:api_key_id>/delete",
+            methods=["POST"],
+            view_func=self.api_key_handler.delete_api_key,
         )
 
         # 4.应用上去注册蓝图
