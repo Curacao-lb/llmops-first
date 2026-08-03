@@ -19,6 +19,7 @@ from internal.core.language_model.entities.model_entity import (
     BaseLanguageModel,
     ModelFeature,
 )
+from internal.core.language_model.providers.openai.chat import Chat
 from internal.core.memory import TokenBufferMemory
 from internal.core.tools.builtin_tools.entities import ToolEntity
 from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
@@ -99,6 +100,22 @@ class AgentService:
 
         return tools
 
+    def load_language_model(
+        self, model_config: dict[str, Any] | None = None
+    ) -> BaseLanguageModel:
+        """根据传递的模型配置加载大语言模型实例"""
+        model_config = model_config or {}
+        # 使用自定义的 Chat（同时是 ChatOpenAI 与项目 BaseLanguageModel），
+        # 以满足智能体对 features / get_pricing 等属性的依赖，并通过 llm 字段校验。
+        return Chat(
+            model=model_config.get("model", "gpt-4o-mini"),
+            api_key=model_config.get("apiKey"),
+            base_url=model_config.get("baseUrl"),
+            features=[ModelFeature.TOOL_CALL, ModelFeature.AGENT_THOUGHT],
+            metadata={"pricing": {"input": 0.0, "output": 0.0, "unit": 0.0}},
+            **model_config.get("parameters", {}),
+        )
+
     def create_agent(
         self,
         config: AppConfig | AppConfigVersion | dict[str, Any],
@@ -107,9 +124,7 @@ class AgentService:
         conversation: Conversation,
     ) -> tuple[BaseAgent, list[AnyMessage], BaseLanguageModel]:
         # 加载大语言模型
-        llm = self.language_model_service.load_language_model(
-            config.get("model_config", {})
-        )
+        llm = self.load_language_model(config.get("model_config", {}))
 
         # 实例化TokenBufferMemory用于提取短期记忆
         token_buffer_memory = TokenBufferMemory(
@@ -117,7 +132,7 @@ class AgentService:
             conversation=conversation,
             model_instance=llm,
         )
-        history = token_buffer_memory.get_history_prompt_message(
+        history = token_buffer_memory.get_history_prompt_messages(
             max_token_limit=16384,
             message_limit=config["dialog_round"],
             multimodal=config["multimodal"]["enable"],
@@ -172,9 +187,7 @@ class AgentService:
         agent_dict: {str: BaseAgent} = {}
         for app in apps:
             config = self.app_config_service.get_app_config(app)
-            llm = self.language_model_service.load_language_model(
-                config.get("model_config", {})
-            )
+            llm = self.load_language_model(config.get("model_config", {}))
             tools = self.getTools(config, app)
             agent_class = (
                 FunctionCallAgent

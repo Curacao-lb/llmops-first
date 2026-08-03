@@ -129,6 +129,21 @@ class App(BaseModel):
         )
 
     @property
+    def app_config(self) -> Optional["AppConfig"]:
+        """只读属性，返回当前应用已发布的运行配置。
+
+        当应用未发布（app_config_id 为空）或配置记录不存在时返回 None。
+        该属性只做读取，不产生任何写入副作用。
+        """
+        if not self.app_config_id:
+            return None
+        return (
+            db.session.query(AppConfig)
+            .filter(AppConfig.id == self.app_config_id)
+            .one_or_none()
+        )
+
+    @property
     def debug_conversation(self) -> "Conversation":
         """新建多一个只读属性，用来获取应用的调试会话记录"""
         # 根据debug_conversation_id获取调试会话记录

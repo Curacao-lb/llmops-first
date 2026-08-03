@@ -14,6 +14,7 @@ from internal.handler import (
     BuiltinToolHandler,
     DatasetHandler,
     OAuthHandler,
+    OpenAPIHandler,
     UploadFileHandler,
 )
 from internal.service import CosService
@@ -35,6 +36,7 @@ class Router:
     upload_file_handler: UploadFileHandler
     ai_handler: AIHandler
     api_key_handler: ApiKeyHandler
+    openapi_handler: OpenAPIHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -48,6 +50,7 @@ class Router:
         """注册路由"""
         # 1.创建一个蓝图 - 可以看成是一组路由的集合
         bp = Blueprint("llmops", __name__, url_prefix="")
+        openapi_bp = Blueprint("openapi", __name__, url_prefix="")
 
         # 2.使用依赖注入的 app_handler,不需要手动创建
         # self.app_handler 已经通过 @inject 和 @dataclass 自动注入了
@@ -321,9 +324,14 @@ class Router:
             view_func=self.api_key_handler.delete_api_key,
         )
 
+        openapi_bp.add_url_rule(
+            "/openapi/chat", methods=["POST"], view_func=self.openapi_handler.chat
+        )
+
         # 4.应用上去注册蓝图
         app.register_blueprint(bp)
         # 现在我们只需要传入一个APP的应用，我们就可以去访问对应的接口了
+        app.register_blueprint(openapi_bp)
 
     def get_uploaded_file(self, filename: str):
         """读取本地上传文件"""

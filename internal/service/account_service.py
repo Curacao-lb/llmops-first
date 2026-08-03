@@ -1,24 +1,21 @@
 import base64
 import secrets
 from dataclasses import dataclass
-
 from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
-from redis import Redis
-
 
 from flask import request
 from injector import inject
+from redis import Redis
 
 from internal.exception import FailException
-
 from internal.lib.helper import decode_password, generate_random_string
 from internal.model import Account, AccountOAuth
-
 from internal.schema.account_schema import RegisterReq
-from pkg.password import hash_password, compare_password
+from pkg.password import compare_password, hash_password
 from pkg.sqlalchemy import SQLAlchemy
+
 from .base_service import BaseService
 from .jwt_service import JwtService
 

@@ -1,25 +1,29 @@
 import os
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any, cast
 from uuid import UUID
 
 from injector import inject
 from langchain_core.tools import BaseTool
-from .base_service import BaseService
-from internal.model import (
-    App,
-    ApiTool,
-    Dataset,
-    AppConfig,
-    AppConfigVersion,
-    AppDatasetJoin,
+
+from internal.core.tools.api_tools.entites.tool_entity import (
+    ToolEntity as ApiToolEntity,
 )
+from internal.core.tools.api_tools.providers import ApiProviderManager
+from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
 from internal.entity.app_entity import DEFAULT_APP_CONFIG, AppStatus
 
 # from internal.core.language_model import LanguageModelManager
-from internal.lib.helper import datetime_to_timestamp, get_value_type
-from internal.core.language_model.entities.model_entity import ModelParameterType
-from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
+from internal.lib.helper import datetime_to_timestamp
+from internal.model import (
+    ApiTool,
+    App,
+    AppConfig,
+    AppConfigVersion,
+    Dataset,
+)
+
+from .base_service import BaseService
 
 # from internal.core.workflow import Workflow as WorkflowTool
 
@@ -31,6 +35,45 @@ class AppConfigService(BaseService):
 
     # language_model_manager: LanguageModelManager
     builtin_provider_manager: BuiltinProviderManager
+    api_provider_manager: ApiProviderManager
+
+    def get_langchain_tools_by_tools_config(
+        self, tools_config: list[dict]
+    ) -> list[BaseTool]:
+        """根据传递的工具配置列表构建LangChain工具列表"""
+        tools = []
+        for tool in tools_config:
+            if tool["type"] == "builtin_tool":
+                # 内置工具，通过builtin_provider_manager获取工具实例
+                builtin_tool = self.builtin_provider_manager.get_tool(
+                    tool["provider"]["id"], tool["tool"]["name"]
+                )
+                if not builtin_tool:
+                    continue
+                tools.append(builtin_tool(**tool["tool"]["params"]))
+            else:
+                # API工具，根据id找到ApiTool记录，然后创建工具实例
+                api_tool = (
+                    self.db.session.query(ApiTool)
+                    .filter(ApiTool.id == tool["tool"]["id"])
+                    .one_or_none()
+                )
+                if not api_tool:
+                    continue
+                tools.append(
+                    self.api_provider_manager.get_tool(
+                        ApiToolEntity(
+                            id=str(api_tool.id),
+                            name=cast(str, api_tool.name),
+                            url=cast(str, api_tool.url),
+                            method=cast(str, api_tool.method),
+                            description=cast(str, api_tool.description),
+                            headers=cast(list[dict], api_tool.provider.headers),
+                            parameters=cast(list[dict], api_tool.parameters),
+                        )
+                    )
+                )
+        return tools
 
     def get_draft_app_config(self, app: App) -> dict[str, Any]:
         """根据传递的应用获取该应用的草稿配置"""
@@ -82,6 +125,38 @@ class AppConfigService(BaseService):
             datasets,
             agents,
             draft_app_config,
+        )
+
+    def get_app_config(self, app: App) -> dict[str, Any]:
+        """根据传递的应用获取该应用已发布的运行配置"""
+        # 提取应用已发布的运行配置
+        app_config = app.app_config
+
+        # 校验model_config配置信息
+        validate_model_config = self._process_and_validate_model_config(
+            app_config.model_config
+        )
+
+        # 校验工具列表，剔除已被删除的工具，并组装展示信息
+        tools, _ = self._process_and_validate_tools(app_config.tools)
+
+        # 通过知识库关联记录获取该配置引用的知识库id列表，再进行校验
+        dataset_ids = [
+            str(app_dataset_join.dataset_id)
+            for app_dataset_join in app_config.app_dataset_joins
+        ]
+        datasets, _ = self._process_and_validate_datasets(dataset_ids)
+
+        # 校验关联的agent列表
+        agents, _ = self._process_and_validate_agents(app_config.agents)
+
+        # 将数据转换成字典后返回
+        return self._process_and_transformer_app_config(
+            validate_model_config,
+            tools,
+            datasets,
+            agents,
+            app_config,
         )
 
     def _process_and_validate_tools(
@@ -261,7 +336,7 @@ class AppConfigService(BaseService):
         # workflows: list[dict],
         datasets: list[dict],
         agents: list[dict],
-        app_config: Union[AppConfig, AppConfigVersion],
+        app_config: AppConfig | AppConfigVersion,
     ) -> dict[str, Any]:
         """根据传递的插件列表、工作流列表、知识库列表以及应用配置创建字典信息"""
         return {

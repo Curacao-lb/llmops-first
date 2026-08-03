@@ -13,6 +13,7 @@ from .embeddings_service import EmbeddingsService
 from .jieba_service import JiebaService
 from .jwt_service import JwtService
 from .oauth_service import OAuthService
+from .openapi_service import OpenAPIService
 from .retrieval_service import RetrievalService
 from .upload_file_service import UploadFileService
 from .vector_database_service import VectorDatabaseService
@@ -36,4 +37,5 @@ __all__ = [
     "AppConfigService",
     "AgentService",
     "AIService",
+    "OpenAPIService",
 ]
