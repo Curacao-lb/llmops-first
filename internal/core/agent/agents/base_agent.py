@@ -4,9 +4,8 @@ import uuid
 from abc import abstractmethod
 from collections.abc import Iterator
 from threading import Thread
-from typing import Any
+from typing import Any, cast
 
-from langchain_core.language_models import BaseLanguageModel
 from langchain_core.load import Serializable
 from langchain_core.runnables import Runnable
 from langgraph.graph.state import CompiledStateGraph, RunnableConfig
@@ -29,9 +28,9 @@ class BaseAgent(Serializable, Runnable):
     name: str | None = None
     llm: BaseLanguageModel
     agent_config: AgentConfig
-    _agent: CompiledStateGraph = PrivateAttr(None)
-    _agent_queue_manager: AgentQueueManager = PrivateAttr(None)
-    collaborative_agent: dict[str, Any] = None
+    _agent: CompiledStateGraph | None = PrivateAttr(None)
+    _agent_queue_manager: AgentQueueManager | None = PrivateAttr(None)
+    collaborative_agent: dict[str, Any] | None = None
     description: str | None = None
     zh_name: str | None = None
 
@@ -67,35 +66,36 @@ class BaseAgent(Serializable, Runnable):
         **kwargs: Any | None,
     ) -> AgentResult:
         """块内容响应，一次性生成完整内容后返回"""
-        # 调用stream方法获取流式事件输出数据
+        # 1.调用stream方法获取流式事件输出数据
         content = input["messages"][0].content
         query = ""
-        image_urls = []
+        image_urls: list[str] = []
         if isinstance(content, str):
             query = content
         elif isinstance(content, list):
-            query = content[0]["text"]
+            content_list = cast(list[dict[str, Any]], content)
+            query = content_list[0]["text"]
             image_urls = [
                 chunk["image_url"]["url"]
-                for chunk in content
+                for chunk in content_list
                 if chunk.get("type") == "image_url"
             ]
         agent_result = AgentResult(query=query, image_urls=image_urls)
         agent_thoughts = {}
         for agent_thought in self.stream(input, config):
-            # 提取事件id并转换成字符串
+            # 2.提取事件id并转换成字符串
             event_id = str(agent_thought.id)
 
-            # 除了ping事件，其他事件全部记录
+            # 3.除了ping事件，其他事件全部记录
             if agent_thought.event != QueueEvent.PING:
-                # 单独处理agent_message事件，因为该事件为数据叠加
+                # 4.单独处理agent_message事件，因为该事件为数据叠加
                 if agent_thought.event == QueueEvent.AGENT_MESSAGE:
-                    # 检测是否已存储了事件
+                    # 5.检测是否已存储了事件
                     if event_id not in agent_thoughts:
-                        # 初始化智能体消息事件
+                        # 6.初始化智能体消息事件
                         agent_thoughts[event_id] = agent_thought
                     else:
-                        # 叠加智能体消息事件
+                        # 7.叠加智能体消息事件
                         agent_thoughts[event_id] = agent_thoughts[event_id].model_copy(
                             update={
                                 "thought": agent_thoughts[event_id].thought
@@ -105,13 +105,13 @@ class BaseAgent(Serializable, Runnable):
                                 "latency": agent_thought.latency,
                             }
                         )
-                    # 更新智能体消息答案
+                    # 8.更新智能体消息答案
                     agent_result.answer += agent_thought.answer
                 else:
-                    # 处理其他类型的智能体事件，类型均为覆盖
+                    # 9.处理其他类型的智能体事件，类型均为覆盖
                     agent_thoughts[event_id] = agent_thought
 
-                    # 单独判断是否为异常消息类型，如果是则修改状态并记录错误
+                    # 10.单独判断是否为异常消息类型，如果是则修改状态并记录错误
                     if agent_thought.event in [
                         QueueEvent.STOP,
                         QueueEvent.TIMEOUT,
@@ -124,12 +124,10 @@ class BaseAgent(Serializable, Runnable):
                             else ""
                         )
 
-        # 将推理字典转换成列表并存储
-        agent_result.agent_thoughts = [
-            agent_thought for agent_thought in agent_thoughts.values()
-        ]
+        # 11.将推理字典转换成列表并存储
+        agent_result.agent_thoughts = list(agent_thoughts.values())
 
-        # 完善message
+        # 12.完善message
         agent_result.message = next(
             (
                 agent_thought.message
@@ -139,7 +137,7 @@ class BaseAgent(Serializable, Runnable):
             [],
         )
 
-        # 更新总耗时
+        # 13.更新总耗时
         agent_result.latency = sum(
             [agent_thought.latency for agent_thought in agent_thoughts.values()]
         )
@@ -148,15 +146,16 @@ class BaseAgent(Serializable, Runnable):
 
     def stream(
         self,
-        input: dict[str, Any],
-        config: dict[str, Any] | None = None,
+        input: AgentState,
+        config: RunnableConfig | None = None,
         **kwargs: Any,
     ) -> Iterator[Any]:
         """在线程中执行Agent图，并通过队列返回流式事件。"""
         """流式输出，每个node节点或者LLM每生成一个token则会返回相应内容"""
 
         # 1.检测子类是否已构建Agent智能体，如果未构建则抛出错误
-        if not self._agent:
+        agent = self._agent
+        if agent is None:
             raise FailException("智能体未成功构建，请核实后尝试")
 
         # 2.构建对应的任务id及数据初始化
@@ -167,22 +166,25 @@ class BaseAgent(Serializable, Runnable):
 
         # 在启动工作线程之前先创建好队列，避免工作线程(publish)与监听线程(listen)
         # 并发懒创建出两个不同的队列，导致最早发布的事件(如长期记忆召回)丢失
-        self._agent_queue_manager.queue(task_id)
+        queue_manager = self._agent_queue_manager
+        if queue_manager is None:
+            raise FailException("智能体队列管理器未初始化，请核实后尝试")
+        queue_manager.queue(task_id)
 
         def invoke_agent() -> None:
             try:
-                self._agent.invoke(input, config=config, **kwargs)
+                agent.invoke(input, config=config, **kwargs)
             except Exception as exc:
-                self._agent_queue_manager.publish_error(task_id, exc)
+                queue_manager.publish_error(task_id, exc)
 
         # 3.创建子线程并执行
         thread = Thread(target=invoke_agent, daemon=True)
         thread.start()
         # 4.调用队列管理器监听数据并返回迭代器
-        yield from self._agent_queue_manager.listen(task_id)
+        yield from queue_manager.listen(task_id)
 
     @property
-    def agent_queue_manager(self) -> AgentQueueManager:
+    def agent_queue_manager(self) -> AgentQueueManager | None:
         return self._agent_queue_manager
 
     # @property
