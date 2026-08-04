@@ -10,15 +10,15 @@ from uuid import UUID
 from flask import current_app
 from injector import inject
 from langchain_core.messages import HumanMessage
-from sqlalchemy.orm import joinedload
-from internal.core.agent.agents.agent_queue_manager import AgentQueueManager
-from internal.core.language_model.entities.model_entity import ModelFeature
-from internal.core.language_model.providers.openai.chat import Chat
 from sqlalchemy import desc, func
+from sqlalchemy.orm import joinedload
 
+from internal.core.agent.agents.agent_queue_manager import AgentQueueManager
 from internal.core.agent.agents.function_call_agent import FunctionCallAgent
 from internal.core.agent.entities.agent_entity import AgentConfig
 from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
+from internal.core.language_model.entities.model_entity import ModelFeature
+from internal.core.language_model.providers.openai.chat import Chat
 from internal.core.memory import TokenBufferMemory
 from internal.core.tools.api_tools.entites.tool_entity import ToolEntity
 from internal.core.tools.api_tools.providers import ApiProviderManager
@@ -886,7 +886,6 @@ class AppService(BaseService):
         # 2.获取应用的最新草稿配置信息
         draft_app_config = self.get_draft_app_config(app_id, account)
 
-
         # 3.获取当前应用的调试会话信息
         debug_conversation = app.debug_conversation
         task_id = uuid.uuid4()
@@ -1186,10 +1185,10 @@ class AppService(BaseService):
         )
 
     def get_debug_conversation_messages_with_page(
-            self,
-            app_id: UUID,
-            req: GetDebugConversationMessagesWithPageReq,
-            account: Account
+        self,
+        app_id: UUID,
+        req: GetDebugConversationMessagesWithPageReq,
+        account: Account,
     ) -> tuple[list[Message], Paginator]:
         """根据传递的应用id+请求数据，获取调试会话消息列表分页数据"""
         # 获取应用信息并校验权限
@@ -1208,12 +1207,15 @@ class AppService(BaseService):
 
         # 执行分页并查询数据
         messages = paginator.paginate(
-            self.db.session.query(Message).options(joinedload(Message.agent_thoughts)).filter(
+            self.db.session.query(Message)
+            .options(joinedload(Message.agent_thoughts))
+            .filter(
                 Message.conversation_id == debug_conversation.id,
                 Message.status.in_([MessageStatus.STOP, MessageStatus.NORMAL]),
                 Message.answer != "",
                 *filters,
-            ).order_by(desc("created_at"))
+            )
+            .order_by(desc("created_at"))
         )
 
         return messages, paginator

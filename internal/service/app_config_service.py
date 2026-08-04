@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, cast
 from uuid import UUID
 
@@ -12,6 +13,7 @@ from internal.core.tools.api_tools.entites.tool_entity import (
 from internal.core.tools.api_tools.providers import ApiProviderManager
 from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
 from internal.entity.app_entity import DEFAULT_APP_CONFIG, AppStatus
+from internal.exception import NotFoundException
 
 # from internal.core.language_model import LanguageModelManager
 from internal.lib.helper import datetime_to_timestamp
@@ -79,6 +81,8 @@ class AppConfigService(BaseService):
         """根据传递的应用获取该应用的草稿配置"""
         # 提取应用的草稿配置
         draft_app_config = app.draft_app_config
+        if draft_app_config is None:
+            raise NotFoundException("该应用不存在草稿配置，请核实后重试")
 
         # 校验model_config配置信息
         validate_model_config = self._process_and_validate_model_config(
@@ -131,6 +135,8 @@ class AppConfigService(BaseService):
         """根据传递的应用获取该应用已发布的运行配置"""
         # 提取应用已发布的运行配置
         app_config = app.app_config
+        if app_config is None:
+            raise NotFoundException("该应用尚未发布，无法获取运行配置")
 
         # 校验model_config配置信息
         validate_model_config = self._process_and_validate_model_config(
@@ -181,7 +187,7 @@ class AppConfigService(BaseService):
                     continue
 
                 # 判断工具的params和草稿中的params是否一致，如果不一致则全部重置为默认值（或者考虑删除这个工具的引用）
-                param_keys = set([param.name for param in tool_entity.params])
+                param_keys = {param.name for param in tool_entity.params}
                 params = tool["params"]
                 if set(tool["params"].keys()) - param_keys:
                     params = {
@@ -255,8 +261,8 @@ class AppConfigService(BaseService):
         return tools, validate_tools
 
     def _process_and_validate_datasets(
-        self, origin_datasets: list[dict]
-    ) -> tuple[list[dict], list[dict]]:
+        self, origin_datasets: list[str]
+    ) -> tuple[list[dict], list[str]]:
         """根据传递的知识库并返回知识库配置与校验后的数据"""
 
         # 校验知识库配置列表，如果引用了不存在的/被删除的知识库，则需要剔除数据并更新，同时获取知识库的额外信息
@@ -276,7 +282,7 @@ class AppConfigService(BaseService):
 
         # 循环获取知识库数据
         for dataset_id in validate_datasets:
-            dataset = dataset_dict.get(str(dataset_id))
+            dataset = dataset_dict[str(dataset_id)]
             datasets.append(
                 {
                     "id": str(dataset.id),
@@ -358,8 +364,8 @@ class AppConfigService(BaseService):
             "review_config": app_config.review_config,
             "multimodal": app_config.multimodal,
             "mcp_server": app_config.mcp_server,
-            "updated_at": datetime_to_timestamp(app_config.updated_at),
-            "created_at": datetime_to_timestamp(app_config.created_at),
+            "updated_at": datetime_to_timestamp(cast(datetime, app_config.updated_at)),
+            "created_at": datetime_to_timestamp(cast(datetime, app_config.created_at)),
         }
 
     def _process_and_validate_agents(
@@ -383,7 +389,7 @@ class AppConfigService(BaseService):
 
         # 循环获取工作流数据
         for agent_id in validate_agents:
-            agent = agent_dict.get(str(agent_id))
+            agent = agent_dict[str(agent_id)]
             agents.append(
                 {
                     "id": str(agent.id),

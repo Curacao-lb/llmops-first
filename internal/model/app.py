@@ -187,67 +187,67 @@ class AppConfig(BaseModel):
         # Index("app_config_app_id_idx", "app_id"),
     )
 
-    id = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID, nullable=False, server_default=text("uuid_generate_v4()")
     )  # 配置id
-    app_id = Column(UUID, nullable=False)  # 关联应用id
-    model_config = Column(
+    app_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 关联应用id
+    model_config: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )  # 模型配置
-    dialog_round = Column(
+    dialog_round: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default=text("0")
     )  # 鞋带上下文轮数
-    preset_prompt = Column(
+    preset_prompt: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("''::text")
     )  # 预设prompt
-    tools = Column(
+    tools: Mapped[list] = mapped_column(
         JSONB, nullable=False, server_default=text("'[]'::jsonb")
     )  # 应用关联工具列表
-    agents = Column(
+    agents: Mapped[list] = mapped_column(
         JSONB, nullable=False, server_default=text("'[]'::jsonb")
     )  # 应用关联的agent列表
-    workflows = Column(
+    workflows: Mapped[list] = mapped_column(
         JSONB, nullable=False, server_default=text("'[]'::jsonb")
     )  # 应用关联的工作流列表
-    retrieval_config = Column(
+    retrieval_config: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'[]'::jsonb")
     )  # 检索配置
-    long_term_memory = Column(
+    long_term_memory: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )  # 长期记忆配置
-    opening_statement = Column(
+    opening_statement: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("''::text")
     )  # 开场白文案
-    opening_questions = Column(
+    opening_questions: Mapped[list] = mapped_column(
         JSONB, nullable=False, server_default=text("'[]'::jsonb")
     )  # 开场白建议问题列表
-    speech_to_text = Column(
+    speech_to_text: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )  # 语音转文本配置
-    text_to_speech = Column(
+    text_to_speech: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )  # 文本转语音配置
-    multimodal = Column(
+    multimodal: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )  # 开启多模态
-    mcp_server = Column(
+    mcp_server: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )  # mcp配置
-    suggested_after_answer = Column(
+    suggested_after_answer: Mapped[dict] = mapped_column(
         JSONB,
         nullable=False,
         server_default=text("'{\"enable\": true}'::jsonb"),
     )  # 回答后生成建议问题
-    review_config = Column(
+    review_config: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )  # 审核配置
-    updated_at = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
 
