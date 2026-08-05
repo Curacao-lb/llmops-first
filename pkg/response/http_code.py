@@ -1,5 +1,8 @@
+from enum import StrEnum
+
+
 # 类HttpCode,这个类它是一个字符串的枚举类型，用来记录我们的业务状态码
-class HttpCode(str):
+class HttpCode(StrEnum):
     """HTTP基础业务状态码"""
 
     SUCCESS = "success"  # 成功状态
@@ -8,3 +11,4 @@ class HttpCode(str):
     UNAUTHORIZED = "unauthorized"  # 未授权状态
     FORBIDDEN = "forbidden"  # 无权限状态
     VALIDATE_ERROR = "validate_error"  # 数据验证错误状态
+    SERVER_ERROR = "server_error"  # 服务器错误状态

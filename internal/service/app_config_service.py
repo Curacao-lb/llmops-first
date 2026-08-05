@@ -24,6 +24,7 @@ from internal.model import (
     AppConfigVersion,
     Dataset,
 )
+from internal.model.app import AppDatasetJoin
 
 from .base_service import BaseService
 
@@ -143,18 +144,41 @@ class AppConfigService(BaseService):
             app_config.model_config
         )
 
+        if app_config.model_config != validate_model_config:
+            self.update(app_config, model_config=validate_model_config)
+
         # 校验工具列表，剔除已被删除的工具，并组装展示信息
-        tools, _ = self._process_and_validate_tools(app_config.tools)
+        tools, validate_tools = self._process_and_validate_tools(app_config.tools)
 
-        # 通过知识库关联记录获取该配置引用的知识库id列表，再进行校验
-        dataset_ids = [
-            str(app_dataset_join.dataset_id)
-            for app_dataset_join in app_config.app_dataset_joins
+        # 判断是否需要更新草稿配置中的工具列表信息
+        if app_config.tools != validate_tools:
+            # 更新草稿配置中的工具列表
+            self.update(app_config, tools=validate_tools)
+
+        # 校验知识库列表，如果引用了不存在/被删除的知识库，需要剔除数据并更新，同时获取知识库的额外信息
+        app_dataset_joins = app_config.app_dataset_joins
+        origin_datasets = [
+            str(app_dataset_join.dataset_id) for app_dataset_join in app_dataset_joins
         ]
-        datasets, _ = self._process_and_validate_datasets(dataset_ids)
+        datasets, validate_datasets = self._process_and_validate_datasets(
+            origin_datasets
+        )
 
-        # 校验关联的agent列表
-        agents, _ = self._process_and_validate_agents(app_config.agents)
+        # 判断是否存在已删除的知识库，如果存在则更新
+        for dataset_id in set(origin_datasets) - set(validate_datasets):
+            with self.db.auto_commit():
+                self.db.session.query(AppDatasetJoin).filter(
+                    AppDatasetJoin.dataset_id == dataset_id
+                ).delete()
+
+        # 校验工作流列表对应的数据
+        # workflows, validate_workflows = self._process_and_validate_workflows(app_config.workflows)
+        # if set(validate_workflows) != set(app_config.workflows):
+        #     self.update(app_config, workflows=validate_workflows)
+
+        agents, validate_agents = self._process_and_validate_agents(app_config.agents)
+        if set(validate_agents) != set(app_config.agents):
+            self.update(app_config, agents=validate_agents)
 
         # 将数据转换成字典后返回
         return self._process_and_transformer_app_config(

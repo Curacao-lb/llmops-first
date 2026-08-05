@@ -20,6 +20,7 @@ class OpenAPIHandler:
     @login_required
     def chat(self):
         """开放Chat对话接口"""
+
         # 1.提取请求并校验数据
         req = OpenAPIChatReq()
         if not req.validate():

@@ -37,14 +37,15 @@ class OpenAPIChatReq(FlaskForm):
     image_urls = ListField("image_urls", default=[])
     stream = BooleanField("stream", default=True)
 
+    # 当你在 Form 子类里定义名为 validate_<字段名> 的方法时，WTForms 会在执行表单校验时自动把它当作对应字段的额外校验器来调用
     def validate_conversation_id(self, field: StringField) -> None:
         """自定义校验conversation_id函数"""
         # 检测是否传递数据，如果传递了，则类型必须为UUID
         if field.data:
             try:
                 uuid.UUID(field.data)
-            except Exception as _:
-                raise ValidationError("会话id格式必须为UUID")
+            except Exception as e:
+                raise ValidationError("会话id格式必须为UUID") from e
 
             # 终端用户id是不是为空
             if not self.end_user_id.data:
@@ -54,7 +55,7 @@ class OpenAPIChatReq(FlaskForm):
         """校验传递的图片URL链接列表"""
         # 校验数据类型如果为None则设置默认值空列表
         if not isinstance(field.data, list):
-            return []
+            return
 
         # 校验数据的长度，最多不能超过5条URL记录
         if len(field.data) > 5:

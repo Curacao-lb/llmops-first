@@ -26,8 +26,10 @@ class Response:
         }
 
 
-def json(data: Response = None):
+def json(data: Response | None = None):
     """基础的响应接口"""
+    if data is None:
+        data = Response()
     response = jsonify(data.to_dict())
     """添加跨域响应头"""
     # response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
@@ -51,13 +53,10 @@ def validate_error_json(errors: Any = None):
     """验证错误的数据响应接口"""
     # 获取 errors 字典的第一个 key（第一个出错的字段名）
 
-    first_key = next(iter(errors))
+    first_key = next(iter(errors), None)
     # 获取该字段的第一条错误信息
     # errors 结构类似: {"username": ["不能为空", "长度不够"], "email": ["格式错误"]}
-    if first_key is not None:
-        msg = errors.get(first_key)[0]
-    else:
-        msg = ""
+    msg = errors.get(first_key)[0] if first_key is not None else ""
     # 返回统一格式的 JSON 响应，包含错误码、完整错误数据和第一条错误消息
     return json(Response(code=HttpCode.VALIDATE_ERROR, data=errors, message=msg))
 
@@ -104,7 +103,9 @@ def server_error_message(msg: str = ""):
     return message(HttpCode.SERVER_ERROR, msg=msg)
 
 
-def compact_generate_response(response: Response | Generator) -> FlaskResponse:
+def compact_generate_response(
+    response: Response | Generator,
+) -> FlaskResponse | tuple[FlaskResponse, int]:
     """统一合并处理块输出以及流式事件输出"""
     # 1.检测下是否为块输出（Response）
     if isinstance(response, Response):

@@ -2,10 +2,13 @@ import json
 import uuid
 from collections.abc import Generator
 from dataclasses import dataclass
+from typing import cast
+from uuid import UUID
 
 from injector import inject
 
-from internal.core.agent.entities.queue_entity import QueueEvent
+from internal.core.agent.entities.agent_entity import AgentState
+from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
 from internal.entity.app_entity import AppStatus
 from internal.entity.conversation_entity import InvokeFrom, MessageStatus
 from internal.exception import ForbiddenException, NotFoundException
@@ -35,7 +38,7 @@ class OpenAPIService(BaseService):
     def chat(self, req: OpenAPIChatReq, account: Account):
         """根据传递的请求+账号信息发起聊天对话，返回数据为块内容或者生成器"""
         # 判断当前应用是否属于当前账号
-        app = self.app_service.get_app(req.app_id.data, account)
+        app = self.app_service.get_app(uuid.UUID(cast(str, req.app_id.data)), account)
 
         # 判断当前应用是否已发布
         if app.status != AppStatus.PUBLISHED:
@@ -99,10 +102,10 @@ class OpenAPIService(BaseService):
         )
 
         # 定义智能体状态基础数据
-        agent_state = {
+        agent_state: AgentState = {
             "messages": [
                 llm.convert_to_human_message(
-                    req.query.data,
+                    cast(str, req.query.data),
                     req.image_urls.data,
                     app_config["multimodal"]["enable"],
                 )
@@ -112,6 +115,13 @@ class OpenAPIService(BaseService):
             "history": history,
             "long_term_memory": conversation.summary,
         }
+
+        # 提前将需要的ORM属性取成普通变量，避免在惰性执行的生成器中访问已脱离Session的ORM对象
+        account_id = cast(UUID, account.id)
+        app_id = cast(UUID, app.id)
+        end_user_id = cast(UUID, end_user.id)
+        conversation_id = cast(UUID, conversation.id)
+        message_id = cast(UUID, message.id)
 
         # 根据stream类型差异执行不同的代码
         if req.stream.data is True:
@@ -159,23 +169,21 @@ class OpenAPIService(BaseService):
                             }
                         ),
                         "id": event_id,
-                        "end_user_id": str(end_user.id),
-                        "conversation_id": str(conversation.id),
-                        "message_id": str(message.id),
+                        "end_user_id": str(end_user_id),
+                        "conversation_id": str(conversation_id),
+                        "message_id": str(message_id),
                         "task_id": str(agent_thought.task_id),
                     }
                     yield f"event: {agent_thought.event}\ndata:{json.dumps(data)}\n\n"
 
                 # 将消息以及推理过程添加到数据库
                 self.conversation_service.save_agent_thoughts(
-                    account_id=account.id,
-                    app_id=app.id,
+                    account_id=account_id,
+                    app_id=app_id,
                     app_config=app_config,
-                    conversation_id=conversation.id,
-                    message_id=message.id,
-                    agent_thoughts=[
-                        agent_thought for agent_thought in agent_thoughts_dict.values()
-                    ],
+                    conversation_id=conversation_id,
+                    message_id=message_id,
+                    agent_thoughts=list(agent_thoughts_dict.values()),
                 )
 
             return handle_stream()
@@ -185,12 +193,12 @@ class OpenAPIService(BaseService):
 
         # 将消息以及推理过程添加到数据库
         self.conversation_service.save_agent_thoughts(
-            account_id=account.id,
-            app_id=app.id,
+            account_id=cast(UUID, account.id),
+            app_id=cast(UUID, app.id),
             app_config=app_config,
-            conversation_id=conversation.id,
-            message_id=message.id,
-            agent_thoughts=agent_result.agent_thoughts,
+            conversation_id=cast(UUID, conversation.id),
+            message_id=cast(UUID, message.id),
+            agent_thoughts=cast(list[AgentThought], agent_result.agent_thoughts),
         )
 
         return Response(
