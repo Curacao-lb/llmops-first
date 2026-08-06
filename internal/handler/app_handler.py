@@ -24,6 +24,7 @@ from internal.schema.app_schema import (
     GetDebugConversationMessagesWithPageResp,
     GetPublishHistoriesWithPageReq,
     GetPublishHistoriesWithPageResp,
+    UpdateAppReq,
     UpdateDebugConversationSummaryReq,
 )
 from internal.service import AppService, RetrievalService
@@ -112,6 +113,25 @@ class AppHandler:
         # 3.序列化并返回应用基础信息
         resp = GetAppResp()
         return success_json(resp.dump(app))
+
+    @login_required
+    def update_app(self, app_id: uuid.UUID):
+        """根据传递的信息更新指定的应用"""
+        req = UpdateAppReq()
+        if not req.validate():
+            return validate_error_json(req.errors)
+
+        self.app_service.update_app(
+            app_id, account=cast(Account, current_user), **req.data
+        )
+
+        return success_message("修改Agent智能体应用成功")
+
+    @login_required
+    def delete_app(self, app_id: uuid.UUID):
+        """根据传递的信息删除指定的应用信息，目前仅删除基础应用信息既可"""
+        self.app_service.delete_app(app_id, account=cast(Account, current_user))
+        return success_message("删除Agent智能体应用成功")
 
     @login_required
     def get_draft_app_config(self, app_id: uuid.UUID):

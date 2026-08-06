@@ -72,6 +72,20 @@ class Router:
 
         bp.add_url_rule("/apps/<uuid:app_id>", view_func=self.app_handler.get_app)
 
+        # 更新指定应用信息
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>",
+            methods=["POST"],
+            view_func=self.app_handler.update_app,
+        )
+
+        # 删除指定应用
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/delete",
+            methods=["POST"],
+            view_func=self.app_handler.delete_app,
+        )
+
         bp.add_url_rule(
             "/apps/<uuid:app_id>/draft-app-config",
             view_func=self.app_handler.get_draft_app_config,
