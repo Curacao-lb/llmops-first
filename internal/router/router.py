@@ -86,6 +86,13 @@ class Router:
             view_func=self.app_handler.delete_app,
         )
 
+        # 创建应用副本
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/copy",
+            methods=["POST"],
+            view_func=self.app_handler.copy_app,
+        )
+
         bp.add_url_rule(
             "/apps/<uuid:app_id>/draft-app-config",
             view_func=self.app_handler.get_draft_app_config,
