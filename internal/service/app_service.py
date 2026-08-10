@@ -170,11 +170,19 @@ class AppService(BaseService):
         app = self.get_app(app_id, account)
         return self.app_config_service.get_draft_app_config(app)
 
-    def update_app(self, app_id: UUID, account: Account) -> App:
+    def update_app(self, app_id: UUID, account: Account, **kwargs) -> App:
         """更新应用信息"""
+        # 1.获取应用并校验权限
         app = self.get_app(app_id, account)
-        with self.db.auto_commit():
-            app.name = "robin的机器人"
+
+        # 2.仅保留允许更新的基础字段，过滤掉 csrf_token 等非法字段
+        allowed_fields = {"name", "en_name", "icon", "description", "mode"}
+        update_data = {
+            field: value for field, value in kwargs.items() if field in allowed_fields
+        }
+
+        # 3.更新应用基础信息
+        self.update(app, **update_data)
         return app
 
     def copy_app(self, app_id: UUID, account: Account) -> App:
