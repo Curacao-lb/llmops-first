@@ -17,6 +17,7 @@ from internal.handler import (
     OpenAPIHandler,
     UploadFileHandler,
 )
+from internal.handler.builtin_app_handler import BuiltinAppHandler
 from internal.service import CosService
 
 
@@ -37,6 +38,7 @@ class Router:
     ai_handler: AIHandler
     api_key_handler: ApiKeyHandler
     openapi_handler: OpenAPIHandler
+    builtin_app_handler: BuiltinAppHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -347,6 +349,20 @@ class Router:
 
         openapi_bp.add_url_rule(
             "/openapi/chat", methods=["POST"], view_func=self.openapi_handler.chat
+        )
+
+        # 内置应用模块
+        bp.add_url_rule(
+            "/builtin-apps/categories",
+            view_func=self.builtin_app_handler.get_builtin_app_categories,
+        )
+        bp.add_url_rule(
+            "/builtin-apps", view_func=self.builtin_app_handler.get_builtin_apps
+        )
+        bp.add_url_rule(
+            "/builtin-apps/add-builtin-app-to-space",
+            methods=["POST"],
+            view_func=self.builtin_app_handler.add_builtin_app_to_space,
         )
 
         # 4.应用上去注册蓝图
