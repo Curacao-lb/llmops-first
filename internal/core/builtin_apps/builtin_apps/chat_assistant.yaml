@@ -1,0 +1,47 @@
+id: 3af8a24e-1c9b-4a6d-9f6b-1a2b3c4d5e6f
+category: assistant
+name: 全能聊天助手
+icon: https://api.iconify.design/lucide/bot.svg
+description: 一个通用的 AI 聊天助手，可以回答各类问题、进行日常对话与知识问答。
+model_config:
+  provider: openai
+  model: gpt-4o-mini
+  parameters:
+    temperature: 0.7
+    top_p: 0.85
+    frequency_penalty: 0.2
+    presence_penalty: 0.2
+    max_tokens: 8192
+dialog_round: 5
+preset_prompt: 你是一个乐于助人、知识渊博的 AI 助手，请用简洁友好的语气回答用户的问题。
+tools: []
+retrieval_config:
+  retrieval_strategy: semantic
+  k: 10
+  score: 0.5
+long_term_memory:
+  enable: true
+opening_statement: 你好，我是你的全能助手，有什么可以帮你的吗？
+opening_questions:
+  - 帮我写一封请假邮件
+  - 用简单的话解释一下量子计算
+  - 推荐几本值得读的书
+speech_to_text:
+  enable: false
+text_to_speech:
+  enable: false
+  voice: echo
+  auto_play: false
+suggested_after_answer:
+  enable: true
+multimodal:
+  enable: false
+review_config:
+  enable: false
+  keywords: []
+  inputs_config:
+    enable: false
+    preset_response: ""
+  outputs_config:
+    enable: false
+created_at: 1754800000

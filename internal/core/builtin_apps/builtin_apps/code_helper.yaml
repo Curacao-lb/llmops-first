@@ -1,0 +1,47 @@
+id: b2c3d4e5-6f70-4819-a2b3-c4d5e6f70812
+category: assistant
+name: 编程小助手
+icon: https://api.iconify.design/lucide/code.svg
+description: 帮你解释代码、排查 Bug、生成代码片段并给出优化建议，覆盖多种编程语言。
+model_config:
+  provider: openai
+  model: gpt-4o
+  parameters:
+    temperature: 0.2
+    top_p: 0.9
+    frequency_penalty: 0.1
+    presence_penalty: 0.1
+    max_tokens: 8192
+dialog_round: 5
+preset_prompt: 你是一位资深软件工程师，擅长多种编程语言。请用清晰的解释和规范的代码帮助用户解决问题，必要时给出示例和最佳实践。
+tools: []
+retrieval_config:
+  retrieval_strategy: semantic
+  k: 10
+  score: 0.5
+long_term_memory:
+  enable: true
+opening_statement: 有代码问题尽管问我，贴上代码或报错信息即可。
+opening_questions:
+  - 帮我解释这段代码是做什么的
+  - 这个报错怎么解决？
+  - 用 Python 写一个快速排序
+speech_to_text:
+  enable: false
+text_to_speech:
+  enable: false
+  voice: echo
+  auto_play: false
+suggested_after_answer:
+  enable: true
+multimodal:
+  enable: false
+review_config:
+  enable: false
+  keywords: []
+  inputs_config:
+    enable: false
+    preset_response: ""
+  outputs_config:
+    enable: false
+created_at: 1754800500

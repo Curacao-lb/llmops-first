@@ -1,0 +1,47 @@
+id: c3d4e5f6-7081-492a-b3c4-d5e6f7081923
+category: writing
+name: 社媒内容创作
+icon: https://api.iconify.design/lucide/megaphone.svg
+description: 为小红书、微博、公众号等平台生成吸睛的标题、正文和话题标签。
+model_config:
+  provider: openai
+  model: gpt-4o-mini
+  parameters:
+    temperature: 0.9
+    top_p: 0.9
+    frequency_penalty: 0.3
+    presence_penalty: 0.4
+    max_tokens: 8192
+dialog_round: 3
+preset_prompt: 你是一位社交媒体内容运营专家，熟悉小红书、微博、公众号等平台的风格。请根据主题生成吸引人、有传播力的标题和正文，并附上合适的话题标签。
+tools: []
+retrieval_config:
+  retrieval_strategy: semantic
+  k: 10
+  score: 0.5
+long_term_memory:
+  enable: false
+opening_statement: 告诉我主题和平台，我来帮你写爆款内容。
+opening_questions:
+  - 写一篇小红书咖啡探店笔记
+  - 给新品发布写一条微博文案
+  - 帮我想几个吸睛标题
+speech_to_text:
+  enable: false
+text_to_speech:
+  enable: false
+  voice: echo
+  auto_play: false
+suggested_after_answer:
+  enable: true
+multimodal:
+  enable: false
+review_config:
+  enable: false
+  keywords: []
+  inputs_config:
+    enable: false
+    preset_response: ""
+  outputs_config:
+    enable: false
+created_at: 1754800600

@@ -1,0 +1,47 @@
+id: 5b1e7c92-8d4a-4f3e-b2c1-6e7f8a9b0c1d
+category: writing
+name: 写作润色专家
+icon: https://api.iconify.design/lucide/pen-line.svg
+description: 帮助你撰写、润色和优化各类文案，包括文章、邮件、方案与营销文本。
+model_config:
+  provider: openai
+  model: gpt-4o
+  parameters:
+    temperature: 0.8
+    top_p: 0.9
+    frequency_penalty: 0.3
+    presence_penalty: 0.3
+    max_tokens: 8192
+dialog_round: 3
+preset_prompt: 你是一位资深中文写作专家，擅长润色文字、优化结构、调整语气。请在保持原意的前提下让文本更流畅、更专业。
+tools: []
+retrieval_config:
+  retrieval_strategy: semantic
+  k: 10
+  score: 0.5
+long_term_memory:
+  enable: false
+opening_statement: 把你的文字发给我，我来帮你润色优化。
+opening_questions:
+  - 帮我润色这段产品介绍
+  - 把这封邮件改得更正式一些
+  - 给这篇文章起几个标题
+speech_to_text:
+  enable: false
+text_to_speech:
+  enable: false
+  voice: echo
+  auto_play: false
+suggested_after_answer:
+  enable: true
+multimodal:
+  enable: false
+review_config:
+  enable: false
+  keywords: []
+  inputs_config:
+    enable: false
+    preset_response: ""
+  outputs_config:
+    enable: false
+created_at: 1754800100

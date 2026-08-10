@@ -1,0 +1,47 @@
+id: 7c2f9d31-4e5b-4a1c-8d3e-2f4a6b8c0d2e
+category: ecommerce
+name: 电商带货文案生成器
+icon: https://api.iconify.design/lucide/shopping-bag.svg
+description: 根据商品卖点快速生成吸引人的电商标题、卖点文案与营销短文。
+model_config:
+  provider: openai
+  model: gpt-4o-mini
+  parameters:
+    temperature: 0.9
+    top_p: 0.9
+    frequency_penalty: 0.2
+    presence_penalty: 0.4
+    max_tokens: 8192
+dialog_round: 3
+preset_prompt: 你是一位电商营销文案高手，擅长挖掘商品卖点，写出有转化力、有种草感的营销文案。请输出简洁有力、突出卖点的内容。
+tools: []
+retrieval_config:
+  retrieval_strategy: semantic
+  k: 10
+  score: 0.5
+long_term_memory:
+  enable: false
+opening_statement: 告诉我商品信息和卖点，我帮你生成带货文案。
+opening_questions:
+  - 帮我写一条保温杯的种草文案
+  - 给这款面膜起个促销标题
+  - 生成一段直播口播稿
+speech_to_text:
+  enable: false
+text_to_speech:
+  enable: false
+  voice: echo
+  auto_play: false
+suggested_after_answer:
+  enable: true
+multimodal:
+  enable: false
+review_config:
+  enable: false
+  keywords: []
+  inputs_config:
+    enable: false
+    preset_response: ""
+  outputs_config:
+    enable: false
+created_at: 1754800200

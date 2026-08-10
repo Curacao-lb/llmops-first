@@ -1,0 +1,47 @@
+id: 9d3a1b42-6f7c-4b2d-9e4a-3b5c7d9e1f30
+category: hr
+name: 招聘筛选助手
+icon: https://api.iconify.design/lucide/user-search.svg
+description: 帮助 HR 快速筛选简历、生成面试问题并撰写职位描述（JD）。
+model_config:
+  provider: openai
+  model: gpt-4o-mini
+  parameters:
+    temperature: 0.5
+    top_p: 0.85
+    frequency_penalty: 0.2
+    presence_penalty: 0.2
+    max_tokens: 8192
+dialog_round: 5
+preset_prompt: 你是一位经验丰富的招聘专家，擅长撰写职位描述、评估简历匹配度并设计结构化面试问题。请用专业、客观的语气给出建议。
+tools: []
+retrieval_config:
+  retrieval_strategy: semantic
+  k: 10
+  score: 0.5
+long_term_memory:
+  enable: true
+opening_statement: 你好，我可以帮你写 JD、筛简历或准备面试问题。
+opening_questions:
+  - 帮我写一份后端工程师的 JD
+  - 针对这份简历生成面试问题
+  - 评估候选人是否符合岗位要求
+speech_to_text:
+  enable: false
+text_to_speech:
+  enable: false
+  voice: echo
+  auto_play: false
+suggested_after_answer:
+  enable: true
+multimodal:
+  enable: false
+review_config:
+  enable: false
+  keywords: []
+  inputs_config:
+    enable: false
+    preset_response: ""
+  outputs_config:
+    enable: false
+created_at: 1754800300
