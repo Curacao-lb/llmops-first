@@ -39,9 +39,7 @@ class BaseNodeData(BaseModel):
     node_type: NodeType  # 节点类型
     title: str = ""  # 节点标题，数据也必须唯一
     description: str = ""  # 节点描述信息
-    position: Position = Field(
-        default_factory=lambda: {"x": 0, "y": 0}
-    )  # 节点对应的坐标信息
+    position: Position = Field(default_factory=Position)  # 节点对应的坐标信息
 
 
 class NodeStatus(str, Enum):

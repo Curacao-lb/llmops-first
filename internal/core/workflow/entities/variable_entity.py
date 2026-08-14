@@ -1,6 +1,6 @@
 import re
 from enum import Enum
-from typing import Union, Any, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -91,33 +91,35 @@ class VariableEntity(BaseModel):
         class Content(BaseModel):
             """变量内容实体信息，如果类型为引用，则使用content记录引用节点id+引用节点的变量名"""
 
-            ref_node_id: Optional[UUID] = None
+            ref_node_id: UUID | None = None
             ref_var_name: str = ""
 
             @field_validator("ref_node_id", mode="before", check_fields=True)
-            def validate_ref_node_id(cls, ref_node_id: Optional[UUID]):
+            def validate_ref_node_id(cls, ref_node_id: UUID | None):
                 return ref_node_id if ref_node_id != "" else None
 
         type: VariableValueType = VariableValueType.LITERAL
-        content: Union[
-            Content,
-            str,
-            int,
-            float,
-            bool,
-            list[str],
-            list[int],
-            list[float],
-            list[bool],
-            None,
-        ] = None
+        content: (
+            Content
+            | str
+            | int
+            | float
+            | bool
+            | list[str]
+            | list[int]
+            | list[float]
+            | list[bool]
+            | None
+        ) = None
 
     name: str = ""  # 变量的名字
     description: str = ""  # 变量的描述信息
     required: bool = True  # 变量是否必填
     type: VariableType = VariableType.STRING  # 变量的类型
     value: Value = Field(
-        default_factory=lambda: {"type": VariableValueType.LITERAL, "content": ""}
+        default_factory=lambda: VariableEntity.Value(
+            type=VariableValueType.LITERAL, content=""
+        )
     )  # 变量对应的值
     meta: dict[str, Any] = Field(default_factory=dict)  # 变量元数据，存储一些额外的信息
 
