@@ -30,7 +30,7 @@ class DatasetRetrievalNodeData(BaseNodeData):
         default_factory=lambda: [
             VariableEntity(
                 name="combine_documents",
-                value={"type": VariableValueType.GENERATED},
+                value=VariableEntity.Value(type=VariableValueType.GENERATED),
             )
         ]
     )
@@ -40,7 +40,7 @@ class DatasetRetrievalNodeData(BaseNodeData):
         return [
             VariableEntity(
                 name="combine_documents",
-                value={"type": VariableValueType.GENERATED},
+                value=VariableEntity.Value(type=VariableValueType.GENERATED),
             )
         ]
 

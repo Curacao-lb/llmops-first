@@ -1,5 +1,5 @@
 import time
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from flask import Flask
@@ -47,7 +47,7 @@ class DatasetRetrievalNode(BaseNode):
         )
 
     def invoke(
-        self, state: WorkflowState, config: Optional[RunnableConfig] = None
+        self, state: WorkflowState, config: RunnableConfig | None = None
     ) -> WorkflowState:
         """知识库检索节点调用函数，执行相应的知识库检索后返回"""
         # 提取节点输入变量字典映射
