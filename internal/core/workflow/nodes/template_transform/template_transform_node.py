@@ -1,5 +1,4 @@
 import time
-from typing import Optional
 
 from jinja2 import Template
 from langchain_core.runnables import RunnableConfig
@@ -18,7 +17,7 @@ class TemplateTransformNode(BaseNode):
     node_data: TemplateTransformNodeData
 
     def invoke(
-        self, state: WorkflowState, config: Optional[RunnableConfig] = None
+        self, state: WorkflowState, config: RunnableConfig | None = None
     ) -> WorkflowState:
         """模板转换节点执行函数，将传递的多个变量合并成字符串后返回"""
         # 提取节点中的输入数据

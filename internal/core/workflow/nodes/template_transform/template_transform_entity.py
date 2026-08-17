@@ -14,12 +14,18 @@ class TemplateTransformNodeData(BaseNodeData):
     inputs: list[VariableEntity] = Field(default_factory=list)  # 输入列表信息
     outputs: list[VariableEntity] = Field(
         default_factory=lambda: [
-            VariableEntity(name="output", value={"type": VariableValueType.GENERATED})
+            VariableEntity(
+                name="output",
+                value=VariableEntity.Value(type=VariableValueType.GENERATED),
+            )
         ]
     )
 
     @field_validator("outputs", mode="before")
     def validate_outputs(cls, outputs: list[VariableEntity]):
         return [
-            VariableEntity(name="output", value={"type": VariableValueType.GENERATED})
+            VariableEntity(
+                name="output",
+                value=VariableEntity.Value(type=VariableValueType.GENERATED),
+            )
         ]
