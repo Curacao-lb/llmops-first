@@ -1,5 +1,4 @@
 import time
-from typing import Optional
 
 from jinja2 import Template
 from langchain_core.runnables import RunnableConfig
@@ -18,7 +17,7 @@ class LLMNode(BaseNode):
     node_data: LLMNodeData
 
     def invoke(
-        self, state: WorkflowState, config: Optional[RunnableConfig] = None
+        self, state: WorkflowState, config: RunnableConfig | None = None
     ) -> WorkflowState:
         """大语言模型节点执行函数，根据输入变量渲染提示词并调用LLM生成结果"""
         # 提取节点中的输入数据
