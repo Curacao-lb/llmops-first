@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import time
-from typing import Optional
 
 import requests
 from langchain_core.runnables import RunnableConfig
@@ -25,7 +24,7 @@ class CodeNode(BaseNode):
     node_data: CodeNodeData
 
     def invoke(
-        self, state: WorkflowState, config: Optional[RunnableConfig] = None
+        self, state: WorkflowState, config: RunnableConfig | None = None
     ) -> WorkflowState:
         """Python代码运行节点，执行的代码函数名必须为main，并且参数名为params"""
         # 从状态中提取输入数据
@@ -38,7 +37,10 @@ class CodeNode(BaseNode):
             "func_name": "main",
             "args": [inputs_dict],
         }
-        response = requests.post(url=os.getenv("FUNCTION_CALL_URL"), json=data)
+        function_call_url = os.getenv("FUNCTION_CALL_URL")
+        if not function_call_url:
+            raise FailException("未配置云函数调用地址FUNCTION_CALL_URL")
+        response = requests.post(url=function_call_url, json=data)
 
         if response.status_code != 200:
             logging.error("云函数返回异常: %(reason)s", {"reason": response.reason})
