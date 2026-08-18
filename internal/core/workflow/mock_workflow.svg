@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="720" viewBox="0 0 1020 720" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a4a6a"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect x="0" y="0" width="1020" height="720" fill="#ffffff"/>
+
+  <!-- edges -->
+  <g fill="none" stroke="#4a4a6a" stroke-width="1.3" marker-end="url(#arrow)">
+    <!-- __start__ -> start -->
+    <path d="M513,58 L513,100"/>
+    <!-- start -> dataset_retrieval -->
+    <path d="M430,150 C260,175 150,180 118,205"/>
+    <!-- start -> http_request -->
+    <path d="M500,152 C430,230 390,290 385,340"/>
+    <!-- start -> tool1 -->
+    <path d="M540,152 C600,290 645,400 650,460"/>
+    <!-- start -> tool2 -->
+    <path d="M600,150 C820,210 905,340 908,460"/>
+    <!-- dataset_retrieval -> llm -->
+    <path d="M116,272 L116,340"/>
+    <!-- llm -> code -->
+    <path d="M116,392 L116,458"/>
+    <!-- http_request -> template_transform -->
+    <path d="M384,392 L384,458"/>
+    <!-- code -> end -->
+    <path d="M170,510 C300,560 380,565 425,578"/>
+    <!-- template_transform -> end -->
+    <path d="M420,510 C455,540 475,552 495,570"/>
+    <!-- tool1 -> end -->
+    <path d="M630,512 C595,542 575,552 555,570"/>
+    <!-- tool2 -> end -->
+    <path d="M880,512 C720,560 640,565 600,578"/>
+    <!-- end -> __end__ -->
+    <path d="M513,620 L513,662"/>
+  </g>
+
+  <!-- __start__ pill -->
+  <g>
+    <rect x="470" y="30" width="86" height="30" rx="15" ry="15" fill="#f2f0fb" stroke="#b7aede"/>
+    <text x="513" y="50" text-anchor="middle" font-size="14" fill="#333">__start__</text>
+  </g>
+
+  <!-- node boxes -->
+  <g font-size="11" fill="#333">
+    <!-- start -->
+    <rect x="417" y="100" width="192" height="50" rx="6" fill="#f7f6fc" stroke="#c9c2e8"/>
+    <text x="513" y="120" text-anchor="middle">start_18d938c4-ecd7-4a6b-</text>
+    <text x="513" y="136" text-anchor="middle">9403-3625224b96cc</text>
+
+    <!-- dataset_retrieval -->
+    <rect x="15" y="205" width="202" height="67" rx="6" fill="#f7f6fc" stroke="#c9c2e8"/>
+    <text x="116" y="228" text-anchor="middle">dataset_retrieval_868b5769-</text>
+    <text x="116" y="244" text-anchor="middle">1925-4e7b-8aa4-</text>
+    <text x="116" y="260" text-anchor="middle">af7c3d444d91</text>
+
+    <!-- llm -->
+    <rect x="15" y="340" width="202" height="52" rx="6" fill="#f7f6fc" stroke="#c9c2e8"/>
+    <text x="116" y="362" text-anchor="middle">llm_eba75c0b-21b7-46ed-</text>
+    <text x="116" y="378" text-anchor="middle">8d21-791724f0740f</text>
+
+    <!-- code -->
+    <rect x="15" y="458" width="202" height="52" rx="6" fill="#f7f6fc" stroke="#c9c2e8"/>
+    <text x="116" y="480" text-anchor="middle">code_4a9ed43d-e886-49f7-</text>
+    <text x="116" y="496" text-anchor="middle">af9f-9e85d83b27aa</text>
+
+    <!-- http_request -->
+    <rect x="283" y="340" width="202" height="67" rx="6" fill="#f7f6fc" stroke="#c9c2e8"/>
+    <text x="384" y="363" text-anchor="middle">http_request_675fca50-</text>
+    <text x="384" y="379" text-anchor="middle">1228-8008-82dc-</text>
+    <text x="384" y="395" text-anchor="middle">0c714158534c</text>
+
+    <!-- template_transform -->
+    <rect x="283" y="458" width="202" height="52" rx="6" fill="#f7f6fc" stroke="#c9c2e8"/>
+    <text x="384" y="480" text-anchor="middle">template_transform_623b7671-</text>
+    <text x="384" y="496" text-anchor="middle">0bc2-446c-bf5e-5e25032a522e</text>
+
+    <!-- tool 1 -->
+    <rect x="550" y="460" width="202" height="52" rx="6" fill="#f7f6fc" stroke="#c9c2e8"/>
+    <text x="651" y="482" text-anchor="middle">tool_2f6cf40d-0219-421b-</text>
+    <text x="651" y="498" text-anchor="middle">92ff-229fdde15ecb</text>
+
+    <!-- tool 2 -->
+    <rect x="807" y="460" width="202" height="52" rx="6" fill="#f7f6fc" stroke="#c9c2e8"/>
+    <text x="908" y="482" text-anchor="middle">tool_e9fc1f95-1a59-4ba4-</text>
+    <text x="908" y="498" text-anchor="middle">a87d-2ad349287234</text>
+
+    <!-- end -->
+    <rect x="417" y="570" width="192" height="50" rx="6" fill="#f7f6fc" stroke="#c9c2e8"/>
+    <text x="513" y="590" text-anchor="middle">end_860c8411-37ed-4872-</text>
+    <text x="513" y="606" text-anchor="middle">b53f-30afa0290211</text>
+  </g>
+
+  <!-- __end__ pill -->
+  <g>
+    <rect x="472" y="662" width="82" height="30" rx="15" ry="15" fill="#d9d3f0" stroke="#b7aede"/>
+    <text x="513" y="682" text-anchor="middle" font-size="14" fill="#333">__end__</text>
+  </g>
+</svg>
