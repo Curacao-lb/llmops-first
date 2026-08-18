@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Any, Optional
+from typing import Any, cast
 
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import BaseTool
@@ -74,17 +74,17 @@ class ToolNode(BaseNode):
             self._tool = api_provider_manager.get_tool(
                 ToolEntity(
                     id=str(api_tool.id),
-                    name=api_tool.name,
-                    url=api_tool.url,
-                    method=api_tool.method,
-                    description=api_tool.description,
-                    headers=api_tool.provider.headers,
-                    parameters=api_tool.parameters,
+                    name=str(api_tool.name),
+                    url=str(api_tool.url),
+                    method=str(api_tool.method),
+                    description=str(api_tool.description),
+                    headers=cast(list[dict], api_tool.provider.headers),
+                    parameters=cast(list[dict], api_tool.parameters),
                 )
             )
 
     def invoke(
-        self, state: WorkflowState, config: Optional[RunnableConfig] = None
+        self, state: WorkflowState, config: RunnableConfig | None = None
     ) -> WorkflowState:
         """扩展插件执行节点，根据传递的信息调用预设的插件"""
         # 提取节点中的输入数据
@@ -94,8 +94,8 @@ class ToolNode(BaseNode):
         # 调用插件并获取结果
         try:
             result = self._tool.invoke(inputs_dict)
-        except Exception:
-            raise FailException("扩展插件执行失败，请稍后尝试")
+        except Exception as e:
+            raise FailException("扩展插件执行失败，请稍后尝试") from e
 
         # 检测result是否为字符串，如果不是则转换(避免汉字被转义)
         if not isinstance(result, str):

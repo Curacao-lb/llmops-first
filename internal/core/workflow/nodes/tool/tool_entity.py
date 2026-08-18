@@ -19,12 +19,18 @@ class ToolNodeData(BaseNodeData):
     inputs: list[VariableEntity] = Field(default_factory=list)  # 输入变量列表
     outputs: list[VariableEntity] = Field(
         default_factory=lambda: [
-            VariableEntity(name="text", value={"type": VariableValueType.GENERATED})
+            VariableEntity(
+                name="text",
+                value=VariableEntity.Value(type=VariableValueType.GENERATED),
+            )
         ]
     )  # 输出字段列表信息
 
     @field_validator("outputs", mode="before")
     def validate_outputs(cls, outputs: list[VariableEntity]):
         return [
-            VariableEntity(name="text", value={"type": VariableValueType.GENERATED})
+            VariableEntity(
+                name="text",
+                value=VariableEntity.Value(type=VariableValueType.GENERATED),
+            )
         ]
