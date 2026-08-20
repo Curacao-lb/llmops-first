@@ -1,4 +1,3 @@
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -15,4 +14,4 @@ class BaseEdgeData(BaseModel):
     target: UUID  # 边目标对应的节点id
     target_type: NodeType  # 边目标类型
     # 起点句柄id，存在数据时则代表节点存在多个连接句柄(如意图识别/条件分支)
-    source_handle_id: Optional[UUID] = None
+    source_handle_id: UUID | None = None
