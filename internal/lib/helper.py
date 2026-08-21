@@ -58,7 +58,7 @@ def generate_text_hash(text: str) -> str:
     return sha3_256(text.encode()).hexdigest()
 
 
-def datetime_to_timestamp(dt: datetime) -> int:
+def datetime_to_timestamp(dt: datetime | None) -> int:
     if dt is None:
         return 0
     return int(dt.timestamp())

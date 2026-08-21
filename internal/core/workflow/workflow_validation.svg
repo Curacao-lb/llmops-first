@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="830" viewBox="0 0 760 830" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <!-- 背景 -->
+  <rect x="0" y="0" width="760" height="830" fill="#ffffff"/>
+
+  <!-- 标题 -->
+  <text x="230" y="34" text-anchor="middle" font-size="18" font-weight="bold" fill="#222">工作流Nodes与Edges校验逻辑</text>
+
+  <!-- ================= 边（虚线箭头） ================= -->
+  <g fill="none" stroke="#555" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrow)">
+    <!-- start -> http_request -->
+    <path d="M78,110 C45,145 40,175 55,205"/>
+    <!-- start -> dataset_retrieval -->
+    <path d="M92,112 C110,150 118,175 128,203"/>
+    <!-- start -> tool -->
+    <path d="M108,102 C170,140 200,175 208,203"/>
+    <!-- dataset_retrieval -> llm -->
+    <path d="M132,258 C130,290 128,315 126,343"/>
+    <!-- tool -> http_request (下方的http_request) -->
+    <path d="M212,258 C214,290 216,315 218,343"/>
+    <!-- llm -> code -->
+    <path d="M132,398 C150,430 165,450 178,468"/>
+    <!-- http_request(下) -> code -->
+    <path d="M216,398 C205,430 195,450 185,468"/>
+    <!-- code -> llm(第二个) -->
+    <path d="M178,522 L178,563"/>
+    <!-- llm(第二个) -> template_transform -->
+    <path d="M178,618 L178,658"/>
+    <!-- template_transform -> end -->
+    <path d="M160,708 C140,730 130,735 122,742"/>
+  </g>
+
+  <!-- ================= 非法的边（红色虚线 + X） ================= -->
+  <g fill="none" stroke="#c0504d" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#arrow)" opacity="0.6">
+    <!-- start(非法) 的边 -->
+    <path d="M212,110 C214,150 214,175 214,203"/>
+    <!-- tool 的自环/非法边 -->
+    <path d="M242,222 C285,215 285,250 250,240"/>
+    <!-- template_transform -> end(非法) -->
+    <path d="M196,708 C216,730 225,735 232,742"/>
+  </g>
+  <!-- 红色 X 标记（表示非法/被拒绝） -->
+  <g stroke="#c0504d" stroke-width="2.4" stroke-linecap="round">
+    <!-- start 非法边上的 X -->
+    <path d="M207,150 l14,14 M221,150 l-14,14"/>
+    <!-- tool 非法边上的 X -->
+    <path d="M283,258 l14,14 M297,258 l-14,14"/>
+    <!-- end 非法边上的 X -->
+    <path d="M207,724 l14,14 M221,724 l-14,14"/>
+  </g>
+
+  <!-- ================= 节点（圆形） ================= -->
+  <g font-size="11" fill="#333" text-anchor="middle">
+    <!-- start（合法） -->
+    <circle cx="80" cy="82" r="28" fill="#ffffff" stroke="#333"/>
+    <text x="80" y="126">start</text>
+
+    <!-- start（非法，重复的开始节点） -->
+    <circle cx="214" cy="82" r="28" fill="#fdecea" stroke="#c0504d"/>
+    <text x="214" y="126">start</text>
+
+    <!-- http_request（上） -->
+    <circle cx="52" cy="232" r="28" fill="#ffffff" stroke="#333"/>
+    <text x="52" y="276">http_request</text>
+
+    <!-- dataset_retrieval -->
+    <circle cx="132" cy="232" r="28" fill="#ffffff" stroke="#333"/>
+    <text x="132" y="276">dataset_retrieval</text>
+
+    <!-- tool -->
+    <circle cx="212" cy="232" r="28" fill="#ffffff" stroke="#333"/>
+    <text x="212" y="276">tool</text>
+
+    <!-- llm（上） -->
+    <circle cx="124" cy="372" r="28" fill="#ffffff" stroke="#333"/>
+    <text x="124" y="416">llm</text>
+
+    <!-- http_request（下） -->
+    <circle cx="218" cy="372" r="28" fill="#ffffff" stroke="#333"/>
+    <text x="218" y="416">http_request</text>
+
+    <!-- code -->
+    <circle cx="178" cy="496" r="28" fill="#ffffff" stroke="#333"/>
+    <text x="178" y="540">code</text>
+
+    <!-- llm（第二个） -->
+    <circle cx="178" cy="592" r="28" fill="#ffffff" stroke="#333"/>
+    <text x="178" y="636">llm</text>
+
+    <!-- template_transform -->
+    <circle cx="178" cy="686" r="28" fill="#ffffff" stroke="#333"/>
+    <text x="178" y="732">template_transform</text>
+
+    <!-- end（合法） -->
+    <circle cx="112" cy="768" r="28" fill="#ffffff" stroke="#333"/>
+    <text x="112" y="812">end</text>
+
+    <!-- end（非法，重复的结束节点） -->
+    <circle cx="242" cy="768" r="28" fill="#fdecea" stroke="#c0504d"/>
+    <text x="242" y="812">end</text>
+  </g>
+
+  <!-- ================= 右侧校验规则说明 ================= -->
+  <g font-size="14" fill="#2a4b8d">
+    <text x="330" y="292">1. 在Nodes中只允许有一个开始节点，和一个结束节点；</text>
+    <text x="330" y="322">2. Nodes节点中的id必须唯一；</text>
+    <text x="330" y="352">3. Nodes节点中的title必须唯一；</text>
+    <text x="330" y="382">4. Edges边id必须唯一；</text>
+    <text x="330" y="412">5. Edges边中的source、target、source_type、target_type必须对应得上；</text>
+    <text x="330" y="442">6. Edges中的边必须唯一（即source+target必须唯一）；</text>
+    <text x="330" y="472">7. 工作流中没有孤立节点，即所有节点都可以访问；</text>
+    <text x="330" y="502">8. 工作流中不存在环路（即循环边结构）；</text>
+    <text x="330" y="532">9. 工作流节点的数据引用只能引用前置节点的数据；</text>
+  </g>
+</svg>

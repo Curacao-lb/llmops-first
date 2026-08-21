@@ -16,6 +16,7 @@ from internal.handler import (
     OAuthHandler,
     OpenAPIHandler,
     UploadFileHandler,
+    WorkflowHandler,
 )
 from internal.handler.builtin_app_handler import BuiltinAppHandler
 from internal.service import CosService
@@ -39,6 +40,7 @@ class Router:
     api_key_handler: ApiKeyHandler
     openapi_handler: OpenAPIHandler
     builtin_app_handler: BuiltinAppHandler
+    workflow_handler: WorkflowHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -363,6 +365,65 @@ class Router:
             "/builtin-apps/add-builtin-app-to-space",
             methods=["POST"],
             view_func=self.builtin_app_handler.add_builtin_app_to_space,
+        )
+
+        # 工作流模块
+        # 获取工作流分页列表数据
+        bp.add_url_rule(
+            "/workflows",
+            view_func=self.workflow_handler.get_workflows_with_page,
+        )
+        # 新增工作流
+        bp.add_url_rule(
+            "/workflows",
+            methods=["POST"],
+            view_func=self.workflow_handler.create_workflow,
+        )
+        # 获取指定工作流详情
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>",
+            view_func=self.workflow_handler.get_workflow,
+        )
+        # 更新指定工作流基础信息
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>",
+            methods=["POST"],
+            view_func=self.workflow_handler.update_workflow,
+        )
+        # 删除指定工作流
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/delete",
+            methods=["POST"],
+            view_func=self.workflow_handler.delete_workflow,
+        )
+        # 获取指定工作流的草稿图配置
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/draft",
+            view_func=self.workflow_handler.get_draft_graph,
+        )
+        # 更新指定工作流的草稿图配置
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/draft",
+            methods=["POST"],
+            view_func=self.workflow_handler.update_draft_graph,
+        )
+        # 调试指定工作流
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/debug",
+            methods=["POST"],
+            view_func=self.workflow_handler.debug_workflow,
+        )
+        # 发布指定工作流
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/publish",
+            methods=["POST"],
+            view_func=self.workflow_handler.publish_workflow,
+        )
+        # 取消发布指定工作流
+        bp.add_url_rule(
+            "/workflows/<uuid:workflow_id>/cancel-publish",
+            methods=["POST"],
+            view_func=self.workflow_handler.cancel_publish_workflow,
         )
 
         # 4.应用上去注册蓝图
