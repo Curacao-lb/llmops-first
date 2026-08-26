@@ -1,12 +1,13 @@
 import os.path
-from typing import Optional, Type
+from typing import Self
 
 import yaml
 from injector import inject, singleton
 from pydantic import BaseModel, Field, model_validator
 
 from internal.exception import NotFoundException
-from .entities.model_entity import ModelType, BaseLanguageModel
+
+from .entities.model_entity import BaseLanguageModel, ModelType
 from .entities.provider_entity import Provider, ProviderEntity
 
 
@@ -18,7 +19,7 @@ class LanguageModelManager(BaseModel):
     provider_map: dict[str, Provider] = Field(default_factory=dict)  # 服务提供者映射
 
     @model_validator(mode="after")
-    def validate_language_model_manager(cls, values: BaseModel) -> BaseModel:
+    def validate_language_model_manager(self) -> Self:
         """使用pydantic提供的预设规则校验提供者映射，完成语言模型管理器的初始化"""
         # 获取当前类所在的路径
         current_path = os.path.abspath(__file__)
@@ -30,18 +31,18 @@ class LanguageModelManager(BaseModel):
             providers_yaml_data = yaml.safe_load(f)
 
         # 循环读取服务提供者数据并配置模型信息
-        values.provider_map = {}
+        self.provider_map = {}
         for index, provider_yaml_data in enumerate(providers_yaml_data):
             # 获取提供者实体数据结构，并构建服务提供者实体
             provider_entity = ProviderEntity(**provider_yaml_data)
-            values.provider_map[provider_entity.name] = Provider(
+            self.provider_map[provider_entity.name] = Provider(
                 name=provider_entity.name,
                 position=index + 1,
                 provider_entity=provider_entity,
             )
-        return values
+        return self
 
-    def get_provider(self, provider_name: str) -> Optional[Provider]:
+    def get_provider(self, provider_name: str) -> Provider:
         """根据传递的提供者名字获取提供者"""
         provider = self.provider_map.get(provider_name, None)
         if provider is None:
@@ -56,7 +57,7 @@ class LanguageModelManager(BaseModel):
         self,
         provider_name: str,
         model_type: ModelType,
-    ) -> Optional[Type[BaseLanguageModel]]:
+    ) -> type[BaseLanguageModel] | None:
         """根据传递的提供者名字+模型类型，获取模型类"""
         provider = self.get_provider(provider_name)
 
@@ -66,7 +67,7 @@ class LanguageModelManager(BaseModel):
         self,
         provider_name: str,
         model_name: str,
-    ) -> Optional[Type[BaseLanguageModel]]:
+    ) -> type[BaseLanguageModel] | None:
         """根据传递的提供者名字+模型名字获取模型类"""
         provider = self.get_provider(provider_name)
 

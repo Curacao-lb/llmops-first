@@ -173,10 +173,8 @@ class WorkflowService(BaseService):
         # 更新工作流草稿图配置，每次修改都将is_debug_passed的值重置为False，该处可以优化对比字典里除position的其他属性
         self.update(
             workflow,
-            **{
-                "draft_graph": validate_draft_graph,
-                "is_debug_passed": False,
-            },
+            draft_graph=validate_draft_graph,
+            is_debug_passed=False,
         )
 
         return workflow
@@ -360,15 +358,13 @@ class WorkflowService(BaseService):
             # 添加数据库工作流运行结果记录
             workflow_result = self.create(
                 WorkflowResult,
-                **{
-                    "app_id": None,
-                    "account_id": account.id,
-                    "workflow_id": workflow.id,
-                    "graph": workflow.draft_graph,
-                    "state": [],
-                    "latency": 0,
-                    "status": WorkflowResultStatus.RUNNING,
-                },
+                app_id=None,
+                account_id=account.id,
+                workflow_id=workflow.id,
+                graph=workflow.draft_graph,
+                state=[],
+                latency=0,
+                status=WorkflowResultStatus.RUNNING,
             )
 
             # 调用stream服务获取工具信息
@@ -396,30 +392,33 @@ class WorkflowService(BaseService):
                 # 流式输出完毕后，将结果存储到数据库中
                 self.update(
                     workflow_result,
-                    **{
-                        "status": WorkflowResultStatus.SUCCEEDED,
-                        "state": node_results,
-                        "latency": (time.perf_counter() - start_at),
-                    },
+                    status=WorkflowResultStatus.SUCCEEDED,
+                    state=node_results,
+                    latency=(time.perf_counter() - start_at),
                 )
-                self.update(
-                    workflow,
-                    **{
-                        "is_debug_passed": True,
-                    },
-                )
+                # 注意：在 stream_with_context 流式响应期间，最初在请求上下文中查询到的
+                # workflow 实例可能已从当前会话游离，直接对其更新不会持久化。
+                # 因此这里在当前会话中按 id 重新获取后再更新调试通过状态。
+                latest_workflow = self.get(Workflow, workflow_id)
+                if latest_workflow is not None:
+                    self.update(latest_workflow, is_debug_passed=True)
             except Exception as e:
                 logging.exception(
                     "执行工作流发生错误, 错误信息: %(error)s", {"error": e}
                 )
                 self.update(
                     workflow_result,
-                    **{
-                        "status": WorkflowResultStatus.FAILED,
-                        "state": node_results,
-                        "latency": (time.perf_counter() - start_at),
-                    },
+                    status=WorkflowResultStatus.FAILED,
+                    state=node_results,
+                    latency=(time.perf_counter() - start_at),
                 )
+
+                # 将错误信息通过流式事件推送给前端，避免前端无法感知真实失败原因
+                error_data = {
+                    "id": str(uuid.uuid4()),
+                    "error": str(e) or "工作流运行失败，请核实节点配置后重试",
+                }
+                yield f"event: error\ndata: {json.dumps(error_data)}\n\n"
 
         return handle_stream()
 
@@ -443,20 +442,16 @@ class WorkflowService(BaseService):
         except Exception:
             self.update(
                 workflow,
-                **{
-                    "is_debug_passed": False,
-                },
+                is_debug_passed=False,
             )
             raise ValidateException("工作流配置校验失败，请核实后重试")
 
         # 更新工作流的发布状态
         self.update(
             workflow,
-            **{
-                "graph": workflow.draft_graph,
-                "status": WorkflowStatus.PUBLISHED,
-                "is_debug_passed": False,
-            },
+            graph=workflow.draft_graph,
+            status=WorkflowStatus.PUBLISHED,
+            is_debug_passed=False,
         )
 
         return workflow
@@ -472,11 +467,9 @@ class WorkflowService(BaseService):
         # 更新发布状态并删除运行图草稿配置
         self.update(
             workflow,
-            **{
-                "graph": {},
-                "status": WorkflowStatus.DRAFT,
-                "is_debug_passed": False,
-            },
+            graph={},
+            status=WorkflowStatus.DRAFT,
+            is_debug_passed=False,
         )
 
         return workflow

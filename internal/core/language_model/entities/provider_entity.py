@@ -1,13 +1,14 @@
 import os.path
-from typing import Union, Type, Optional
+from typing import Self
 
 import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from internal.exception import FailException, NotFoundException
 from internal.lib.helper import dynamic_import
+
 from .default_model_parameter_template import DEFAULT_MODEL_PARAMETER_TEMPLATE
-from .model_entity import ModelType, ModelEntity, BaseLanguageModel
+from .model_entity import BaseLanguageModel, ModelEntity, ModelType
 
 
 class ProviderEntity(BaseModel):
@@ -32,21 +33,21 @@ class Provider(BaseModel):
     model_entity_map: dict[str, ModelEntity] = Field(
         default_factory=dict
     )  # 模型实体映射
-    model_class_map: dict[str, Union[None, Type[BaseLanguageModel]]] = Field(
+    model_class_map: dict[str, None | type[BaseLanguageModel]] = Field(
         default_factory=dict
     )  # 模型类映射
 
     @model_validator(mode="after")
-    def validate_provider(cls, provider: BaseModel) -> BaseModel:
+    def validate_provider(self) -> Self:
         """服务提供者校验器，利用校验器完成该服务提供者的实体与类实例化"""
         # 获取服务提供商实体
-        provider_entity: ProviderEntity = provider.provider_entity
+        provider_entity: ProviderEntity = self.provider_entity
 
         # 动态导入服务提供商的模型类
         for model_type in provider_entity.supported_model_types:
             # 将类型的第一个字符转换成大写，其他不变，并构建类映射
             symbol_name = model_type[0].upper() + model_type[1:]
-            provider.model_class_map[model_type] = dynamic_import(
+            self.model_class_map[model_type] = dynamic_import(
                 f"internal.core.language_model.providers.{provider_entity.name}.{model_type.value}",
                 symbol_name,
             )
@@ -81,7 +82,7 @@ class Provider(BaseModel):
                 if use_template:
                     # 使用了模板，则使用模板补全剩余数据，并删除use_template
                     default_parameter = DEFAULT_MODEL_PARAMETER_TEMPLATE.get(
-                        use_template
+                        use_template, {}
                     )
                     del parameter["use_template"]
                     parameters.append({**default_parameter, **parameter})
@@ -91,20 +92,18 @@ class Provider(BaseModel):
 
             # 修改对应模板的yaml数据，并创建ModelEntity随后传递给provider
             model_yaml_data["parameters"] = parameters
-            provider.model_entity_map[model_name] = ModelEntity(**model_yaml_data)
+            self.model_entity_map[model_name] = ModelEntity(**model_yaml_data)
 
-        return provider
+        return self
 
-    def get_model_class(
-        self, model_type: ModelType
-    ) -> Optional[Type[BaseLanguageModel]]:
+    def get_model_class(self, model_type: ModelType) -> type[BaseLanguageModel] | None:
         """根据传递的模型类型获取该提供者的模型类"""
         model_class = self.model_class_map.get(model_type, None)
         if model_class is None:
             raise NotFoundException("该模型类不存在，请核实后重试")
         return model_class
 
-    def get_model_entity(self, model_name: str) -> Optional[ModelEntity]:
+    def get_model_entity(self, model_name: str) -> ModelEntity:
         """根据传递的模型名字获取模型实体信息"""
         model_entity = self.model_entity_map.get(model_name, None)
         if model_entity is None:

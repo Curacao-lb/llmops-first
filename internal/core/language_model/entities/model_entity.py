@@ -1,13 +1,13 @@
 from abc import ABC
-from enum import Enum
-from typing import Any, Optional
+from enum import StrEnum
+from typing import Any
 
 from langchain_core.language_models import BaseLanguageModel as LCBaseLanguageModel
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
 
-class DefaultModelParameterName(str, Enum):
+class DefaultModelParameterName(StrEnum):
     """默认的参数名字，一般是所有LLM都有的一些参数"""
 
     TEMPERATURE = "temperature"  # 温度
@@ -17,14 +17,14 @@ class DefaultModelParameterName(str, Enum):
     MAX_TOKENS = "max_tokens"  # 要生成的内容的最大tokens数
 
 
-class ModelType(str, Enum):
+class ModelType(StrEnum):
     """模型类型枚举"""
 
     CHAT = "chat"  # 聊天模型
     COMPLETION = "completion"  # 文本生成模型
 
 
-class ModelParameterType(str, Enum):
+class ModelParameterType(StrEnum):
     """模型参数类型"""
 
     FLOAT = "float"
@@ -48,14 +48,14 @@ class ModelParameter(BaseModel):
     type: ModelParameterType = ModelParameterType.STRING  # 参数的类型
     help: str = ""  # 帮助信息
     required: bool = False  # 是否必填
-    default: Optional[Any] = None  # 默认参数值
-    min: Optional[float] = None  # 最小值
-    max: Optional[float] = None  # 最大值
+    default: Any | None = None  # 默认参数值
+    min: float | None = None  # 最小值
+    max: float | None = None  # 最大值
     precision: int = 2  # 保留小数的位数
     options: list[ModelParameterOption] = Field(default_factory=list)  # 可选的参数配置
 
 
-class ModelFeature(str, Enum):
+class ModelFeature(StrEnum):
     """模型特性，用于标记模型支持的特性信息，涵盖工具调用、智能体推理、图片输入"""
 
     TOOL_CALL = "tool_call"  # 工具调用
@@ -96,12 +96,12 @@ class BaseLanguageModel(LCBaseLanguageModel, ABC):
         return input_price, output_price, unit
 
     def convert_to_human_message(
-        self, query: str, image_urls: list[str] = None, multimodal: bool = False
+        self, query: str, image_urls: list[str] | None = None, multimodal: bool = False
     ) -> HumanMessage:
         """将传递的query+image_url转换成人类消息HumanMessage，如果没有传递image_url或者该LLM不支持image_input，则直接返回普通人类消息"""
         # 判断图片url是否为空，或者该LLM不支持图片输入，则直接返回普通消息
         if multimodal:
-            if len(image_urls) > 0:
+            if image_urls and len(image_urls) > 0:
                 query = query + ",文档/文件/图片/链接如下:\n" + "\n".join(image_urls)
             return HumanMessage(content=query)
         else:
