@@ -13,6 +13,7 @@ from internal.handler import (
     AuthHandler,
     BuiltinToolHandler,
     DatasetHandler,
+    LanguageModelHandler,
     OAuthHandler,
     OpenAPIHandler,
     UploadFileHandler,
@@ -41,6 +42,7 @@ class Router:
     openapi_handler: OpenAPIHandler
     builtin_app_handler: BuiltinAppHandler
     workflow_handler: WorkflowHandler
+    language_model_handler: LanguageModelHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -424,6 +426,26 @@ class Router:
             "/workflows/<uuid:workflow_id>/cancel-publish",
             methods=["POST"],
             view_func=self.workflow_handler.cancel_publish_workflow,
+        )
+
+        # 语言模型模块
+        # 获取LLMOps项目中的所有语言模型列表
+        bp.add_url_rule(
+            "/language-models",
+            endpoint="get_language_models",
+            view_func=self.language_model_handler.get_language_models,
+        )
+        # 获取指定模型的详细信息
+        bp.add_url_rule(
+            "/language-models/<string:provider_name>/<string:model_name>",
+            endpoint="get_language_model",
+            view_func=self.language_model_handler.get_language_model,
+        )
+        # 获取指定提供商对应的icon图标
+        bp.add_url_rule(
+            "/language-models/<string:provider_name>/icon",
+            endpoint="get_language_model_icon",
+            view_func=self.language_model_handler.get_language_model_icon,
         )
 
         # 4.应用上去注册蓝图

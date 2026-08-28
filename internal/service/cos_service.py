@@ -8,15 +8,16 @@ from pathlib import Path
 
 from flask import has_request_context, request
 from injector import inject
-from qcloud_cos import CosS3Client, CosConfig
+from qcloud_cos import CosConfig, CosS3Client
 from werkzeug.datastructures import FileStorage
 
 from internal.entity.upload_file_entity import (
-    ALLOW_IMAGE_EXTENSION,
     ALL_DOCUMENT_EXTENSION,
+    ALLOW_IMAGE_EXTENSION,
 )
 from internal.exception import FailException
-from internal.model import UploadFile, Account
+from internal.model import Account, UploadFile
+
 from .upload_file_service import UploadFileService
 
 

@@ -96,7 +96,7 @@ class Provider(BaseModel):
 
         return self
 
-    def get_model_class(self, model_type: ModelType) -> type[BaseLanguageModel] | None:
+    def get_model_class(self, model_type: ModelType) -> type[BaseLanguageModel]:
         """根据传递的模型类型获取该提供者的模型类"""
         model_class = self.model_class_map.get(model_type, None)
         if model_class is None:

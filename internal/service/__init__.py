@@ -13,6 +13,7 @@ from .dataset_service import DatasetService
 from .embeddings_service import EmbeddingsService
 from .jieba_service import JiebaService
 from .jwt_service import JwtService
+from .language_model_service import LanguageModelService
 from .oauth_service import OAuthService
 from .openapi_service import OpenAPIService
 from .retrieval_service import RetrievalService
@@ -42,4 +43,5 @@ __all__ = [
     "OpenAPIService",
     "BuiltinAppService",
     "WorkflowService",
+    "LanguageModelService",
 ]

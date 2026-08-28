@@ -87,6 +87,10 @@ class BaseLanguageModel(LCBaseLanguageModel, ABC):
     features: list[ModelFeature] = Field(default_factory=list)  # 模型特性
     metadata: dict[str, Any] = Field(default_factory=dict)  # 模型元数据信息
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """允许子类模型透传特定于提供者的参数(如base_url、api_key、temperature等)。"""
+        super().__init__(*args, **kwargs)
+
     def get_pricing(self) -> tuple[float, float, float]:
         """获取价格信息(输入价格，输出价格，单位)"""
         # 获取输入价格，输出价格，单位

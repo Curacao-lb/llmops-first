@@ -6,6 +6,7 @@ from .app_handler import AppHandler
 from .auth_handler import AuthHandler
 from .builtin_tool_handler import BuiltinToolHandler
 from .dataset_handler import DatasetHandler
+from .language_model_handler import LanguageModelHandler
 from .oauth_handler import AuthorizeReq, AuthorizeResp, OAuthHandler
 from .openapi_handler import OpenAPIHandler
 from .upload_file_handler import UploadFileHandler
@@ -27,4 +28,5 @@ __all__ = [
     "ApiKeyHandler",
     "OpenAPIHandler",
     "WorkflowHandler",
+    "LanguageModelHandler",
 ]
