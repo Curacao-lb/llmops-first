@@ -60,9 +60,10 @@ pythonVersion = "3.13"
 # 类型检查严格程度:off / basic / standard / strict
 typeCheckingMode = "basic"
 
-# 解释器所在虚拟环境:位于项目上一级目录的 .venv(与 .vscode/settings.json 保持一致)
-venvPath = ".."
-venv = ".venv"
+# 解释器所在虚拟环境:位于项目根目录下的 venv(与 .vscode/settings.json 中
+# python.defaultInterpreterPath 指向的 ./venv/bin/python 保持一致)
+venvPath = "."
+venv = "venv"
 
 # 需要分析的目录
 include = ["internal", "app", "config", "pkg", "run.py"]

@@ -6,7 +6,6 @@ import time
 import uuid
 from typing import Any, Literal, cast
 
-from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import (
     AIMessage,
     AIMessageChunk,
@@ -212,13 +211,13 @@ class FunctionCallAgent(BaseAgent):
         llm: Runnable = base_llm
 
         # 检测大语言模型实例是否有bind_tools方法，如果没有则不绑定，如果有还需要检测tools是否为空，不为空则绑定
+        bind_tools = getattr(base_llm, "bind_tools", None)
         if (
             ModelFeature.TOOL_CALL in base_llm.features
-            and hasattr(base_llm, "bind_tools")
-            and callable(base_llm.bind_tools)
+            and callable(bind_tools)
             and len(self.agent_config.tools) > 0
         ):
-            llm = cast(BaseChatModel, base_llm).bind_tools(self.agent_config.tools)
+            llm = cast(Runnable, bind_tools(self.agent_config.tools))
 
         # 流式调用LLM输出对应内容
         gathered: AIMessageChunk | None = None

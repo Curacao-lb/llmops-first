@@ -102,6 +102,18 @@ class BaseAgent(Serializable, Runnable):
                                 + agent_thought.thought,
                                 "answer": agent_thoughts[event_id].answer
                                 + agent_thought.answer,
+                                # token / 费用字段按覆盖取最新值：流式片段事件均为 0，
+                                # 只有流式结束后补发的最终事件才带真实值，若不 copy 进来
+                                # 会一直保留第一条的 0，导致落库的 token/费用统计丢失。
+                                "message": agent_thought.message,
+                                "message_token_count": agent_thought.message_token_count,
+                                "message_unit_price": agent_thought.message_unit_price,
+                                "message_price_unit": agent_thought.message_price_unit,
+                                "answer_token_count": agent_thought.answer_token_count,
+                                "answer_unit_price": agent_thought.answer_unit_price,
+                                "answer_price_unit": agent_thought.answer_price_unit,
+                                "total_token_count": agent_thought.total_token_count,
+                                "total_price": agent_thought.total_price,
                                 "latency": agent_thought.latency,
                             }
                         )
@@ -184,7 +196,9 @@ class BaseAgent(Serializable, Runnable):
         yield from queue_manager.listen(task_id)
 
     @property
-    def agent_queue_manager(self) -> AgentQueueManager | None:
+    def agent_queue_manager(self) -> AgentQueueManager:
+        if self._agent_queue_manager is None:
+            raise FailException("智能体队列管理器未初始化，请核实后尝试")
         return self._agent_queue_manager
 
     # @property

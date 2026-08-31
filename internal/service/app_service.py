@@ -1147,6 +1147,18 @@ class AppService(BaseService):
                                     + agent_thought.thought,
                                     "answer": agent_thoughts[event_id].answer
                                     + agent_thought.answer,
+                                    # 以下 token / 费用字段按覆盖取最新值：流式片段事件里
+                                    # 均为默认 0，只有流式结束后补发的最终事件才带真实值，
+                                    # 若不 copy 进来会一直保留第一条的 0，导致落库统计丢失。
+                                    "message": agent_thought.message,
+                                    "message_token_count": agent_thought.message_token_count,
+                                    "message_unit_price": agent_thought.message_unit_price,
+                                    "message_price_unit": agent_thought.message_price_unit,
+                                    "answer_token_count": agent_thought.answer_token_count,
+                                    "answer_unit_price": agent_thought.answer_unit_price,
+                                    "answer_price_unit": agent_thought.answer_price_unit,
+                                    "total_token_count": agent_thought.total_token_count,
+                                    "total_price": agent_thought.total_price,
                                     "latency": agent_thought.latency,
                                 }
                             )
@@ -1186,6 +1198,8 @@ class AppService(BaseService):
                     "tool": agent_thought.tool,
                     "tool_input": agent_thought.tool_input,
                     "answer": agent_thought.answer,
+                    "total_token_count": agent_thought.total_token_count,
+                    "total_price": agent_thought.total_price,
                     "latency": agent_thought.latency,
                 }
                 yield f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
