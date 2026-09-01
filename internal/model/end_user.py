@@ -1,13 +1,14 @@
+import uuid
 from datetime import datetime
 
 from sqlalchemy import (
     UUID,
-    Column,
     DateTime,
     Index,
     PrimaryKeyConstraint,
     text,
 )
+from sqlalchemy.orm import Mapped, mapped_column
 
 from internal.extension.database_extension import db
 
@@ -22,17 +23,21 @@ class EndUser(db.Model):
         Index("end_user_app_id_idx", "app_id"),
     )
 
-    id = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID, nullable=False, server_default=text("uuid_generate_v4()")
     )  # 终端id
-    tenant_id = Column(UUID, nullable=False)  # 归属的账号/空间id
-    app_id = Column(UUID, nullable=False)  # 归属应用的id，终端用户只能在应用下使用
-    updated_at = Column(
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False
+    )  # 归属的账号/空间id
+    app_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False
+    )  # 归属应用的id，终端用户只能在应用下使用
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )

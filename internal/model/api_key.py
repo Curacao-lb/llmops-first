@@ -1,16 +1,17 @@
+import uuid
 from datetime import datetime
 from typing import cast
 
 from sqlalchemy import (
     UUID,
     Boolean,
-    Column,
     DateTime,
     Index,
     PrimaryKeyConstraint,
     String,
     text,
 )
+from sqlalchemy.orm import Mapped, mapped_column
 
 from internal.extension.database_extension import db
 
@@ -27,26 +28,26 @@ class ApiKey(db.Model):
         Index("api_key_api_key_idx", "api_key"),
     )
 
-    id = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID, nullable=False, server_default=text("uuid_generate_v4()")
     )  # 记录id
-    account_id = Column(UUID, nullable=False)  # 关联账号id
-    api_key = Column(
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 关联账号id
+    api_key: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )  # 加密后的api秘钥
-    is_active = Column(
+    is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )  # 是否激活，为true时可以使用
-    remark = Column(
+    remark: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )  # 备注信息
-    updated_at = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
 

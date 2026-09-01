@@ -1,6 +1,7 @@
 from .account_service import AccountService
 from .agent_service import AgentService
 from .ai_service import AIService
+from .analysis_service import AnalysisService
 from .api_key_service import ApiKeyService
 from .api_tool_service import ApiToolService
 from .app_config_service import AppConfigService

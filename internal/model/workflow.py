@@ -1,9 +1,9 @@
+import uuid
 from datetime import datetime
 
 from sqlalchemy import (
     UUID,
     Boolean,
-    Column,
     DateTime,
     Float,
     Index,
@@ -13,6 +13,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
 
 from internal.extension.database_extension import db
 
@@ -27,40 +28,44 @@ class Workflow(db.Model):
         Index("workflow_tool_call_name_idx", "tool_call_name"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
-    account_id = Column(UUID, nullable=False)  # 创建账号id
-    name = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 创建账号id
+    name: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )  # 工作流名字
-    tool_call_name = Column(
+    tool_call_name: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )  # 工作流工具调用名字
-    icon = Column(
+    icon: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )  # 工作流图标
-    description = Column(
+    description: Mapped[str] = mapped_column(
         Text, nullable=False, server_default=text("''::text")
     )  # 应用描述
-    graph = Column(
+    graph: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )  # 运行时配置
-    draft_graph = Column(
+    draft_graph: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )  # 草稿图配置
-    is_debug_passed = Column(
+    is_debug_passed: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )  # 是否调试通过
-    status = Column(
+    status: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )  # 工作流状态
-    published_at = Column(DateTime, nullable=True)  # 发布时间
-    updated_at = Column(
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )  # 发布时间
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
 
@@ -76,28 +81,34 @@ class WorkflowResult(db.Model):
         Index("workflow_result_workflow_id_idx", "workflow_id"),
     )
 
-    id = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID, nullable=False, server_default=text("uuid_generate_v4()")
     )  # 结果id
-    app_id = Column(UUID, nullable=True)  # 工作流调用的应用id，如果为空则代表非应用调用
-    account_id = Column(UUID, nullable=False)  # 创建账号id
-    workflow_id = Column(UUID, nullable=False)  # 结果关联的工作流id
-    graph = Column(
+    app_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID, nullable=True
+    )  # 工作流调用的应用id，如果为空则代表非应用调用
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)  # 创建账号id
+    workflow_id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False
+    )  # 结果关联的工作流id
+    graph: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )  # 运行时配置
-    state = Column(
+    state: Mapped[dict] = mapped_column(
         JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )  # 工作流最终状态
-    latency = Column(Float, nullable=False, server_default=text("0.0"))  # 消息的总耗时
-    status = Column(
+    latency: Mapped[float] = mapped_column(
+        Float, nullable=False, server_default=text("0.0")
+    )  # 消息的总耗时
+    status: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )  # 运行状态
-    updated_at = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )

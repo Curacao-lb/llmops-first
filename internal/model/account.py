@@ -5,13 +5,13 @@ from flask import current_app
 from flask_login import UserMixin
 from sqlalchemy import (
     UUID,
-    Column,
     DateTime,
     PrimaryKeyConstraint,
     # Index,
     String,
     text,
 )
+from sqlalchemy.orm import Mapped, mapped_column
 
 from internal.entity.conversation_entity import InvokeFrom
 from internal.extension.database_extension import db
@@ -29,36 +29,40 @@ class Account(UserMixin, BaseModel):
         # Index("account_email_idx", "email"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
-    name = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
+    name: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    email = Column(
+    email: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    avatar = Column(
+    avatar: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    password = Column(
+    password: Mapped[str | None] = mapped_column(
         String(255), nullable=True, server_default=text("''::character varying")
     )
-    password_salt = Column(
+    password_salt: Mapped[str | None] = mapped_column(
         String(255), nullable=True, server_default=text("''::character varying")
     )
-    assistant_agent_conversation_id = Column(UUID, nullable=True)  # 辅助智能体会话id
-    last_login_at = Column(
+    assistant_agent_conversation_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID, nullable=True
+    )  # 辅助智能体会话id
+    last_login_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
-    last_login_ip = Column(
+    last_login_ip: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    updated_at = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
 
@@ -109,23 +113,25 @@ class AccountOAuth(BaseModel):
         # Index("account_oauth_openid_provider_idx", "openid", "provider"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
-    account_id = Column(UUID, nullable=False)
-    provider = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    provider: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    openid = Column(
+    openid: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    encrypted_token = Column(
+    encrypted_token: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    updated_at = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )

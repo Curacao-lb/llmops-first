@@ -1,6 +1,9 @@
+import uuid
+from datetime import datetime
+from typing import cast
+
 from sqlalchemy import (
     UUID,
-    Column,
     DateTime,
     PrimaryKeyConstraint,
     String,
@@ -8,6 +11,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
 
 from internal.extension.database_extension import db
 
@@ -24,24 +28,32 @@ class ApiToolProvider(BaseModel):
         # Index("idx_api_tool_provider_account_id_name", "account_id", "name"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
-    account_id = Column(UUID, nullable=False)
-    name = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    name: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    icon = Column(
+    icon: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    description = Column(Text, nullable=False, server_default=text("''::text"))
-    openapi_schema = Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
-    headers = Column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
-    updated_at = Column(
+    description: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("''::text")
+    )
+    openapi_schema: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    headers: Mapped[list] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         server_onupdate=text("CURRENT_TIMESTAMP(0)"),
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
 
@@ -61,31 +73,39 @@ class ApiTool(BaseModel):
         # Index("idx_api_tool_provider_id_name", "provider_id", "name"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
-    account_id = Column(UUID, nullable=False)
-    provider_id = Column(UUID, nullable=False)
-    name = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    provider_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    name: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    description = Column(Text, nullable=False, server_default=text("''::text"))
-    url = Column(
+    description: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("''::text")
+    )
+    url: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    method = Column(
+    method: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    parameters = Column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
-    updated_at = Column(
+    parameters: Mapped[list] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         server_onupdate=text("CURRENT_TIMESTAMP(0)"),
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
 
     @property
     def provider(self) -> "ApiToolProvider":
         """只读属性，返回当前工具关联/归属的工具提供者信息"""
-        return db.session.query(ApiToolProvider).get(self.provider_id)
+        return cast(
+            "ApiToolProvider", db.session.query(ApiToolProvider).get(self.provider_id)
+        )

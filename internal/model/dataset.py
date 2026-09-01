@@ -1,10 +1,10 @@
 import uuid
 from datetime import datetime
+from typing import cast
 
 from sqlalchemy import (
     UUID,
     Boolean,
-    Column,
     DateTime,
     Index,
     Integer,
@@ -36,21 +36,23 @@ class Dataset(BaseModel):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID, nullable=False, server_default=text("uuid_generate_v4()")
     )
-    account_id = Column(UUID, nullable=False)
-    name = Column(
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    name: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    icon = Column(
+    icon: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    description = Column(Text, nullable=False, server_default=text("''::text"))
-    updated_at = Column(
+    description: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("''::text")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
 
@@ -102,60 +104,82 @@ class Document(BaseModel):
         Index("document_batch_idx", "batch"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
-    account_id = Column(UUID, nullable=False)
-    dataset_id = Column(UUID, nullable=False)
-    upload_file_id = Column(UUID, nullable=False)
-    process_rule_id = Column(UUID, nullable=False)
-    batch = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    dataset_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    upload_file_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    process_rule_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    batch: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    name = Column(
+    name: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    position = Column(Integer, nullable=False, server_default=text("1"))
-    character_count = Column(Integer, nullable=False, server_default=text("0"))
-    token_count = Column(Integer, nullable=False, server_default=text("0"))
-    processing_started_at = Column(DateTime, nullable=True)
-    parsing_completed_at = Column(DateTime, nullable=True)
-    splitting_completed_at = Column(DateTime, nullable=True)
-    indexing_completed_at = Column(DateTime, nullable=True)
-    completed_at = Column(DateTime, nullable=True)
-    stopped_at = Column(DateTime, nullable=True)
-    error = Column(Text, nullable=False, server_default=text("''::text"))
-    enabled = Column(Boolean, nullable=False, server_default=text("false"))
-    disabled_at = Column(DateTime, nullable=True)
-    status = Column(
+    position: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("1")
+    )
+    character_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    token_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    processing_started_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
+    parsing_completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
+    splitting_completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
+    indexing_completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    stopped_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    error: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("''::text")
+    )
+    enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    disabled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("'waiting'::character varying")
     )
-    updated_at = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
 
     @property
     def upload_file(self) -> "UploadFile":
-        return (
+        return cast(
+            "UploadFile",
             db.session.query(UploadFile)
             .filter(
                 UploadFile.id == self.upload_file_id,
             )
-            .one_or_none()
+            .one_or_none(),
         )
 
     @property
     def process_rule(self) -> "ProcessRule":
-        return (
+        return cast(
+            "ProcessRule",
             db.session.query(ProcessRule)
             .filter(
                 ProcessRule.id == self.process_rule_id,
             )
-            .one_or_none()
+            .one_or_none(),
         )
 
     @property
@@ -190,43 +214,65 @@ class Segment(BaseModel):
         Index("segment_document_id_idx", "document_id"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
-    account_id = Column(UUID, nullable=False)
-    dataset_id = Column(UUID, nullable=False)
-    document_id = Column(UUID, nullable=False)
-    node_id = Column(UUID, nullable=False)
-    position = Column(Integer, nullable=False, server_default=text("1"))
-    content = Column(Text, nullable=False, server_default=text("''::text"))
-    character_count = Column(Integer, nullable=False, server_default=text("0"))
-    token_count = Column(Integer, nullable=False, server_default=text("0"))
-    keywords = Column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
-    hash = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    dataset_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    document_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    node_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    position: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("1")
+    )
+    content: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("''::text")
+    )
+    character_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    token_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    keywords: Mapped[list] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    hash: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("''::character varying")
     )
-    hit_count = Column(Integer, nullable=False, server_default=text("0"))
-    enabled = Column(Boolean, nullable=False, server_default=text("false"))
-    disabled_at = Column(DateTime, nullable=True)
-    processing_started_at = Column(DateTime, nullable=True)
-    indexing_completed_at = Column(DateTime, nullable=True)
-    completed_at = Column(DateTime, nullable=True)
-    stopped_at = Column(DateTime, nullable=True)
-    error = Column(Text, nullable=False, server_default=text("''::text"))
-    status = Column(
+    hit_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("0")
+    )
+    enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    disabled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    processing_started_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
+    indexing_completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    stopped_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    error: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("''::text")
+    )
+    status: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("'waiting'::character varying")
     )
-    updated_at = Column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
 
     @property
     def document(self) -> "Document":
-        return db.session.query(Document).get(self.document_id)
+        return cast("Document", db.session.query(Document).get(self.document_id))
 
 
 class KeywordTable(BaseModel):
@@ -238,16 +284,20 @@ class KeywordTable(BaseModel):
         Index("keyword_table_dataset_id_idx", "dataset_id"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
-    dataset_id = Column(UUID, nullable=False)
-    keyword_table = Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
-    updated_at = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
+    dataset_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    keyword_table: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
 
@@ -263,23 +313,27 @@ class DatasetQuery(BaseModel):
         Index("dataset_source_app_id_idx", "source_app_id"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
-    dataset_id = Column(UUID, nullable=False)
-    query = Column(Text, nullable=False, server_default=text("''::text"))
-    source = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
+    dataset_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    query: Mapped[str] = mapped_column(
+        Text, nullable=False, server_default=text("''::text")
+    )
+    source: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
         server_default=text("'HitTesting'::character varying"),
     )
-    source_app_id = Column(UUID, nullable=True)
-    created_by = Column(UUID, nullable=True)
-    updated_at = Column(
+    source_app_id: Mapped[uuid.UUID | None] = mapped_column(UUID, nullable=True)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(UUID, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )
 
@@ -294,19 +348,23 @@ class ProcessRule(BaseModel):
         Index("process_rule_dataset_id_idx", "dataset_id"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
-    account_id = Column(UUID, nullable=False)
-    dataset_id = Column(UUID, nullable=False)
-    mode = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    dataset_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    mode: Mapped[str] = mapped_column(
         String(255), nullable=False, server_default=text("'automic'::character varying")
     )
-    rule = Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
-    updated_at = Column(
+    rule: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )

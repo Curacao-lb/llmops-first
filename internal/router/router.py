@@ -7,6 +7,7 @@ from injector import inject
 from internal.handler import (
     AccountHandler,
     AIHandler,
+    AnalysisHandler,
     ApiKeyHandler,
     ApiToolHandler,
     AppHandler,
@@ -43,6 +44,7 @@ class Router:
     builtin_app_handler: BuiltinAppHandler
     workflow_handler: WorkflowHandler
     language_model_handler: LanguageModelHandler
+    analysis_handler: AnalysisHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -446,6 +448,11 @@ class Router:
             "/language-models/<string:provider_name>/icon",
             endpoint="get_language_model_icon",
             view_func=self.language_model_handler.get_language_model_icon,
+        )
+
+        # 应用统计模块
+        bp.add_url_rule(
+            "/analysis/<uuid:app_id>", view_func=self.analysis_handler.get_app_analysis
         )
 
         # 4.应用上去注册蓝图

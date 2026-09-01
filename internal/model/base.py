@@ -3,6 +3,9 @@ from typing import TYPE_CHECKING, Any
 
 from internal.extension.database_extension import db
 
+if TYPE_CHECKING:
+    from sqlalchemy import Table
+
 
 class BaseModel(db.Model):
     """
@@ -19,6 +22,9 @@ class BaseModel(db.Model):
         # 声明式构造器完成，因此不会影响 ORM 行为。这与 SQLAlchemy 2.0
         # DeclarativeBase 的做法一致。
         def __init__(self, **kw: Any) -> None: ...
+
+        # 声明式模型在运行时由 SQLAlchemy 注入 __table__，此处仅为类型检查声明。
+        __table__: Table
 
     def to_dict(self):
         """

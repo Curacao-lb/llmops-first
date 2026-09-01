@@ -4,7 +4,6 @@ from typing import Optional
 
 from sqlalchemy import (
     UUID,
-    Column,
     DateTime,
     Index,
     Integer,
@@ -353,15 +352,17 @@ class AppDatasetJoin(BaseModel):
         Index("app_dataset_join_app_id_dataset_id_idx", "app_id", "dataset_id"),
     )
 
-    id = Column(UUID, nullable=False, server_default=text("uuid_generate_v4()"))
-    app_id = Column(UUID, nullable=False)
-    dataset_id = Column(UUID, nullable=False)
-    updated_at = Column(
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID, nullable=False, server_default=text("uuid_generate_v4()")
+    )
+    app_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    dataset_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
         server_default=text("CURRENT_TIMESTAMP(0)"),
         onupdate=datetime.now,
     )
-    created_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP(0)")
     )

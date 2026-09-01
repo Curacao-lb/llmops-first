@@ -1,5 +1,6 @@
 from .account_handler import AccountHandler
 from .ai_handler import AIHandler
+from .analysis_handler import AnalysisHandler
 from .api_key_handler import ApiKeyHandler
 from .api_tool_handler import ApiToolHandler
 from .app_handler import AppHandler
@@ -29,4 +30,5 @@ __all__ = [
     "OpenAPIHandler",
     "WorkflowHandler",
     "LanguageModelHandler",
+    "AnalysisHandler",
 ]
