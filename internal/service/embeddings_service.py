@@ -34,8 +34,13 @@ class EmbeddingsService:
 
     @classmethod
     def calculate_token_count(cls, query: str) -> int:
-        encoding = tiktoken.encoding_for_model("gpt-3.5")
-        return len(encoding.encode(query))
+        try:
+            encoding = tiktoken.encoding_for_model("gpt-3.5")
+            return len(encoding.encode(query))
+        except Exception:
+            # 兜底：当 tiktoken 词表缺失且无法联网下载时，退化为字符数近似估算，
+            # 避免因 token 计数失败而阻塞索引 / 召回等流程。
+            return len(query)
 
     @property
     def store(self) -> RedisStore:

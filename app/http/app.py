@@ -1,9 +1,12 @@
+# 必须在任何会 import tiktoken 的业务模块之前执行，
+# 以便把 TIKTOKEN_CACHE_DIR 指向仓库内的离线缓存目录，避免运行时联网下载词表。
 # 将.env加载到环境变量中
 import dotenv
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from injector import Injector
 
+import pkg.tiktoken_cache  # noqa: F401
 from internal.middleware import Middleware
 from internal.router import Router
 from internal.server import Http
