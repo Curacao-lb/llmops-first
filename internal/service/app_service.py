@@ -26,6 +26,7 @@ from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
 from internal.entity.app_entity import DEFAULT_APP_CONFIG, AppConfigType, AppStatus
 from internal.entity.conversation_entity import InvokeFrom, MessageStatus
 from internal.entity.dataset_entity import RetrievalSource, RetrievalStrategy
+from internal.entity.workflow_entity import WorkflowStatus
 from internal.exception import (
     FailException,
     NotFoundException,
@@ -42,6 +43,7 @@ from internal.model import (
     AppDatasetJoin,
     Conversation,
     Dataset,
+    Workflow,
 )
 from internal.model.conversation import Message
 from internal.schema.app_schema import (
@@ -455,35 +457,40 @@ class AppService(BaseService):
             draft_app_config["tools"] = validate_tools
 
         # 校验workflow，提取已发布+权限正确的工作流列表进行绑定（更新配置阶段不校验）
-        # if "workflows" in draft_app_config:
-        #     workflows = draft_app_config["workflows"]
+        if "workflows" in draft_app_config:
+            workflows = draft_app_config["workflows"]
 
-        #     if not isinstance(workflows, list):
-        #         raise ValidateException("绑定工作流列表参数格式错误")
-        #     if len(workflows) > 5:
-        #         raise ValidateException("绑定工作流数量不能超过5个")
-        #     for workflow_id in workflows:
-        #         try:
-        #             UUID(workflow_id)
-        #         except Exception as _:
-        #             raise ValidateException("工作流参数必须是UUID")
-        #     if (len(set(workflows))) != len(workflows):
-        #         raise ValidateException("绑定工作流存在重复")
-        #     # workflow_records = (
-        #     #     self.db.session.query(Workflow)
-        #     #     .filter(
-        #     #         Workflow.id.in_(workflows),
-        #     #         Workflow.account_id == account.id,
-        #     #         Workflow.status == WorkflowStatus.PUBLISHED,
-        #     #     )
-        #     #     .all()
-        #     # )
-        #     # workflow_sets = set(
-        #     #     [str(workflow_record.id) for workflow_record in workflow_records]
-        #     # )
-        #     # draft_app_config["workflows"] = [
-        #     #     workflow_id for workflow_id in workflows if workflow_id in workflow_sets
-        #     # ]
+            # 判断workflow是否为列表
+            if not isinstance(workflows, list):
+                raise ValidateException("绑定工作流列表参数格式错误")
+            # 判断关联的工作流列表是否超过5个
+            if len(workflows) > 5:
+                raise ValidateException("绑定工作流数量不能超过5个")
+            # 循环检验工作流的每个参数，类型必须为UUID
+            for workflow_id in workflows:
+                try:
+                    UUID(workflow_id)
+                except Exception as _:
+                    raise ValidateException("工作流参数必须是UUID")
+            # 判断是否重复关联了工作流
+            if (len(set(workflows))) != len(workflows):
+                raise ValidateException("绑定工作流存在重复")
+            # 检验关联工作流的权限，提出不属于当前账号，或者未发布的工作流
+            workflow_records = (
+                self.db.session.query(Workflow)
+                .filter(
+                    Workflow.id.in_(workflows),
+                    Workflow.account_id == account.id,
+                    Workflow.status == WorkflowStatus.PUBLISHED,
+                )
+                .all()
+            )
+            workflow_sets = set(
+                [str(workflow_record.id) for workflow_record in workflow_records]
+            )
+            draft_app_config["workflows"] = [
+                workflow_id for workflow_id in workflows if workflow_id in workflow_sets
+            ]
 
         # 8.校验datasets知识库列表
         if "datasets" in draft_app_config:
@@ -745,8 +752,7 @@ class AppService(BaseService):
                 }
                 for tool in draft_app_config["tools"]
             ],
-            # workflows=[workflow["id"] for workflow in draft_app_config["workflows"]],
-            workflows=workflows,
+            workflows=[workflow["id"] for workflow in draft_app_config["workflows"]],
             retrieval_config=draft_app_config["retrieval_config"],
             long_term_memory=draft_app_config["long_term_memory"],
             opening_statement=draft_app_config["opening_statement"],
@@ -1028,6 +1034,15 @@ class AppService(BaseService):
                 )
             )
             tools.append(dataset_retrieval)
+
+        # 12.检测是否关联了工作流，如果关联了则将工作流构建成工具添加到tools中
+        if draft_app_config["workflows"]:
+            workflow_tools = (
+                self.app_config_service.get_langchain_tools_by_workflow_ids(
+                    [workflow["id"] for workflow in draft_app_config["workflows"]]
+                )
+            )
+            tools.extend(workflow_tools)
 
         agent_config = AgentConfig(
             user_id=cast(UUID, account.id),

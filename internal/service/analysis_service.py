@@ -28,11 +28,13 @@ class AnalysisService(BaseService):
         # 根据传递的应用id获取应用信息并校验权限
         app = self.app_service.get_app(app_id, account)
 
-        # 获取当前时间、午夜时间、7天前时间、14天前的时间
+        # 获取当前时间、今日午夜时间、明日午夜时间，以及往前推的7天、14天时间
+        # 使用明日午夜时间作为统计窗口的结束边界，确保把今天一整天的数据也纳入统计
         today = datetime.now()
         today_midnight = datetime.combine(today, datetime.min.time())
-        seven_days_ago = today_midnight - timedelta(days=7)
-        fourteen_days_ago = today_midnight - timedelta(days=14)
+        tomorrow_midnight = today_midnight + timedelta(days=1)
+        seven_days_ago = tomorrow_midnight - timedelta(days=7)
+        fourteen_days_ago = tomorrow_midnight - timedelta(days=14)
 
         # 计算统计分析数据的缓存键
         cache_key = f"{today.strftime('%Y_%m_%d')}:{str(app.id)}"
@@ -49,7 +51,7 @@ class AnalysisService(BaseService):
 
         # 查询消息表最近7天，以及最近14-7天的数据（数据要求答案非空、并且只要需要计算的数据）
         seven_days_messages = self.get_messages_by_time_range(
-            app, seven_days_ago, today_midnight
+            app, seven_days_ago, tomorrow_midnight
         )
         fourteen_days_messages = self.get_messages_by_time_range(
             app, fourteen_days_ago, seven_days_ago
@@ -68,8 +70,10 @@ class AnalysisService(BaseService):
             seven_overview_indicators, fourteen_overview_indicators
         )
 
-        # 计算4个指标对应的趋势
-        trend = self.calculate_trend_by_messages(today_midnight, 7, seven_days_messages)
+        # 计算4个指标对应的趋势（结束时间使用明日午夜，保证最后一个区间为今天）
+        trend = self.calculate_trend_by_messages(
+            tomorrow_midnight, 7, seven_days_messages
+        )
 
         # 定义5个指标字段名称
         fields = [
@@ -92,8 +96,9 @@ class AnalysisService(BaseService):
             },
         }
 
-        # 将数据存储到redis缓存中，并设置过期时间为1天
-        self.redis_client.setex(cache_key, 24 * 60 * 60, json.dumps(app_analysis))
+        # 将数据存储到redis缓存中，由于统计数据现在包含今天，使用较短的过期时间(3分钟)
+        # 以保证今天新产生的数据能够较快地反映到统计结果中
+        self.redis_client.setex(cache_key, 3 * 60, json.dumps(app_analysis))
 
         return app_analysis
 

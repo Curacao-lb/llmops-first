@@ -12,7 +12,10 @@ from internal.core.tools.api_tools.entites.tool_entity import (
 )
 from internal.core.tools.api_tools.providers import ApiProviderManager
 from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
+from internal.core.workflow import Workflow as WorkflowTool
+from internal.core.workflow.entities.workflow_entity import WorkflowConfig
 from internal.entity.app_entity import DEFAULT_APP_CONFIG, AppStatus
+from internal.entity.workflow_entity import WorkflowStatus
 from internal.exception import NotFoundException
 
 # from internal.core.language_model import LanguageModelManager
@@ -25,10 +28,9 @@ from internal.model import (
     Dataset,
 )
 from internal.model.app import AppDatasetJoin
+from internal.model.workflow import Workflow
 
 from .base_service import BaseService
-
-# from internal.core.workflow import Workflow as WorkflowTool
 
 
 @inject
@@ -78,6 +80,40 @@ class AppConfigService(BaseService):
                 )
         return tools
 
+    def get_langchain_tools_by_workflow_ids(
+        self, workflow_ids: list[UUID]
+    ) -> list[BaseTool]:
+        """根据传递的工作流配置列表获取langchain工具列表"""
+        # 根据传递的工作流id查询工作流记录信息
+        workflow_records = (
+            self.db.session.query(Workflow)
+            .filter(
+                Workflow.id.in_(workflow_ids),
+                Workflow.status == WorkflowStatus.PUBLISHED,
+            )
+            .all()
+        )
+
+        # 循环遍历所有工作流记录列表
+        workflows = []
+        for workflow_record in workflow_records:
+            try:
+                # 创建工作流工具
+                workflow_tool = WorkflowTool(
+                    workflow_config=WorkflowConfig(
+                        account_id=workflow_record.account_id,
+                        name=f"wf_{workflow_record.tool_call_name}",
+                        description=workflow_record.description,
+                        nodes=workflow_record.graph.get("nodes", []),
+                        edges=workflow_record.graph.get("edges", []),
+                    )
+                )
+                workflows.append(workflow_tool)
+            except Exception:
+                continue
+
+        return workflows
+
     def get_draft_app_config(self, app: App) -> dict[str, Any]:
         """根据传递的应用获取该应用的草稿配置"""
         # 提取应用的草稿配置
@@ -110,11 +146,11 @@ class AppConfigService(BaseService):
             self.update(draft_app_config, datasets=validate_datasets)
 
         # 校验工作流列表对应的数据
-        # workflows, validate_workflows = self._process_and_validate_workflows(
-        #     draft_app_config.workflows
-        # )
-        # if set(validate_workflows) != set(draft_app_config.workflows):
-        #     self.update(draft_app_config, workflows=validate_workflows)
+        workflows, validate_workflows = self._process_and_validate_workflows(
+            draft_app_config.workflows
+        )
+        if set(validate_workflows) != set(draft_app_config.workflows):
+            self.update(draft_app_config, workflows=validate_workflows)
 
         agents, validate_agents = self._process_and_validate_agents(
             draft_app_config.agents
@@ -126,7 +162,7 @@ class AppConfigService(BaseService):
         return self._process_and_transformer_app_config(
             validate_model_config,
             tools,
-            # workflows,
+            workflows,
             datasets,
             agents,
             draft_app_config,
@@ -172,9 +208,11 @@ class AppConfigService(BaseService):
                 ).delete()
 
         # 校验工作流列表对应的数据
-        # workflows, validate_workflows = self._process_and_validate_workflows(app_config.workflows)
-        # if set(validate_workflows) != set(app_config.workflows):
-        #     self.update(app_config, workflows=validate_workflows)
+        workflows, validate_workflows = self._process_and_validate_workflows(
+            app_config.workflows
+        )
+        if set(validate_workflows) != set(app_config.workflows):
+            self.update(app_config, workflows=validate_workflows)
 
         agents, validate_agents = self._process_and_validate_agents(app_config.agents)
         if set(validate_agents) != set(app_config.agents):
@@ -184,6 +222,7 @@ class AppConfigService(BaseService):
         return self._process_and_transformer_app_config(
             validate_model_config,
             tools,
+            workflows,
             datasets,
             agents,
             app_config,
@@ -318,52 +357,52 @@ class AppConfigService(BaseService):
 
         return datasets, validate_datasets
 
-    # def _process_and_validate_workflows(
-    #     self, origin_workflows: list[UUID]
-    # ) -> tuple[list[dict], list[UUID]]:
-    #     # 校验工作流配置列表，如果引用了不存在/被删除的工作流，则需要提出数据并更新，同时获取工作流的额外信息
-    #     workflows = []
-    #     workflow_records = (
-    #         self.db.session.query(Workflow)
-    #         .filter(
-    #             Workflow.id.in_(origin_workflows),
-    #             Workflow.status == WorkflowStatus.PUBLISHED,
-    #         )
-    #         .all()
-    #     )
-    #     workflow_dict = {
-    #         str(workflow_record.id): workflow_record
-    #         for workflow_record in workflow_records
-    #     }
-    #     workflow_sets = set(workflow_dict.keys())
+    def _process_and_validate_workflows(
+        self, origin_workflows: list[UUID]
+    ) -> tuple[list[dict], list[UUID]]:
+        # 校验工作流配置列表，如果引用了不存在/被删除的工作流，则需要剔除数据并更新，同时获取工作流的额外信息
+        workflows = []
+        workflow_records = (
+            self.db.session.query(Workflow)
+            .filter(
+                Workflow.id.in_(origin_workflows),
+                Workflow.status == WorkflowStatus.PUBLISHED,
+            )
+            .all()
+        )
+        workflow_dict = {
+            str(workflow_record.id): workflow_record
+            for workflow_record in workflow_records
+        }
+        workflow_sets = set(workflow_dict.keys())
 
-    #     # 计算存在的工作流id列表，为了保留原始顺序，使用列表循环的方式来判断
-    #     validate_workflows = [
-    #         workflow_id
-    #         for workflow_id in origin_workflows
-    #         if workflow_id in workflow_sets
-    #     ]
+        # 计算存在的工作流id列表，为了保留原始顺序，使用列表循环的方式来判断
+        validate_workflows = [
+            workflow_id
+            for workflow_id in origin_workflows
+            if workflow_id in workflow_sets
+        ]
 
-    #     # 循环获取工作流数据
-    #     for workflow_id in validate_workflows:
-    #         workflow = workflow_dict.get(str(workflow_id))
-    #         workflows.append(
-    #             {
-    #                 "id": str(workflow.id),
-    #                 "name": workflow.name,
-    #                 "icon": workflow.icon,
-    #                 "description": workflow.description,
-    #             }
-    #         )
+        # 循环获取工作流数据
+        for workflow_id in validate_workflows:
+            workflow = workflow_dict[str(workflow_id)]
+            workflows.append(
+                {
+                    "id": str(workflow.id),
+                    "name": workflow.name,
+                    "icon": workflow.icon,
+                    "description": workflow.description,
+                }
+            )
 
-    #     return workflows, validate_workflows
+        return workflows, validate_workflows
 
     @classmethod
     def _process_and_transformer_app_config(
         cls,
         model_config: dict[str, Any],
         tools: list[dict],
-        # workflows: list[dict],
+        workflows: list[dict],
         datasets: list[dict],
         agents: list[dict],
         app_config: AppConfig | AppConfigVersion,
@@ -376,7 +415,7 @@ class AppConfigService(BaseService):
             "preset_prompt": app_config.preset_prompt,
             "tools": tools,
             "agents": agents,
-            # "workflows": workflows,
+            "workflows": workflows,
             "datasets": datasets,
             "retrieval_config": app_config.retrieval_config,
             "long_term_memory": app_config.long_term_memory,
