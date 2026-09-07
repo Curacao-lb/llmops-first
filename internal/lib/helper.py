@@ -124,6 +124,7 @@ def get_value_type(value: Any) -> Any:
 
 
 def generate_random_string(length: int = 16) -> str:
+    """根据传递的位数,生成随机字符串"""
     chars = string.ascii_letters + string.digits
     random_str = "".join(random.choices(chars, k=length))
     return random_str

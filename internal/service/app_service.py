@@ -33,7 +33,7 @@ from internal.exception import (
     UnauthorizedException,
     ValidateException,
 )
-from internal.lib.helper import remove_fields
+from internal.lib.helper import generate_random_string, remove_fields
 from internal.model import (
     Account,
     ApiTool,
@@ -1312,3 +1312,27 @@ class AppService(BaseService):
         )
 
         return messages, paginator
+
+    def get_published_config(self, app_id: UUID, account: Account) -> dict[str, Any]:
+        """根据传递的应用id+账号，获取应用的发布配置"""
+        app = self.get_app(app_id, account)
+
+        return {
+            "web_app": {
+                "token": app.token_with_default,
+                "status": app.status,
+            }
+        }
+
+    def regenerate_web_app_token(self, app_id: UUID, account: Account) -> str:
+        """根据传递的应用id+账号，重新生成WebApp凭证标识"""
+        app = self.get_app(app_id, account)
+
+        if app.status != AppStatus.PUBLISHED:
+            raise FailException("应用未发布，无法生成WebApp凭证标识")
+
+        # 重新生成token并更新数据
+        token = generate_random_string(16)
+        self.update(app, token=token)
+
+        return token

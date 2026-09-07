@@ -178,6 +178,20 @@ class Router:
             view_func=self.app_handler.get_debug_conversation_messages_with_page,
         )
 
+        # 根据传递的应用id获取应用的发布配置信息
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/published-config",
+            methods=["GET"],
+            view_func=self.app_handler.get_published_config,
+        )
+
+        # 根据传递的应用id重新生成WebApp凭证标识
+        bp.add_url_rule(
+            "/apps/<uuid:app_id>/published-config/regenerate-web-app-token",
+            methods=["POST"],
+            view_func=self.app_handler.regenerate_web_app_token,
+        )
+
         # 知识库模块
         bp.add_url_rule(
             "/datasets",
