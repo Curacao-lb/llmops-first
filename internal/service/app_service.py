@@ -1317,6 +1317,7 @@ class AppService(BaseService):
         """根据传递的应用id+账号，获取应用的发布配置"""
         app = self.get_app(app_id, account)
 
+        # 构建发布配置并返回
         return {
             "web_app": {
                 "token": app.token_with_default,

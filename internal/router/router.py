@@ -18,6 +18,7 @@ from internal.handler import (
     OAuthHandler,
     OpenAPIHandler,
     UploadFileHandler,
+    WebAppHandler,
     WorkflowHandler,
 )
 from internal.handler.builtin_app_handler import BuiltinAppHandler
@@ -45,6 +46,7 @@ class Router:
     workflow_handler: WorkflowHandler
     language_model_handler: LanguageModelHandler
     analysis_handler: AnalysisHandler
+    web_app_handler: WebAppHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -467,6 +469,38 @@ class Router:
         # 应用统计模块
         bp.add_url_rule(
             "/analysis/<uuid:app_id>", view_func=self.analysis_handler.get_app_analysis
+        )
+
+        # web-app模块
+
+        # 根据传递的token凭证标识获取WebApp基础信息
+        bp.add_url_rule(
+            "/web-apps/<string:token>", view_func=self.web_app_handler.get_web_app
+        )
+
+        # 根据传递的token+query等信息与WebApp进行对话
+        bp.add_url_rule(
+            "/web-apps/<string:token>/chat", view_func=self.web_app_handler.web_app_chat
+        )
+
+        # 根据传递的token+query等信息与WebApp进行对话
+        bp.add_url_rule(
+            "/web-apps/<string:token>/chat",
+            methods=["POST"],
+            view_func=self.web_app_handler.web_app_chat,
+        )
+
+        # 根据传递的token+task_id停止与WebApp的对话
+        bp.add_url_rule(
+            "/web-apps/<string:token>/chat/<uuid:task_id>/stop",
+            methods=["POST"],
+            view_func=self.web_app_handler.stop_web_app_chat,
+        )
+
+        # 根据传递的token+is_pinned获取指定WebApp下的所有会话列表信息
+        bp.add_url_rule(
+            "/web-apps/<string:token>/chat/<uuid:task_id>/conversations",
+            view_func=self.web_app_handler.get_conversations,
         )
 
         # 4.应用上去注册蓝图

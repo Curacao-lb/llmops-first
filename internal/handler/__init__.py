@@ -11,6 +11,7 @@ from .language_model_handler import LanguageModelHandler
 from .oauth_handler import AuthorizeReq, AuthorizeResp, OAuthHandler
 from .openapi_handler import OpenAPIHandler
 from .upload_file_handler import UploadFileHandler
+from .web_app_handler import WebAppHandler
 from .workflow_hanlder import WorkflowHandler
 
 # 引用魔术变量也叫 dunder 变量，是 Python 内置的特殊变量
@@ -31,4 +32,5 @@ __all__ = [
     "WorkflowHandler",
     "LanguageModelHandler",
     "AnalysisHandler",
+    "WebAppHandler",
 ]
