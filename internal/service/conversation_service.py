@@ -92,10 +92,20 @@ class ConversationService(BaseService):
     def delete_conversation(
         self, conversation_id: UUID, account: Account
     ) -> Conversation:
-        """根据传递的会话id+账号删除指定的会话记录"""
+        """根据传递的会话id+账号删除会话及其全部消息记录"""
         conversation = self.get_conversation(conversation_id, account)
 
-        self.update(conversation, is_deleted=True)
+        # 会话和消息都采用软删除，且必须在同一个事务中完成，避免只删除
+        # 会话而遗留可被其他查询读取的消息记录。
+        with self.db.auto_commit():
+            self.db.session.query(Message).filter(
+                Message.conversation_id == conversation.id,
+                ~Message.is_deleted,
+            ).update(
+                {Message.is_deleted: True},
+                synchronize_session=False,
+            )
+            conversation.is_deleted = True
 
         return conversation
 
