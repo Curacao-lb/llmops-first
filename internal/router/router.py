@@ -13,6 +13,7 @@ from internal.handler import (
     AppHandler,
     AuthHandler,
     BuiltinToolHandler,
+    ConversationHandler,
     DatasetHandler,
     LanguageModelHandler,
     OAuthHandler,
@@ -47,6 +48,7 @@ class Router:
     language_model_handler: LanguageModelHandler
     analysis_handler: AnalysisHandler
     web_app_handler: WebAppHandler
+    conversation_handler: ConversationHandler
 
     """
     dataclass 自动生成 __init__ 和 self.app_handler
@@ -501,6 +503,43 @@ class Router:
         bp.add_url_rule(
             "/web-apps/<string:token>/chat/<uuid:task_id>/conversations",
             view_func=self.web_app_handler.get_conversations,
+        )
+        bp.add_url_rule(
+            "/web-apps/<string:token>/conversations",
+            methods=["GET"],
+            view_func=self.web_app_handler.get_conversations,
+        )
+
+        # 会话模块
+
+        # 根据传递的会话id获取该会话的消息列表分页数据
+        bp.add_url_rule(
+            "/conversations/<uuid:conversation_id>/messages",
+            view_func=self.conversation_handler.get_conversation_messages_with_page,
+        )
+        bp.add_url_rule(
+            "/conversations/<uuid:conversation_id>/delete",
+            methods=["POST"],
+            view_func=self.conversation_handler.delete_conversation,
+        )
+        bp.add_url_rule(
+            "/conversations/<uuid:conversation_id>/messages/<uuid:message_id>/delete",
+            methods=["POST"],
+            view_func=self.conversation_handler.delete_message,
+        )
+        bp.add_url_rule(
+            "/conversations/<uuid:conversation_id>/name",
+            view_func=self.conversation_handler.get_conversation_name,
+        )
+        bp.add_url_rule(
+            "/conversations/<uuid:conversation_id>/name",
+            methods=["POST"],
+            view_func=self.conversation_handler.update_conversation_name,
+        )
+        bp.add_url_rule(
+            "/conversations/<uuid:conversation_id>/is-pinned",
+            methods=["POST"],
+            view_func=self.conversation_handler.update_conversation_is_pinned,
         )
 
         # 4.应用上去注册蓝图

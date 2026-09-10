@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 from threading import Thread
 from typing import Any, cast
 from uuid import UUID
@@ -9,8 +10,9 @@ from injector import inject
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
+from sqlalchemy import desc
+from sqlalchemy.orm import joinedload
 
-# from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
 from internal.core.agent.entities.queue_entity import AgentThought, QueueEvent
 from internal.entity.conversation_entity import (
     CONVERSATION_NAME_TEMPLATE,
@@ -18,12 +20,13 @@ from internal.entity.conversation_entity import (
     SUMMARIZER_TEMPLATE,
     ConversationInfo,
     InvokeFrom,
+    MessageStatus,
     SuggestedQuestions,
 )
-
-# from internal.model import Conversation, Message, MessageAgentThought, Account
-# from internal.schema.conversation_schema import GetConversationMessagesWithPageReq
-from internal.model.conversation import Conversation, Message, MessageAgentThought
+from internal.exception import NotFoundException
+from internal.model import Account, Conversation, Message, MessageAgentThought
+from internal.schema.conversation_schema import GetConversationMessagesWithPageReq
+from pkg.paginator.paginator import Paginator
 from pkg.sqlalchemy import SQLAlchemy
 
 from .base_service import BaseService
@@ -36,90 +39,90 @@ class ConversationService(BaseService):
 
     db: SQLAlchemy
 
-    # def get_conversation(self, conversation_id: UUID, account: Account) -> Conversation:
-    #     """根据传递的会话id+account，获取指定的会话信息"""
-    #     conversation = self.get(Conversation, conversation_id)
-    #     if (
-    #         not conversation
-    #         or conversation.created_by != account.id
-    #         or conversation.is_deleted
-    #     ):
-    #         raise NotFoundException("该会话不存在或被删除，请核实后重试")
+    def get_conversation(self, conversation_id: UUID, account: Account) -> Conversation:
+        """根据传递的会话id+account，获取指定的会话信息"""
+        conversation = self.get(Conversation, conversation_id)
+        if (
+            not conversation
+            or conversation.created_by != account.id
+            or conversation.is_deleted
+        ):
+            raise NotFoundException("该会话不存在或被删除，请核实后重试")
 
-    #     return conversation
+        return conversation
 
-    # def get_message(self, message_id: UUID, account: Account) -> Message:
-    #     """根据传递的消息id+账号，获取指定的消息"""
-    #     message = self.get(Message, message_id)
-    #     if not message or message.created_by != account.id or message.is_deleted:
-    #         raise NotFoundException("该消息不存在或被删除，请核实后重试")
+    def get_message(self, message_id: UUID, account: Account) -> Message:
+        """根据传递的消息id+账号，获取指定的消息"""
+        message = self.get(Message, message_id)
+        if not message or message.created_by != account.id or message.is_deleted:
+            raise NotFoundException("该消息不存在或被删除，请核实后重试")
 
-    #     return message
+        return message
 
-    # def get_conversation_messages_with_page(
-    #     self,
-    #     conversation_id: UUID,
-    #     req: GetConversationMessagesWithPageReq,
-    #     account: Account,
-    # ) -> tuple[list[Message], Paginator]:
-    #     """根据传递的会话id+请求数据，获取当前账号下该会话的消息分页列表数据"""
-    #     conversation = self.get_conversation(conversation_id, account)
+    def get_conversation_messages_with_page(
+        self,
+        conversation_id: UUID,
+        req: GetConversationMessagesWithPageReq,
+        account: Account,
+    ) -> tuple[list[Message], Paginator]:
+        """根据传递的会话id+请求数据，获取当前账号下该会话的消息分页列表数据"""
+        conversation = self.get_conversation(conversation_id, account)
 
-    #     paginator = Paginator(db=self.db, req=req)
-    #     filters = []
-    #     if req.created_at.data:
-    #         created_at_datetime = datetime.fromtimestamp(req.created_at.data)
-    #         filters.append(Message.created_at <= created_at_datetime)
+        paginator = Paginator(db=self.db, req=req)
+        filters = []
+        if req.created_at.data:
+            created_at_datetime = datetime.fromtimestamp(req.created_at.data)
+            filters.append(Message.created_at <= created_at_datetime)
 
-    #     messages = paginator.paginate(
-    #         self.db.session.query(Message)
-    #         .options(joinedload(Message.agent_thoughts))
-    #         .filter(
-    #             Message.conversation_id == conversation.id,
-    #             Message.status.in_([MessageStatus.STOP, MessageStatus.NORMAL]),
-    #             Message.answer != "",
-    #             ~Message.is_deleted,
-    #             *filters,
-    #         )
-    #         .order_by(desc("created_at"))
-    #     )
+        messages = paginator.paginate(
+            self.db.session.query(Message)
+            .options(joinedload(Message.agent_thoughts))
+            .filter(
+                Message.conversation_id == conversation.id,
+                Message.status.in_([MessageStatus.STOP, MessageStatus.NORMAL]),
+                Message.answer != "",
+                ~Message.is_deleted,
+                *filters,
+            )
+            .order_by(desc("created_at"))
+        )
 
-    #     return messages, paginator
+        return messages, paginator
 
-    # def delete_conversation(
-    #     self, conversation_id: UUID, account: Account
-    # ) -> Conversation:
-    #     """根据传递的会话id+账号删除指定的会话记录"""
-    #     conversation = self.get_conversation(conversation_id, account)
+    def delete_conversation(
+        self, conversation_id: UUID, account: Account
+    ) -> Conversation:
+        """根据传递的会话id+账号删除指定的会话记录"""
+        conversation = self.get_conversation(conversation_id, account)
 
-    #     self.update(conversation, is_deleted=True)
+        self.update(conversation, is_deleted=True)
 
-    #     return conversation
+        return conversation
 
-    # def delete_message(
-    #     self, conversation_id: UUID, message_id: UUID, account: Account
-    # ) -> Message:
-    #     """根据传递的会话id+消息id删除指定的消息记录"""
-    #     conversation = self.get_conversation(conversation_id, account)
+    def delete_message(
+        self, conversation_id: UUID, message_id: UUID, account: Account
+    ) -> Message:
+        """根据传递的会话id+消息id删除指定的消息记录"""
+        conversation = self.get_conversation(conversation_id, account)
 
-    #     message = self.get_message(message_id, account)
+        message = self.get_message(message_id, account)
 
-    #     if conversation.id != message.conversation_id:
-    #         raise NotFoundException("该会话下不存在该消息，请核实后重试")
+        if conversation.id != message.conversation_id:
+            raise NotFoundException("该会话下不存在该消息，请核实后重试")
 
-    #     self.update(message, is_deleted=True)
+        self.update(message, is_deleted=True)
 
-    #     return message
+        return message
 
-    # def update_conversation(
-    #     self, conversation_id: UUID, account: Account, **kwargs
-    # ) -> Conversation:
-    #     """根据传递的会话id+账号+kwargs更新会话信息"""
-    #     conversation = self.get_conversation(conversation_id, account)
+    def update_conversation(
+        self, conversation_id: UUID, account: Account, **kwargs
+    ) -> Conversation:
+        """根据传递的会话id+账号+kwargs更新会话信息"""
+        conversation = self.get_conversation(conversation_id, account)
 
-    #     self.update(conversation, **kwargs)
+        self.update(conversation, **kwargs)
 
-    #     return conversation
+        return conversation
 
     @classmethod
     def summary(cls, human_message: str, ai_message: str, old_summary: str = "") -> str:

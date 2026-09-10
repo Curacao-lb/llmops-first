@@ -6,6 +6,7 @@ from .api_tool_handler import ApiToolHandler
 from .app_handler import AppHandler
 from .auth_handler import AuthHandler
 from .builtin_tool_handler import BuiltinToolHandler
+from .conversation_handler import ConversationHandler
 from .dataset_handler import DatasetHandler
 from .language_model_handler import LanguageModelHandler
 from .oauth_handler import AuthorizeReq, AuthorizeResp, OAuthHandler
