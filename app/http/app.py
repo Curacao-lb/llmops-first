@@ -7,6 +7,7 @@ from flask_migrate import Migrate
 from injector import Injector
 
 import pkg.tiktoken_cache  # noqa: F401
+from internal.extension.logging_extension import init_app as init_logging
 from internal.middleware import Middleware
 from internal.router import Router
 from internal.server import Http
@@ -42,6 +43,9 @@ app = Http(
     middlware=injector.get(Middleware),
     router=injector.get(Router),
 )
+
+# 统一初始化日志；后台任务服务应使用不同的 LOG_SERVICE_NAME（如 worker）。
+init_logging(app)
 
 if __name__ == "__main__":
     app.run(debug=True)

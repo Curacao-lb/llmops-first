@@ -1,5 +1,6 @@
 import os
 from typing import Any
+
 from .default_config import DEFAULT_CONFIG
 
 
@@ -34,3 +35,10 @@ class Config:
             "pool_recycle": int(_get_env("SQLALCHEMY_POOL_RECYCLE")),
         }
         self.SQLALCHEMY_ECHO = _get_bool_env("SQLALCHEMY_ECHO")
+
+        # 日志配置。LOG_SERVICE_NAME 用于隔离 Web、Celery 等服务的日志文件。
+        self.LOG_DIR = _get_env("LOG_DIR")
+        self.LOG_SERVICE_NAME = _get_env("LOG_SERVICE_NAME")
+        self.LOG_LEVEL = _get_env("LOG_LEVEL")
+        self.LOG_BACKUP_COUNT = int(_get_env("LOG_BACKUP_COUNT"))
+        self.LOG_TO_CONSOLE = _get_bool_env("LOG_TO_CONSOLE")

@@ -12,6 +12,7 @@ celery==5.5.3
 chardet==5.2.0
 charset-normalizer==3.4.4
 click==8.3.1
+concurrent-log-handler==0.9.29
 cos-python-sdk-v5==1.9.37
 dataclasses-json==0.6.7
 distro==1.9.0

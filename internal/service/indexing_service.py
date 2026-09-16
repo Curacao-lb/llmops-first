@@ -3,6 +3,7 @@ import re
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
+from typing import cast
 from uuid import UUID
 
 from injector import inject
@@ -16,8 +17,9 @@ from internal.entity.cache_entity import LOCK_DOCUMENT_UPDATE_ENABLED
 from internal.entity.dataset_entity import DocumentStatus, SegmentStatus
 from internal.exception import NotFoundException
 from internal.lib.helper import generate_text_hash
-from internal.model import Document, Segment, KeywordTable, DatasetQuery
+from internal.model import DatasetQuery, Document, KeywordTable, Segment
 from pkg.sqlalchemy import SQLAlchemy
+
 from .base_service import BaseService
 from .embeddings_service import EmbeddingsService
 from .jieba_service import JiebaService
@@ -258,7 +260,9 @@ class IndexingService(BaseService):
     def _parsing(self, document: Document) -> list[LCDocument]:
         # 获取upload_file 并加载Langchain文档
         upload_file = document.upload_file
-        lc_documents = self.file_extractor.load(upload_file, False, True)
+        lc_documents = cast(
+            list[LCDocument], self.file_extractor.load(upload_file, False, True)
+        )
         for lc_document in lc_documents:
             lc_document.page_content = self._clean_extra_text(lc_document.page_content)
 
