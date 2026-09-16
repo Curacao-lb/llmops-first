@@ -196,6 +196,12 @@ class Router:
             view_func=self.app_handler.regenerate_web_app_token,
         )
 
+        bp.add_url_rule(
+            "/datasets/<uuid:dataset_id>/hit",
+            view_func=self.dataset_handler.hit,
+            methods=["POST"],
+        )
+
         # 知识库模块
         bp.add_url_rule(
             "/datasets",

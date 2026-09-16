@@ -1,0 +1,258 @@
+[2026-09-16 16:12:04,543.543] _internal.py -> _log line:97 [WARNING]:  * Debugger is active!
+[2026-09-16 16:12:04,562.562] _internal.py -> _log line:97 [INFO]:  * Debugger PIN: 864-454-865
+[2026-09-16 16:13:00,654.654] _internal.py -> _log line:97 [INFO]: 127.0.0.1 - - [16/Sep/2026 16:13:00] "GET /ping HTTP/1.1" 200 -
+[2026-09-16 16:13:57,726.726] _internal.py -> _log line:97 [INFO]:  * Detected change in '/Users/luobin/project/llmops/llmops-api/internal/router/router.py', reloading
+[2026-09-16 16:14:10,753.753] _internal.py -> _log line:97 [WARNING]:  * Debugger is active!
+[2026-09-16 16:14:10,767.767] _internal.py -> _log line:97 [INFO]:  * Debugger PIN: 864-454-865
+[2026-09-16 16:21:34,160.160] _internal.py -> _log line:97 [INFO]: 127.0.0.1 - - [16/Sep/2026 16:21:34] "[35m[1mPOST /auth/password-login HTTP/1.1[0m" 500 -
+[2026-09-16 16:24:20,455.455] base.py -> _execute_context line:1846 [INFO]: select pg_catalog.version()
+[2026-09-16 16:24:20,462.462] base.py -> _execute_context line:1846 [INFO]: [raw sql] {}
+[2026-09-16 16:24:20,521.521] base.py -> _execute_context line:1846 [INFO]: select current_schema()
+[2026-09-16 16:24:20,521.521] base.py -> _execute_context line:1846 [INFO]: [raw sql] {}
+[2026-09-16 16:24:20,536.536] base.py -> _execute_context line:1846 [INFO]: show standard_conforming_strings
+[2026-09-16 16:24:20,536.536] base.py -> _execute_context line:1846 [INFO]: [raw sql] {}
+[2026-09-16 16:24:20,537.537] base.py -> _connection_begin_impl line:2710 [INFO]: BEGIN (implicit)
+[2026-09-16 16:24:20,583.583] base.py -> _execute_context line:1846 [INFO]: SELECT account.id AS account_id, account.name AS account_name, account.email AS account_email, account.avatar AS account_avatar, account.password AS account_password, account.password_salt AS account_password_salt, account.assistant_agent_conversation_id AS account_assistant_agent_conversation_id, account.last_login_at AS account_last_login_at, account.last_login_ip AS account_last_login_ip, account.updated_at AS account_updated_at, account.created_at AS account_created_at 
+FROM account 
+WHERE account.email = %(email_1)s
+[2026-09-16 16:24:20,584.584] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00196s] {'email_1': 'bentley.luo@outlook.com'}
+[2026-09-16 16:24:20,843.843] base.py -> _execute_context line:1846 [INFO]: UPDATE account SET last_login_at=%(last_login_at)s, updated_at=%(updated_at)s WHERE account.id = %(account_id)s::UUID
+[2026-09-16 16:24:20,843.843] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00034s] {'last_login_at': datetime.datetime(2026, 9, 16, 16, 24, 20, 834310), 'updated_at': datetime.datetime(2026, 9, 16, 16, 24, 20, 843023), 'account_id': UUID('46db30d1-3199-4e79-a0cd-abf12fa6858f')}
+[2026-09-16 16:24:20,848.848] base.py -> _connection_commit_impl line:2716 [INFO]: COMMIT
+[2026-09-16 16:24:20,867.867] _internal.py -> _log line:97 [INFO]: 127.0.0.1 - - [16/Sep/2026 16:24:20] "POST /auth/password-login HTTP/1.1" 200 -
+[2026-09-16 16:24:47,088.088] base.py -> _connection_begin_impl line:2710 [INFO]: BEGIN (implicit)
+[2026-09-16 16:24:47,108.108] base.py -> _execute_context line:1846 [INFO]: SELECT account.id AS account_id, account.name AS account_name, account.email AS account_email, account.avatar AS account_avatar, account.password AS account_password, account.password_salt AS account_password_salt, account.assistant_agent_conversation_id AS account_assistant_agent_conversation_id, account.last_login_at AS account_last_login_at, account.last_login_ip AS account_last_login_ip, account.updated_at AS account_updated_at, account.created_at AS account_created_at 
+FROM account 
+WHERE account.id = %(pk_1)s::UUID
+[2026-09-16 16:24:47,109.109] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00404s] {'pk_1': UUID('46db30d1-3199-4e79-a0cd-abf12fa6858f')}
+[2026-09-16 16:24:47,432.432] base.py -> _execute_context line:1846 [INFO]: SELECT dataset.id, dataset.account_id, dataset.name, dataset.icon, dataset.description, dataset.updated_at, dataset.created_at 
+FROM dataset 
+WHERE dataset.account_id = %(account_id_1)s::UUID ORDER BY dataset.created_at DESC 
+ LIMIT %(param_1)s OFFSET %(param_2)s
+[2026-09-16 16:24:47,433.433] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00034s] {'account_id_1': UUID('46db30d1-3199-4e79-a0cd-abf12fa6858f'), 'param_1': 20, 'param_2': 0}
+[2026-09-16 16:24:47,516.516] base.py -> _execute_context line:1846 [INFO]: SELECT count(*) AS count_1 
+FROM (SELECT dataset.id AS id, dataset.account_id AS account_id, dataset.name AS name, dataset.icon AS icon, dataset.description AS description, dataset.updated_at AS updated_at, dataset.created_at AS created_at 
+FROM dataset 
+WHERE dataset.account_id = %(account_id_1)s::UUID) AS anon_1
+[2026-09-16 16:24:47,516.516] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00037s] {'account_id_1': UUID('46db30d1-3199-4e79-a0cd-abf12fa6858f')}
+[2026-09-16 16:24:47,525.525] base.py -> _execute_context line:1846 [INFO]: SELECT count(document.id) AS count_1 
+FROM document 
+WHERE document.dataset_id = %(dataset_id_1)s::UUID
+[2026-09-16 16:24:47,525.525] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00045s] {'dataset_id_1': UUID('9c58c437-0375-4fdc-b6e5-c1ee3387caf9')}
+[2026-09-16 16:24:47,547.547] base.py -> _execute_context line:1846 [INFO]: SELECT count(app_dataset_join.id) AS count_1 
+FROM app_dataset_join 
+WHERE app_dataset_join.dataset_id = %(dataset_id_1)s::UUID
+[2026-09-16 16:24:47,547.547] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00027s] {'dataset_id_1': UUID('9c58c437-0375-4fdc-b6e5-c1ee3387caf9')}
+[2026-09-16 16:24:47,553.553] base.py -> _execute_context line:1846 [INFO]: SELECT coalesce(sum(document.character_count), %(coalesce_2)s) AS coalesce_1 
+FROM document 
+WHERE document.dataset_id = %(dataset_id_1)s::UUID
+[2026-09-16 16:24:47,553.553] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00024s] {'coalesce_2': 0, 'dataset_id_1': UUID('9c58c437-0375-4fdc-b6e5-c1ee3387caf9')}
+[2026-09-16 16:24:47,561.561] base.py -> _connection_rollback_impl line:2713 [INFO]: ROLLBACK
+[2026-09-16 16:24:47,565.565] _internal.py -> _log line:97 [INFO]: 127.0.0.1 - - [16/Sep/2026 16:24:47] "GET /datasets?current_page=1&page_size=20 HTTP/1.1" 200 -
+[2026-09-16 16:25:41,500.500] base.py -> _connection_begin_impl line:2710 [INFO]: BEGIN (implicit)
+[2026-09-16 16:25:41,503.503] base.py -> _execute_context line:1846 [INFO]: SELECT account.id AS account_id, account.name AS account_name, account.email AS account_email, account.avatar AS account_avatar, account.password AS account_password, account.password_salt AS account_password_salt, account.assistant_agent_conversation_id AS account_assistant_agent_conversation_id, account.last_login_at AS account_last_login_at, account.last_login_ip AS account_last_login_ip, account.updated_at AS account_updated_at, account.created_at AS account_created_at 
+FROM account 
+WHERE account.id = %(pk_1)s::UUID
+[2026-09-16 16:25:41,504.504] base.py -> _execute_context line:1846 [INFO]: [cached since 54.4s ago] {'pk_1': UUID('46db30d1-3199-4e79-a0cd-abf12fa6858f')}
+[2026-09-16 16:25:41,645.645] base.py -> _connection_rollback_impl line:2713 [INFO]: ROLLBACK
+[2026-09-16 16:25:41,648.648] _internal.py -> _log line:97 [INFO]: 127.0.0.1 - - [16/Sep/2026 16:25:41] "POST /datasets/9c58c437-0375-4fdc-b6e5-c1ee3387caf9/hit HTTP/1.1" 200 -
+[2026-09-16 16:28:17,580.580] _internal.py -> _log line:97 [INFO]:  * Detected change in '/Users/luobin/project/llmops/llmops-api/internal/service/dataset_service.py', reloading
+[2026-09-16 17:06:37,339.339] _internal.py -> _log line:97 [WARNING]:  * Debugger is active!
+[2026-09-16 17:06:37,356.356] _internal.py -> _log line:97 [INFO]:  * Debugger PIN: 864-454-865
+[2026-09-16 17:07:00,281.281] base.py -> _execute_context line:1846 [INFO]: select pg_catalog.version()
+[2026-09-16 17:07:00,282.282] base.py -> _execute_context line:1846 [INFO]: [raw sql] {}
+[2026-09-16 17:07:00,288.288] base.py -> _execute_context line:1846 [INFO]: select current_schema()
+[2026-09-16 17:07:00,288.288] base.py -> _execute_context line:1846 [INFO]: [raw sql] {}
+[2026-09-16 17:07:00,321.321] base.py -> _execute_context line:1846 [INFO]: show standard_conforming_strings
+[2026-09-16 17:07:00,322.322] base.py -> _execute_context line:1846 [INFO]: [raw sql] {}
+[2026-09-16 17:07:00,322.322] base.py -> _connection_begin_impl line:2710 [INFO]: BEGIN (implicit)
+[2026-09-16 17:07:00,351.351] base.py -> _execute_context line:1846 [INFO]: SELECT account.id AS account_id, account.name AS account_name, account.email AS account_email, account.avatar AS account_avatar, account.password AS account_password, account.password_salt AS account_password_salt, account.assistant_agent_conversation_id AS account_assistant_agent_conversation_id, account.last_login_at AS account_last_login_at, account.last_login_ip AS account_last_login_ip, account.updated_at AS account_updated_at, account.created_at AS account_created_at 
+FROM account 
+WHERE account.id = %(pk_1)s::UUID
+[2026-09-16 17:07:00,351.351] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00040s] {'pk_1': UUID('46db30d1-3199-4e79-a0cd-abf12fa6858f')}
+[2026-09-16 17:07:00,457.457] base.py -> _execute_context line:1846 [INFO]: SELECT dataset.id AS dataset_id, dataset.account_id AS dataset_account_id, dataset.name AS dataset_name, dataset.icon AS dataset_icon, dataset.description AS dataset_description, dataset.updated_at AS dataset_updated_at, dataset.created_at AS dataset_created_at 
+FROM dataset 
+WHERE dataset.id = %(pk_1)s::UUID
+[2026-09-16 17:07:00,457.457] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00024s] {'pk_1': UUID('9c58c437-0375-4fdc-b6e5-c1ee3387caf9')}
+[2026-09-16 17:07:00,463.463] base.py -> _execute_context line:1846 [INFO]: SELECT dataset.id AS dataset_id, dataset.account_id AS dataset_account_id, dataset.name AS dataset_name, dataset.icon AS dataset_icon, dataset.description AS dataset_description, dataset.updated_at AS dataset_updated_at, dataset.created_at AS dataset_created_at 
+FROM dataset 
+WHERE dataset.id IN (%(id_1_1)s::UUID) AND dataset.account_id = %(account_id_1)s::UUID
+[2026-09-16 17:07:00,464.464] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00027s] {'account_id_1': UUID('46db30d1-3199-4e79-a0cd-abf12fa6858f'), 'id_1_1': UUID('9c58c437-0375-4fdc-b6e5-c1ee3387caf9')}
+[2026-09-16 17:07:00,465.465] base.py -> _execute_context line:1846 [INFO]: SELECT segment.id AS segment_id 
+FROM segment 
+WHERE segment.dataset_id IN (%(dataset_id_1_1)s::UUID) AND segment.enabled IS true 
+ LIMIT %(param_1)s
+[2026-09-16 17:07:00,465.465] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00018s] {'param_1': 1, 'dataset_id_1_1': UUID('9c58c437-0375-4fdc-b6e5-c1ee3387caf9')}
+[2026-09-16 17:07:00,512.512] base.py -> _execute_context line:1846 [INFO]: SELECT segment.id AS segment_id, segment.account_id AS segment_account_id, segment.dataset_id AS segment_dataset_id, segment.document_id AS segment_document_id, segment.node_id AS segment_node_id, segment.position AS segment_position, segment.content AS segment_content, segment.character_count AS segment_character_count, segment.token_count AS segment_token_count, segment.keywords AS segment_keywords, segment.hash AS segment_hash, segment.hit_count AS segment_hit_count, segment.enabled AS segment_enabled, segment.disabled_at AS segment_disabled_at, segment.processing_started_at AS segment_processing_started_at, segment.indexing_completed_at AS segment_indexing_completed_at, segment.completed_at AS segment_completed_at, segment.stopped_at AS segment_stopped_at, segment.error AS segment_error, segment.status AS segment_status, segment.updated_at AS segment_updated_at, segment.created_at AS segment_created_at 
+FROM segment 
+WHERE segment.id IN (NULL) AND (1 != 1)
+[2026-09-16 17:07:00,513.513] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00038s] {}
+[2026-09-16 17:07:00,516.516] base.py -> _connection_rollback_impl line:2713 [INFO]: ROLLBACK
+[2026-09-16 17:07:00,516.516] _internal.py -> _log line:97 [INFO]: 127.0.0.1 - - [16/Sep/2026 17:07:00] "POST /datasets/9c58c437-0375-4fdc-b6e5-c1ee3387caf9/hit HTTP/1.1" 200 -
+[2026-09-16 17:12:32,132.132] base.py -> _connection_begin_impl line:2710 [INFO]: BEGIN (implicit)
+[2026-09-16 17:12:32,155.155] base.py -> _execute_context line:1846 [INFO]: SELECT account.id AS account_id, account.name AS account_name, account.email AS account_email, account.avatar AS account_avatar, account.password AS account_password, account.password_salt AS account_password_salt, account.assistant_agent_conversation_id AS account_assistant_agent_conversation_id, account.last_login_at AS account_last_login_at, account.last_login_ip AS account_last_login_ip, account.updated_at AS account_updated_at, account.created_at AS account_created_at 
+FROM account 
+WHERE account.id = %(pk_1)s::UUID
+[2026-09-16 17:12:32,172.172] base.py -> _execute_context line:1846 [INFO]: [cached since 331.8s ago] {'pk_1': UUID('46db30d1-3199-4e79-a0cd-abf12fa6858f')}
+[2026-09-16 17:12:32,390.390] base.py -> _execute_context line:1846 [INFO]: SELECT dataset.id AS dataset_id, dataset.account_id AS dataset_account_id, dataset.name AS dataset_name, dataset.icon AS dataset_icon, dataset.description AS dataset_description, dataset.updated_at AS dataset_updated_at, dataset.created_at AS dataset_created_at 
+FROM dataset 
+WHERE dataset.id = %(pk_1)s::UUID
+[2026-09-16 17:12:32,390.390] base.py -> _execute_context line:1846 [INFO]: [cached since 331.9s ago] {'pk_1': UUID('9c58c437-0375-4fdc-b6e5-c1ee3387caf9')}
+[2026-09-16 17:12:32,404.404] base.py -> _execute_context line:1846 [INFO]: SELECT dataset.id AS dataset_id, dataset.account_id AS dataset_account_id, dataset.name AS dataset_name, dataset.icon AS dataset_icon, dataset.description AS dataset_description, dataset.updated_at AS dataset_updated_at, dataset.created_at AS dataset_created_at 
+FROM dataset 
+WHERE dataset.id IN (%(id_1_1)s::UUID) AND dataset.account_id = %(account_id_1)s::UUID
+[2026-09-16 17:12:32,405.405] base.py -> _execute_context line:1846 [INFO]: [cached since 331.9s ago] {'account_id_1': UUID('46db30d1-3199-4e79-a0cd-abf12fa6858f'), 'id_1_1': UUID('9c58c437-0375-4fdc-b6e5-c1ee3387caf9')}
+[2026-09-16 17:12:32,411.411] base.py -> _execute_context line:1846 [INFO]: SELECT segment.id AS segment_id 
+FROM segment 
+WHERE segment.dataset_id IN (%(dataset_id_1_1)s::UUID) AND segment.enabled IS true 
+ LIMIT %(param_1)s
+[2026-09-16 17:12:32,411.411] base.py -> _execute_context line:1846 [INFO]: [cached since 331.9s ago] {'param_1': 1, 'dataset_id_1_1': UUID('9c58c437-0375-4fdc-b6e5-c1ee3387caf9')}
+[2026-09-16 17:12:32,631.631] _trace.py -> trace line:47 [DEBUG]: connect_tcp.started host='127.0.0.1' port=8080 local_address=None timeout=5.0 socket_options=None
+[2026-09-16 17:12:32,631.631] _trace.py -> trace line:47 [DEBUG]: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x11c48a270>
+[2026-09-16 17:12:32,634.634] _trace.py -> trace line:47 [DEBUG]: send_request_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:32,637.637] _trace.py -> trace line:47 [DEBUG]: send_request_headers.complete
+[2026-09-16 17:12:32,637.637] _trace.py -> trace line:47 [DEBUG]: send_request_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:32,637.637] _trace.py -> trace line:47 [DEBUG]: send_request_body.complete
+[2026-09-16 17:12:32,637.637] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:32,656.656] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.complete return_value=(b'HTTP/1.1', 404, b'Not Found', [(b'Access-Control-Allow-Headers', b'Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization, X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key, X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Azure-Deployment-Id, X-Azure-Resource-Name, X-Azure-Concurrency, X-Azure-Block-Size, X-Google-Api-Key, X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Goog-Api-Key, X-Goog-Vertex-Api-Key, X-Goog-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key, X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key, X-Mistral-Baseurl, X-Mistral-Api-Key, X-Anthropic-Baseurl, X-Anthropic-Api-Key, X-Databricks-Endpoint, X-Databricks-Token, X-Databricks-User-Agent, X-Friendli-Token, X-Friendli-Baseurl, X-Weaviate-Api-Key, X-Weaviate-Cluster-Url, X-Nvidia-Api-Key, X-Nvidia-Baseurl, X-ContextualAI-Baseurl, X-ContextualAI-Api-Key'), (b'Access-Control-Allow-Methods', b'*'), (b'Access-Control-Allow-Origin', b'*'), (b'Vary', b'Origin'), (b'Date', b'Wed, 16 Sep 2026 09:12:32 GMT'), (b'Content-Length', b'0')])
+[2026-09-16 17:12:32,659.659] _client.py -> _send_single_request line:1025 [INFO]: HTTP Request: GET http://127.0.0.1:8080/v1/.well-known/openid-configuration "HTTP/1.1 404 Not Found"
+[2026-09-16 17:12:32,659.659] _trace.py -> trace line:47 [DEBUG]: receive_response_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:32,659.659] _trace.py -> trace line:47 [DEBUG]: receive_response_body.complete
+[2026-09-16 17:12:32,659.659] _trace.py -> trace line:47 [DEBUG]: response_closed.started
+[2026-09-16 17:12:32,659.659] _trace.py -> trace line:47 [DEBUG]: response_closed.complete
+[2026-09-16 17:12:32,659.659] _trace.py -> trace line:47 [DEBUG]: close.started
+[2026-09-16 17:12:32,660.660] _trace.py -> trace line:47 [DEBUG]: close.complete
+[2026-09-16 17:12:32,671.671] _trace.py -> trace line:47 [DEBUG]: connect_tcp.started host='127.0.0.1' port=8080 local_address=None timeout=5.0 socket_options=None
+[2026-09-16 17:12:32,671.671] _trace.py -> trace line:47 [DEBUG]: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x11a6d3610>
+[2026-09-16 17:12:32,671.671] _trace.py -> trace line:47 [DEBUG]: send_request_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:32,671.671] _trace.py -> trace line:47 [DEBUG]: send_request_headers.complete
+[2026-09-16 17:12:32,671.671] _trace.py -> trace line:47 [DEBUG]: send_request_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:32,671.671] _trace.py -> trace line:47 [DEBUG]: send_request_body.complete
+[2026-09-16 17:12:32,671.671] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:32,681.681] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Access-Control-Allow-Headers', b'Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization, X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key, X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Azure-Deployment-Id, X-Azure-Resource-Name, X-Azure-Concurrency, X-Azure-Block-Size, X-Google-Api-Key, X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Goog-Api-Key, X-Goog-Vertex-Api-Key, X-Goog-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key, X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key, X-Mistral-Baseurl, X-Mistral-Api-Key, X-Anthropic-Baseurl, X-Anthropic-Api-Key, X-Databricks-Endpoint, X-Databricks-Token, X-Databricks-User-Agent, X-Friendli-Token, X-Friendli-Baseurl, X-Weaviate-Api-Key, X-Weaviate-Cluster-Url, X-Nvidia-Api-Key, X-Nvidia-Baseurl, X-ContextualAI-Baseurl, X-ContextualAI-Api-Key'), (b'Access-Control-Allow-Methods', b'*'), (b'Access-Control-Allow-Origin', b'*'), (b'Content-Type', b'application/json'), (b'Vary', b'Origin'), (b'Date', b'Wed, 16 Sep 2026 09:12:32 GMT'), (b'Transfer-Encoding', b'chunked')])
+[2026-09-16 17:12:32,681.681] _client.py -> _send_single_request line:1025 [INFO]: HTTP Request: GET http://127.0.0.1:8080/v1/meta "HTTP/1.1 200 OK"
+[2026-09-16 17:12:32,681.681] _trace.py -> trace line:47 [DEBUG]: receive_response_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:32,681.681] _trace.py -> trace line:47 [DEBUG]: receive_response_body.complete
+[2026-09-16 17:12:32,681.681] _trace.py -> trace line:47 [DEBUG]: response_closed.started
+[2026-09-16 17:12:32,681.681] _trace.py -> trace line:47 [DEBUG]: response_closed.complete
+[2026-09-16 17:12:32,810.810] _trace.py -> trace line:47 [DEBUG]: connect_tcp.started host='127.0.0.1' port=7897 local_address=None timeout=2 socket_options=None
+[2026-09-16 17:12:32,810.810] _trace.py -> trace line:47 [DEBUG]: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x11a6d2ad0>
+[2026-09-16 17:12:32,810.810] _trace.py -> trace line:47 [DEBUG]: send_request_headers.started request=<Request [b'CONNECT']>
+[2026-09-16 17:12:32,810.810] _trace.py -> trace line:47 [DEBUG]: send_request_headers.complete
+[2026-09-16 17:12:32,810.810] _trace.py -> trace line:47 [DEBUG]: send_request_body.started request=<Request [b'CONNECT']>
+[2026-09-16 17:12:32,810.810] _trace.py -> trace line:47 [DEBUG]: send_request_body.complete
+[2026-09-16 17:12:32,811.811] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.started request=<Request [b'CONNECT']>
+[2026-09-16 17:12:32,811.811] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'Connection established', [])
+[2026-09-16 17:12:32,811.811] _trace.py -> trace line:47 [DEBUG]: start_tls.started ssl_context=<ssl.SSLContext object at 0x11c51ca70> server_hostname='pypi.org' timeout=2
+[2026-09-16 17:12:33,280.280] _trace.py -> trace line:47 [DEBUG]: start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x11a5e3820>
+[2026-09-16 17:12:33,281.281] _trace.py -> trace line:47 [DEBUG]: send_request_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,281.281] _trace.py -> trace line:47 [DEBUG]: send_request_headers.complete
+[2026-09-16 17:12:33,281.281] _trace.py -> trace line:47 [DEBUG]: send_request_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,281.281] _trace.py -> trace line:47 [DEBUG]: send_request_body.complete
+[2026-09-16 17:12:33,281.281] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,553.553] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Connection', b'keep-alive'), (b'Content-Length', b'96618'), (b'access-control-allow-origin', b'*'), (b'content-security-policy', b"base-uri 'self'; connect-src 'self' https://api.github.com/repos/ https://api.github.com/search/issues https://gitlab.com/api/ https://analytics.python.org *.ethicalads.io https://api.pwnedpasswords.com https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/sre/mathmaps/ https://2p66nmmycsj3.statuspage.io; default-src 'none'; font-src 'self'; form-action 'self' https://checkout.stripe.com https://billing.stripe.com; frame-ancestors 'none'; frame-src 'none'; img-src 'self' https://pypi-camo.freetls.fastly.net/ *.ethicalads.io ethicalads.blob.core.windows.net; script-src 'self' https://analytics.python.org *.ethicalads.io 'sha256-U3hKDidudIaxBDEzwGJApJgPEf2mWk6cfMWghrAa6i0=' https://cdn.jsdelivr.net/npm/mathjax@3.2.2/ 'sha256-1CldwzdEg2k1wTmf7s5RWVd7NMXI/7nxxjJM2C4DqII='; style-src 'self' *.ethicalads.io 'sha256-2YHqZokjiizkHi1Zt+6ar0XJ0OeEy/egBnlm+MDMtrM=' 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=' 'sha256-JLEjeN9e5dGsz5475WyRaoA4eQOdNPxDIeUhclnJDCE=' 'sha256-mQyxHEuwZJqpxCw3SLmc4YOySNKXunyu2Oiz1r3/wAE=' 'sha256-OCf+kv5Asiwp++8PIevKBYSgnNLNUZvxAp4a7wMLuKA=' 'sha256-h5LOiLhk6wiJrGsG5ItM0KimwzWQH/yAcmoJDJL//bY='"), (b'access-control-max-age', b'86400'), (b'referrer-policy', b'origin-when-cross-origin'), (b'content-encoding', b'gzip'), (b'access-control-allow-methods', b'GET'), (b'x-pypi-last-serial', b'40812067'), (b'server', b'gunicorn'), (b'access-control-expose-headers', b'X-PyPI-Last-Serial'), (b'access-control-allow-headers', b'Content-Type, If-Match, If-Modified-Since, If-None-Match, If-Unmodified-Since'), (b'cache-control', b'max-age=900, public'), (b'etag', b'"BE8m1AApoNpjNCzHFb3dAA"'), (b'content-type', b'application/json'), (b'Accept-Ranges', b'bytes'), (b'Date', b'Wed, 16 Sep 2026 09:12:33 GMT'), (b'X-Served-By', b'cache-iad-kjyo7100031-IAD, cache-iad-kjyo7100031-IAD, cache-iad-kjyo7100041-IAD, cache-nrt-rjtt7900046-NRT'), (b'X-Cache', b'MISS, HIT, HIT'), (b'X-Cache-Hits', b'0, 595, 8338'), (b'X-Timer', b'S1789549953.494958,VS0,VE158'), (b'Vary', b'Accept-Encoding'), (b'Strict-Transport-Security', b'max-age=31536000; includeSubDomains; preload'), (b'X-Frame-Options', b'deny'), (b'X-XSS-Protection', b'1; mode=block'), (b'X-Content-Type-Options', b'nosniff'), (b'X-Permitted-Cross-Domain-Policies', b'none'), (b'Permissions-Policy', b'publickey-credentials-create=(self),publickey-credentials-get=(self),accelerometer=(),ambient-light-sensor=(),autoplay=(),battery=(),camera=(),display-capture=(),document-domain=(),encrypted-media=(),execution-while-not-rendered=(),execution-while-out-of-viewport=(),fullscreen=(),gamepad=(),geolocation=(),gyroscope=(),hid=(),identity-credentials-get=(),idle-detection=(),local-fonts=(),magnetometer=(),microphone=(),midi=(),otp-credentials=(),payment=(),picture-in-picture=(),screen-wake-lock=(),serial=(),speaker-selection=(),storage-access=(),usb=(),web-share=(),xr-spatial-tracking=()')])
+[2026-09-16 17:12:33,555.555] _client.py -> _send_single_request line:1025 [INFO]: HTTP Request: GET https://pypi.org/pypi/weaviate-client/json "HTTP/1.1 200 OK"
+[2026-09-16 17:12:33,556.556] _trace.py -> trace line:47 [DEBUG]: receive_response_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,817.817] _trace.py -> trace line:47 [DEBUG]: receive_response_body.complete
+[2026-09-16 17:12:33,817.817] _trace.py -> trace line:47 [DEBUG]: response_closed.started
+[2026-09-16 17:12:33,818.818] _trace.py -> trace line:47 [DEBUG]: response_closed.complete
+[2026-09-16 17:12:33,833.833] _trace.py -> trace line:47 [DEBUG]: send_request_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,833.833] _trace.py -> trace line:47 [DEBUG]: send_request_headers.complete
+[2026-09-16 17:12:33,833.833] _trace.py -> trace line:47 [DEBUG]: send_request_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,833.833] _trace.py -> trace line:47 [DEBUG]: send_request_body.complete
+[2026-09-16 17:12:33,833.833] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,839.839] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Access-Control-Allow-Headers', b'Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization, X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key, X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Azure-Deployment-Id, X-Azure-Resource-Name, X-Azure-Concurrency, X-Azure-Block-Size, X-Google-Api-Key, X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Goog-Api-Key, X-Goog-Vertex-Api-Key, X-Goog-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key, X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key, X-Mistral-Baseurl, X-Mistral-Api-Key, X-Anthropic-Baseurl, X-Anthropic-Api-Key, X-Databricks-Endpoint, X-Databricks-Token, X-Databricks-User-Agent, X-Friendli-Token, X-Friendli-Baseurl, X-Weaviate-Api-Key, X-Weaviate-Cluster-Url, X-Nvidia-Api-Key, X-Nvidia-Baseurl, X-ContextualAI-Baseurl, X-ContextualAI-Api-Key'), (b'Access-Control-Allow-Methods', b'*'), (b'Access-Control-Allow-Origin', b'*'), (b'Content-Type', b'application/json'), (b'Vary', b'Origin'), (b'Date', b'Wed, 16 Sep 2026 09:12:33 GMT'), (b'Transfer-Encoding', b'chunked')])
+[2026-09-16 17:12:33,840.840] _client.py -> _send_single_request line:1025 [INFO]: HTTP Request: GET http://127.0.0.1:8080/v1/schema/Dataset "HTTP/1.1 200 OK"
+[2026-09-16 17:12:33,840.840] _trace.py -> trace line:47 [DEBUG]: receive_response_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,840.840] _trace.py -> trace line:47 [DEBUG]: receive_response_body.complete
+[2026-09-16 17:12:33,840.840] _trace.py -> trace line:47 [DEBUG]: response_closed.started
+[2026-09-16 17:12:33,840.840] _trace.py -> trace line:47 [DEBUG]: response_closed.complete
+[2026-09-16 17:12:33,847.847] _trace.py -> trace line:47 [DEBUG]: send_request_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,848.848] _trace.py -> trace line:47 [DEBUG]: send_request_headers.complete
+[2026-09-16 17:12:33,848.848] _trace.py -> trace line:47 [DEBUG]: send_request_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,848.848] _trace.py -> trace line:47 [DEBUG]: send_request_body.complete
+[2026-09-16 17:12:33,848.848] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,849.849] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Access-Control-Allow-Headers', b'Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization, X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key, X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Azure-Deployment-Id, X-Azure-Resource-Name, X-Azure-Concurrency, X-Azure-Block-Size, X-Google-Api-Key, X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Goog-Api-Key, X-Goog-Vertex-Api-Key, X-Goog-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key, X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key, X-Mistral-Baseurl, X-Mistral-Api-Key, X-Anthropic-Baseurl, X-Anthropic-Api-Key, X-Databricks-Endpoint, X-Databricks-Token, X-Databricks-User-Agent, X-Friendli-Token, X-Friendli-Baseurl, X-Weaviate-Api-Key, X-Weaviate-Cluster-Url, X-Nvidia-Api-Key, X-Nvidia-Baseurl, X-ContextualAI-Baseurl, X-ContextualAI-Api-Key'), (b'Access-Control-Allow-Methods', b'*'), (b'Access-Control-Allow-Origin', b'*'), (b'Content-Type', b'application/json'), (b'Vary', b'Origin'), (b'Date', b'Wed, 16 Sep 2026 09:12:33 GMT'), (b'Transfer-Encoding', b'chunked')])
+[2026-09-16 17:12:33,849.849] _client.py -> _send_single_request line:1025 [INFO]: HTTP Request: GET http://127.0.0.1:8080/v1/schema/Dataset "HTTP/1.1 200 OK"
+[2026-09-16 17:12:33,850.850] _trace.py -> trace line:47 [DEBUG]: receive_response_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,850.850] _trace.py -> trace line:47 [DEBUG]: receive_response_body.complete
+[2026-09-16 17:12:33,850.850] _trace.py -> trace line:47 [DEBUG]: response_closed.started
+[2026-09-16 17:12:33,850.850] _trace.py -> trace line:47 [DEBUG]: response_closed.complete
+[2026-09-16 17:12:33,863.863] _trace.py -> trace line:47 [DEBUG]: send_request_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,863.863] _trace.py -> trace line:47 [DEBUG]: send_request_headers.complete
+[2026-09-16 17:12:33,863.863] _trace.py -> trace line:47 [DEBUG]: send_request_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,863.863] _trace.py -> trace line:47 [DEBUG]: send_request_body.complete
+[2026-09-16 17:12:33,863.863] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,865.865] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Access-Control-Allow-Headers', b'Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization, X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key, X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Azure-Deployment-Id, X-Azure-Resource-Name, X-Azure-Concurrency, X-Azure-Block-Size, X-Google-Api-Key, X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Goog-Api-Key, X-Goog-Vertex-Api-Key, X-Goog-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key, X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key, X-Mistral-Baseurl, X-Mistral-Api-Key, X-Anthropic-Baseurl, X-Anthropic-Api-Key, X-Databricks-Endpoint, X-Databricks-Token, X-Databricks-User-Agent, X-Friendli-Token, X-Friendli-Baseurl, X-Weaviate-Api-Key, X-Weaviate-Cluster-Url, X-Nvidia-Api-Key, X-Nvidia-Baseurl, X-ContextualAI-Baseurl, X-ContextualAI-Api-Key'), (b'Access-Control-Allow-Methods', b'*'), (b'Access-Control-Allow-Origin', b'*'), (b'Content-Type', b'application/json'), (b'Vary', b'Origin'), (b'Date', b'Wed, 16 Sep 2026 09:12:33 GMT'), (b'Transfer-Encoding', b'chunked')])
+[2026-09-16 17:12:33,866.866] _client.py -> _send_single_request line:1025 [INFO]: HTTP Request: GET http://127.0.0.1:8080/v1/schema/Dataset "HTTP/1.1 200 OK"
+[2026-09-16 17:12:33,866.866] _trace.py -> trace line:47 [DEBUG]: receive_response_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,866.866] _trace.py -> trace line:47 [DEBUG]: receive_response_body.complete
+[2026-09-16 17:12:33,866.866] _trace.py -> trace line:47 [DEBUG]: response_closed.started
+[2026-09-16 17:12:33,866.866] _trace.py -> trace line:47 [DEBUG]: response_closed.complete
+[2026-09-16 17:12:33,866.866] _trace.py -> trace line:47 [DEBUG]: send_request_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,866.866] _trace.py -> trace line:47 [DEBUG]: send_request_headers.complete
+[2026-09-16 17:12:33,867.867] _trace.py -> trace line:47 [DEBUG]: send_request_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,867.867] _trace.py -> trace line:47 [DEBUG]: send_request_body.complete
+[2026-09-16 17:12:33,867.867] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,873.873] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Access-Control-Allow-Headers', b'Content-Type, Authorization, Batch, X-Openai-Api-Key, X-Openai-Organization, X-Openai-Baseurl, X-Anyscale-Baseurl, X-Anyscale-Api-Key, X-Cohere-Api-Key, X-Cohere-Baseurl, X-Huggingface-Api-Key, X-Azure-Api-Key, X-Azure-Deployment-Id, X-Azure-Resource-Name, X-Azure-Concurrency, X-Azure-Block-Size, X-Google-Api-Key, X-Google-Vertex-Api-Key, X-Google-Studio-Api-Key, X-Goog-Api-Key, X-Goog-Vertex-Api-Key, X-Goog-Studio-Api-Key, X-Palm-Api-Key, X-Jinaai-Api-Key, X-Aws-Access-Key, X-Aws-Secret-Key, X-Voyageai-Baseurl, X-Voyageai-Api-Key, X-Mistral-Baseurl, X-Mistral-Api-Key, X-Anthropic-Baseurl, X-Anthropic-Api-Key, X-Databricks-Endpoint, X-Databricks-Token, X-Databricks-User-Agent, X-Friendli-Token, X-Friendli-Baseurl, X-Weaviate-Api-Key, X-Weaviate-Cluster-Url, X-Nvidia-Api-Key, X-Nvidia-Baseurl, X-ContextualAI-Baseurl, X-ContextualAI-Api-Key'), (b'Access-Control-Allow-Methods', b'*'), (b'Access-Control-Allow-Origin', b'*'), (b'Content-Type', b'application/json'), (b'Vary', b'Origin'), (b'Date', b'Wed, 16 Sep 2026 09:12:33 GMT'), (b'Transfer-Encoding', b'chunked')])
+[2026-09-16 17:12:33,873.873] _client.py -> _send_single_request line:1025 [INFO]: HTTP Request: GET http://127.0.0.1:8080/v1/schema/Dataset "HTTP/1.1 200 OK"
+[2026-09-16 17:12:33,873.873] _trace.py -> trace line:47 [DEBUG]: receive_response_body.started request=<Request [b'GET']>
+[2026-09-16 17:12:33,873.873] _trace.py -> trace line:47 [DEBUG]: receive_response_body.complete
+[2026-09-16 17:12:33,873.873] _trace.py -> trace line:47 [DEBUG]: response_closed.started
+[2026-09-16 17:12:33,873.873] _trace.py -> trace line:47 [DEBUG]: response_closed.complete
+[2026-09-16 17:12:34,002.002] connectionpool.py -> _new_conn line:1049 [DEBUG]: Starting new HTTPS connection (1): api.smith.langchain.com:443
+[2026-09-16 17:12:34,213.213] _base_client.py -> _build_request line:482 [DEBUG]: Request options: {'method': 'post', 'url': '/embeddings', 'files': None, 'idempotency_key': 'stainless-python-retry-11db3c82-722b-4cec-92e3-812739c00eb8', 'post_parser': <function Embeddings.create.<locals>.parser at 0x11c546200>, 'json_data': {'input': [[44388, 19483, 53283, 6744, 228, 46056, 36668, 31634, 10414, 110, 35287, 6271, 222, 82696, 11571]], 'model': 'text-embedding-3-small', 'encoding_format': 'base64'}}
+[2026-09-16 17:12:34,214.214] _base_client.py -> request line:978 [DEBUG]: Sending HTTP Request: POST https://hk.xty.app/v1/embeddings
+[2026-09-16 17:12:34,214.214] _trace.py -> trace line:47 [DEBUG]: connect_tcp.started host='127.0.0.1' port=7897 local_address=None timeout=None socket_options=None
+[2026-09-16 17:12:34,215.215] _trace.py -> trace line:47 [DEBUG]: connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x11c4eed70>
+[2026-09-16 17:12:34,215.215] _trace.py -> trace line:47 [DEBUG]: send_request_headers.started request=<Request [b'CONNECT']>
+[2026-09-16 17:12:34,215.215] _trace.py -> trace line:47 [DEBUG]: send_request_headers.complete
+[2026-09-16 17:12:34,215.215] _trace.py -> trace line:47 [DEBUG]: send_request_body.started request=<Request [b'CONNECT']>
+[2026-09-16 17:12:34,215.215] _trace.py -> trace line:47 [DEBUG]: send_request_body.complete
+[2026-09-16 17:12:34,215.215] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.started request=<Request [b'CONNECT']>
+[2026-09-16 17:12:34,216.216] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'Connection established', [])
+[2026-09-16 17:12:34,216.216] _trace.py -> trace line:47 [DEBUG]: start_tls.started ssl_context=<ssl.SSLContext object at 0x119eaf6e0> server_hostname='hk.xty.app' timeout=None
+[2026-09-16 17:12:34,586.586] connectionpool.py -> _make_request line:544 [DEBUG]: https://api.smith.langchain.com:443 "GET /info HTTP/1.1" 200 None
+[2026-09-16 17:12:34,657.657] _background_thread.py -> tracing_control_thread_func_compress_parallel line:722 [DEBUG]: Tracing control thread func compress parallel called
+[2026-09-16 17:12:34,713.713] client.py -> _send_multipart_req line:2592 [DEBUG]: Sending multipart request to https://api.smith.langchain.com with context: trace=01a0a97d-43b4-7853-bc0b-1c9b00ceecc0,id=01a0a97d-43b4-7853-bc0b-1c9b00ceecc0
+[2026-09-16 17:12:34,974.974] _trace.py -> trace line:47 [DEBUG]: start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x11c4a6e70>
+[2026-09-16 17:12:34,975.975] _trace.py -> trace line:47 [DEBUG]: send_request_headers.started request=<Request [b'POST']>
+[2026-09-16 17:12:34,976.976] _trace.py -> trace line:47 [DEBUG]: send_request_headers.complete
+[2026-09-16 17:12:34,976.976] _trace.py -> trace line:47 [DEBUG]: send_request_body.started request=<Request [b'POST']>
+[2026-09-16 17:12:34,976.976] _trace.py -> trace line:47 [DEBUG]: send_request_body.complete
+[2026-09-16 17:12:34,977.977] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.started request=<Request [b'POST']>
+[2026-09-16 17:12:35,269.269] connectionpool.py -> _make_request line:544 [DEBUG]: https://api.smith.langchain.com:443 "POST /runs/multipart HTTP/1.1" 202 34
+[2026-09-16 17:12:36,429.429] _trace.py -> trace line:47 [DEBUG]: receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Server', b'nginx/1.14.1'), (b'Date', b'Wed, 16 Sep 2026 09:12:36 GMT'), (b'Content-Type', b'application/json'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'Age', b'0'), (b'Apim-Request-Id', b'633c0b50-656c-4bc2-bd73-eef05b986f14'), (b'Azureml-Model-Session', b'd20260726074459-f9fb3969'), (b'Eo-Cache-Status', b'MISS'), (b'Eo-Log-Uuid', b'7639666156997453801'), (b'Nel', b'{"success_fraction":0.1,"report_to":"eo-nel","max_age":604800}'), (b'Report-To', b'{"endpoints":[{"url":"https://nel.teo-rum.com/eo-cgi/nel"}],"group":"eo-nel","max_age":604800}'), (b'Strict-Transport-Security', b'max-age=16070400;includeSubDomains;preload'), (b'X-Content-Type-Options', b'nosniff'), (b'X-Ms-Deployment-Name', b'text-embedding-3-small'), (b'X-Ms-Region', b'Australia East'), (b'X-Ms-Served-Model', b'text-embedding-3-small-1'), (b'X-New-Api-Version', b'0.7.0-rc.6'), (b'X-Oneapi-Request-Id', b'202609160912355375671508268d9d6u2t86HK0'), (b'X-Ratelimit-Limit-Tokens', b'960000'), (b'X-Ratelimit-Remaining-Tokens', b'921691'), (b'X-Request-Id', b'72b0d299-3143-4af5-8e36-9fc85a91db88'), (b'X-Shellapi-Request-Id', b'2026091609123567899254396e93ae3u1kBQblJ')])
+[2026-09-16 17:12:36,430.430] _client.py -> _send_single_request line:1025 [INFO]: HTTP Request: POST https://hk.xty.app/v1/embeddings "HTTP/1.1 200 OK"
+[2026-09-16 17:12:36,430.430] _trace.py -> trace line:47 [DEBUG]: receive_response_body.started request=<Request [b'POST']>
+[2026-09-16 17:12:36,431.431] _trace.py -> trace line:47 [DEBUG]: receive_response_body.complete
+[2026-09-16 17:12:36,431.431] _trace.py -> trace line:47 [DEBUG]: response_closed.started
+[2026-09-16 17:12:36,431.431] _trace.py -> trace line:47 [DEBUG]: response_closed.complete
+[2026-09-16 17:12:36,432.432] _base_client.py -> request line:1016 [DEBUG]: HTTP Response: POST https://hk.xty.app/v1/embeddings "200 OK" Headers({'server': 'nginx/1.14.1', 'date': 'Wed, 16 Sep 2026 09:12:36 GMT', 'content-type': 'application/json', 'transfer-encoding': 'chunked', 'connection': 'keep-alive', 'age': '0', 'apim-request-id': '633c0b50-656c-4bc2-bd73-eef05b986f14', 'azureml-model-session': 'd20260726074459-f9fb3969', 'eo-cache-status': 'MISS', 'eo-log-uuid': '7639666156997453801', 'nel': '{"success_fraction":0.1,"report_to":"eo-nel","max_age":604800}', 'report-to': '{"endpoints":[{"url":"https://nel.teo-rum.com/eo-cgi/nel"}],"group":"eo-nel","max_age":604800}', 'strict-transport-security': 'max-age=16070400;includeSubDomains;preload', 'x-content-type-options': 'nosniff', 'x-ms-deployment-name': 'text-embedding-3-small', 'x-ms-region': 'Australia East', 'x-ms-served-model': 'text-embedding-3-small-1', 'x-new-api-version': '0.7.0-rc.6', 'x-oneapi-request-id': '202609160912355375671508268d9d6u2t86HK0', 'x-ratelimit-limit-tokens': '960000', 'x-ratelimit-remaining-tokens': '921691', 'x-request-id': '72b0d299-3143-4af5-8e36-9fc85a91db88', 'x-shellapi-request-id': '2026091609123567899254396e93ae3u1kBQblJ'})
+[2026-09-16 17:12:36,433.433] _base_client.py -> request line:1024 [DEBUG]: request_id: 72b0d299-3143-4af5-8e36-9fc85a91db88
+[2026-09-16 17:12:36,510.510] base.py -> _execute_context line:1846 [INFO]: INSERT INTO dataset_query (dataset_id, query, source, source_app_id, created_by) VALUES (%(dataset_id)s::UUID, %(query)s, %(source)s, %(source_app_id)s::UUID, %(created_by)s::UUID) RETURNING dataset_query.id, dataset_query.updated_at, dataset_query.created_at
+[2026-09-16 17:12:36,510.510] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00049s] {'dataset_id': '9c58c437-0375-4fdc-b6e5-c1ee3387caf9', 'query': '这个知识库主要讲了什么？', 'source': <RetrievalSource.HIT_TESTING: 'hit_testing'>, 'source_app_id': None, 'created_by': UUID('46db30d1-3199-4e79-a0cd-abf12fa6858f')}
+[2026-09-16 17:12:36,589.589] base.py -> _connection_commit_impl line:2716 [INFO]: COMMIT
+[2026-09-16 17:12:36,594.594] base.py -> _connection_begin_impl line:2710 [INFO]: BEGIN (implicit)
+[2026-09-16 17:12:36,597.597] base.py -> _execute_context line:1846 [INFO]: UPDATE segment SET hit_count=(segment.hit_count + %(hit_count_1)s), updated_at=%(updated_at)s WHERE segment.id IN (%(id_1_1)s::UUID)
+[2026-09-16 17:12:36,598.598] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00198s] {'hit_count_1': 1, 'updated_at': datetime.datetime(2026, 9, 16, 17, 12, 36, 597787), 'id_1_1': UUID('d7221873-3916-4517-a753-9abd19290be6')}
+[2026-09-16 17:12:36,607.607] base.py -> _connection_commit_impl line:2716 [INFO]: COMMIT
+[2026-09-16 17:12:36,608.608] base.py -> _connection_begin_impl line:2710 [INFO]: BEGIN (implicit)
+[2026-09-16 17:12:36,609.609] base.py -> _execute_context line:1846 [INFO]: SELECT segment.id AS segment_id, segment.account_id AS segment_account_id, segment.dataset_id AS segment_dataset_id, segment.document_id AS segment_document_id, segment.node_id AS segment_node_id, segment.position AS segment_position, segment.content AS segment_content, segment.character_count AS segment_character_count, segment.token_count AS segment_token_count, segment.keywords AS segment_keywords, segment.hash AS segment_hash, segment.hit_count AS segment_hit_count, segment.enabled AS segment_enabled, segment.disabled_at AS segment_disabled_at, segment.processing_started_at AS segment_processing_started_at, segment.indexing_completed_at AS segment_indexing_completed_at, segment.completed_at AS segment_completed_at, segment.stopped_at AS segment_stopped_at, segment.error AS segment_error, segment.status AS segment_status, segment.updated_at AS segment_updated_at, segment.created_at AS segment_created_at 
+FROM segment 
+WHERE segment.id IN (%(id_1_1)s::UUID)
+[2026-09-16 17:12:36,609.609] base.py -> _execute_context line:1846 [INFO]: [cached since 336.1s ago] {'id_1_1': 'd7221873-3916-4517-a753-9abd19290be6'}
+[2026-09-16 17:12:36,616.616] base.py -> _execute_context line:1846 [INFO]: SELECT document.id AS document_id, document.account_id AS document_account_id, document.dataset_id AS document_dataset_id, document.upload_file_id AS document_upload_file_id, document.process_rule_id AS document_process_rule_id, document.batch AS document_batch, document.name AS document_name, document.position AS document_position, document.character_count AS document_character_count, document.token_count AS document_token_count, document.processing_started_at AS document_processing_started_at, document.parsing_completed_at AS document_parsing_completed_at, document.splitting_completed_at AS document_splitting_completed_at, document.indexing_completed_at AS document_indexing_completed_at, document.completed_at AS document_completed_at, document.stopped_at AS document_stopped_at, document.error AS document_error, document.enabled AS document_enabled, document.disabled_at AS document_disabled_at, document.status AS document_status, document.updated_at AS document_updated_at, document.created_at AS document_created_at 
+FROM document 
+WHERE document.id = %(pk_1)s::UUID
+[2026-09-16 17:12:36,616.616] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00027s] {'pk_1': UUID('63500480-cc13-4658-aa09-50bfc4b24d31')}
+[2026-09-16 17:12:36,620.620] base.py -> _execute_context line:1846 [INFO]: SELECT upload_file.id AS upload_file_id, upload_file.account_id AS upload_file_account_id, upload_file.name AS upload_file_name, upload_file.key AS upload_file_key, upload_file.size AS upload_file_size, upload_file.extension AS upload_file_extension, upload_file.mime_type AS upload_file_mime_type, upload_file.hash AS upload_file_hash, upload_file.updated_at AS upload_file_updated_at, upload_file.created_at AS upload_file_created_at 
+FROM upload_file 
+WHERE upload_file.id = %(id_1)s::UUID
+[2026-09-16 17:12:36,620.620] base.py -> _execute_context line:1846 [INFO]: [generated in 0.00013s] {'id_1': UUID('be496238-d4cb-43ba-aa54-d85cbfb2792f')}
+[2026-09-16 17:12:36,629.629] _trace.py -> trace line:47 [DEBUG]: close.started
+[2026-09-16 17:12:36,629.629] _trace.py -> trace line:47 [DEBUG]: close.complete
+[2026-09-16 17:12:36,632.632] base.py -> _connection_rollback_impl line:2713 [INFO]: ROLLBACK
+[2026-09-16 17:12:36,635.635] _internal.py -> _log line:97 [INFO]: 127.0.0.1 - - [16/Sep/2026 17:12:36] "POST /datasets/9c58c437-0375-4fdc-b6e5-c1ee3387caf9/hit HTTP/1.1" 200 -
+[2026-09-16 17:12:37,042.042] client.py -> _send_compressed_multipart_req line:2664 [DEBUG]: Sending compressed multipart request with context: trace=01a0a97d-43b4-7853-bc0b-1c9b00ceecc0,id=01a0a97d-43b4-7853-bc0b-1c9b00ceecc0
+[2026-09-16 17:12:37,331.331] connectionpool.py -> _make_request line:544 [DEBUG]: https://api.smith.langchain.com:443 "POST /runs/multipart HTTP/1.1" 202 34

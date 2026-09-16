@@ -36,9 +36,31 @@ class Config:
         }
         self.SQLALCHEMY_ECHO = _get_bool_env("SQLALCHEMY_ECHO")
 
-        # 日志配置。LOG_SERVICE_NAME 用于隔离 Web、Celery 等服务的日志文件。
-        self.LOG_DIR = _get_env("LOG_DIR")
-        self.LOG_SERVICE_NAME = _get_env("LOG_SERVICE_NAME")
-        self.LOG_LEVEL = _get_env("LOG_LEVEL")
-        self.LOG_BACKUP_COUNT = int(_get_env("LOG_BACKUP_COUNT"))
-        self.LOG_TO_CONSOLE = _get_bool_env("LOG_TO_CONSOLE")
+        # weavite 向量数据库配置
+        self.WEAVIATE_HTTP_HOST = _get_env("WEAVIATE_HTTP_HOST")
+        self.WEAVIATE_HTTP_PORT = _get_env("WEAVIATE_HTTP_PORT")
+        self.WEAVIATE_GRPC_HOST = _get_env("WEAVIATE_GRPC_HOST")
+        self.WEAVIATE_GRPC_PORT = _get_env("WEAVIATE_GRPC_PORT")
+        self.WEAVIATE_API_KEY = _get_env("WEAVIATE_API_KEY") or None
+
+        # # Redis配置
+        # self.REDIS_HOST = _get_env("REDIS_HOST")
+        # self.REDIS_PORT = _get_env("REDIS_PORT")
+        # self.REDIS_USERNAME = _get_env("REDIS_USERNAME")
+        # self.REDIS_PASSWORD = _get_env("REDIS_PASSWORD")
+        # self.REDIS_DB = _get_env("REDIS_DB")
+        # self.REDIS_USE_SSL = _get_bool_env("REDIS_USE_SSL")
+
+        # # Celery配置
+        # self.CELERY = {
+        #     "broker_url": f"redis://{self.REDIS_USERNAME}:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{int(_get_env('CELERY_BROKER_DB'))}",
+        #     "result_backend": f"redis://{self.REDIS_USERNAME}:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/{int(_get_env('CELERY_RESULT_BACKEND_DB'))}",
+        #     "task_ignore_result": _get_bool_env("CELERY_TASK_IGNORE_RESULT"),
+        #     "result_expires": int(_get_env("CELERY_RESULT_EXPIRES")),
+        #     "broker_connection_retry_on_startup": _get_bool_env(
+        #         "CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP"
+        #     ),
+        # }
+
+        # # 辅助Agent应用id标识
+        # self.ASSISTANT_AGENT_ID = _get_env("ASSISTANT_AGENT_ID")

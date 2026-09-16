@@ -1,24 +1,24 @@
 import logging
 from dataclasses import dataclass
-from typing import Optional
 from uuid import UUID
 
-from injector import inject, NoInject
+from injector import inject
 from sqlalchemy import desc
 
 from internal.entity.dataset_entity import DEFAULT_DATASET_DESCRIPTION_FORMATTER
-from internal.exception import ValidateException, NotFoundException, FailException
+from internal.exception import FailException, NotFoundException, ValidateException
 from internal.lib.helper import datetime_to_timestamp
-from internal.model import Dataset, Segment, DatasetQuery, AppDatasetJoin, Account
+from internal.model import Account, AppDatasetJoin, Dataset, DatasetQuery, Segment
 from internal.schema.dataset_schema import (
     CreateDatasetReq,
-    UpdateDatasetReq,
     GetDatasetsWithPageReq,
     HitReq,
+    UpdateDatasetReq,
 )
 from internal.task.dataset_task import delete_dataset
 from pkg.paginator import Paginator
 from pkg.sqlalchemy import SQLAlchemy
+
 from .base_service import BaseService
 from .retrieval_service import RetrievalService
 
@@ -27,7 +27,7 @@ from .retrieval_service import RetrievalService
 @dataclass
 class DatasetService(BaseService):
     db: SQLAlchemy
-    retrieval_service: NoInject[Optional[RetrievalService]] = None
+    retrieval_service: RetrievalService
 
     def create_dataset(self, req: CreateDatasetReq, account: Account) -> Dataset:
         dateset = (
@@ -104,9 +104,6 @@ class DatasetService(BaseService):
         return datasets, paginator
 
     def hit(self, dataset_id: UUID, req: HitReq, account: Account) -> list[dict]:
-        if self.retrieval_service is None:
-            raise FailException("知识库召回服务尚未配置")
-
         # 检测知识库是否存在并校验
         dataset = self.get(Dataset, dataset_id)
         if dataset is None or dataset.account_id != account.id:

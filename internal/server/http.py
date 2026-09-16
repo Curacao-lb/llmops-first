@@ -1,15 +1,21 @@
-from flask import Flask
-from flask_cors import CORS
-from internal.router import Router
-from internal.exception import CustomException
-from pkg.response import json, Response, HttpCode
-from pkg.sqlalchemy_encoder import SQLAlchemyJSONProvider
-from pkg.sqlalchemy import SQLAlchemy
 import os
-from flask_migrate import Migrate
-from werkzeug.exceptions import HTTPException
+from typing import cast
+
+from flask import Flask
+from flask.json.provider import DefaultJSONProvider
+from flask_cors import CORS
 from flask_login import LoginManager
+from flask_migrate import Migrate
+from flask_weaviate import FlaskWeaviate
+from werkzeug.exceptions import HTTPException
+
+from config import Config
+from internal.exception import CustomException
 from internal.middleware import Middleware
+from internal.router import Router
+from pkg.response import HttpCode, Response, json
+from pkg.sqlalchemy import SQLAlchemy
+from pkg.sqlalchemy_encoder import SQLAlchemyJSONProvider
 
 
 class Http(Flask):
@@ -26,8 +32,9 @@ class Http(Flask):
     def __init__(
         self,
         *args,
-        conf: "Config",
+        conf: Config,
         db: SQLAlchemy,
+        weaviate: FlaskWeaviate,
         migrate: Migrate,
         login_manager: LoginManager,
         # 中间件
@@ -37,10 +44,10 @@ class Http(Flask):
     ):
         # 使用super去调用父类的构造函数,将整个参数进行实例化。
         # 要不然的话继承别人,如果你不去实现它的构造函数是很容易出错的。
-        super(Http, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # 通过对象的方式去将我们这个类加载到这个flask应用中
         self.config.from_object(conf)
-        self.json.ensure_ascii = False
+        cast(DefaultJSONProvider, self.json).ensure_ascii = False
 
         # 配置 CORS
         CORS(
@@ -52,6 +59,8 @@ class Http(Flask):
 
         # 初始化flask扩展
         db.init_app(self)
+
+        weaviate.init_app(self)
 
         # migrate迁移数据工具
         migrate.init_app(self, db, directory="internal/migration")
