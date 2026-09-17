@@ -1,3 +1,16 @@
+import os
+
+# 1.为生产环境配置猴子补丁
+# 猴子补丁必须在任何其它模块导入之前执行，将标准库替换为 gevent 的协程实现。
+if os.environ.get("FLASK_DEBUG") == "0" or os.environ.get("FLASK_ENV") == "production":
+    from gevent import monkey
+
+    monkey.patch_all()
+
+    import grpc.experimental.gevent
+
+    grpc.experimental.gevent.init_gevent()
+
 # 必须在任何会 import tiktoken 的业务模块之前执行，
 # 以便把 TIKTOKEN_CACHE_DIR 指向仓库内的离线缓存目录，避免运行时联网下载词表。
 # 将.env加载到环境变量中
