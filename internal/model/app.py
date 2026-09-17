@@ -43,7 +43,12 @@ class App(BaseModel):
         # 作用: 加速按账户 ID 查询应用的操作(如 SELECT * FROM app WHERE account_id = ?)
         # 常见场景: 查询某个用户的所有应用
         Index("app_account_id_idx", "account_id"),
-        Index("app_token_idx", "token"),
+        Index(
+            "app_token_idx",
+            "token",
+            unique=True,
+            postgresql_where=text("token IS NOT NULL AND token <> ''"),
+        ),
     )
 
     # 主键: 应用唯一标识符,使用 UUID 格式,自动生成
@@ -201,7 +206,7 @@ class AppConfig(BaseModel):
     __tablename__ = "app_config"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_app_config_id"),
-        # Index("app_config_app_id_idx", "app_id"),
+        Index("app_config_app_id_idx", "app_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -284,7 +289,13 @@ class AppConfigVersion(BaseModel):
     __tablename__ = "app_config_version"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_app_config_version_id"),
-        Index("app_config_version_app_id_idx", "app_id"),
+        Index(
+            "app_config_version_app_id_config_type_version_idx",
+            "app_id",
+            "config_type",
+            "version",
+            unique=True,
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -367,7 +378,13 @@ class AppDatasetJoin(BaseModel):
     __tablename__ = "app_dataset_join"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_app_dataset_join_id"),
-        Index("app_dataset_join_app_id_dataset_id_idx", "app_id", "dataset_id"),
+        Index(
+            "app_dataset_join_app_id_dataset_id_idx",
+            "app_id",
+            "dataset_id",
+            unique=True,
+        ),
+        Index("app_dataset_join_dataset_id_idx", "dataset_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(

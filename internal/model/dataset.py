@@ -30,7 +30,7 @@ class Dataset(BaseModel):
     __tablename__ = "dataset"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_dataset_id"),
-        Index("dataset_account_id_name_idx", "account_id", "name"),
+        Index("dataset_account_id_name_idx", "account_id", "name", unique=True),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -212,6 +212,7 @@ class Segment(BaseModel):
         Index("segment_account_id_idx", "account_id"),
         Index("segment_dataset_id_idx", "dataset_id"),
         Index("segment_document_id_idx", "document_id"),
+        Index("segment_node_id_idx", "node_id", unique=True),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -281,7 +282,7 @@ class KeywordTable(BaseModel):
     __tablename__ = "keyword_table"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_keyword_table_id"),
-        Index("keyword_table_dataset_id_idx", "dataset_id"),
+        Index("keyword_table_dataset_id_idx", "dataset_id", unique=True),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -308,7 +309,7 @@ class DatasetQuery(BaseModel):
     __tablename__ = "dataset_query"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_dataset_query_id"),
-        Index("dataset_query_dataset_id_idx", "dataset_id"),
+        Index("dataset_query_dataset_id_created_at_idx", "dataset_id", "created_at"),
         Index("dataset_created_by_idx", "created_by"),
         Index("dataset_source_app_id_idx", "source_app_id"),
     )

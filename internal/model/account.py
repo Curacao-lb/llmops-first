@@ -6,8 +6,8 @@ from flask_login import UserMixin
 from sqlalchemy import (
     UUID,
     DateTime,
+    Index,
     PrimaryKeyConstraint,
-    # Index,
     String,
     text,
 )
@@ -26,7 +26,7 @@ class Account(UserMixin, BaseModel):
     __tablename__ = "account"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_account_id"),
-        # Index("account_email_idx", "email"),
+        Index("account_email_idx", "email", unique=True),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -109,8 +109,8 @@ class AccountOAuth(BaseModel):
     __tablename__ = "account_oauth"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_account_oauth_id"),
-        # Index("account_oauth_account_id_idx", "account_id"),
-        # Index("account_oauth_openid_provider_idx", "openid", "provider"),
+        Index("account_oauth_account_id_idx", "account_id"),
+        Index("account_oauth_openid_provider_idx", "openid", "provider", unique=True),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(

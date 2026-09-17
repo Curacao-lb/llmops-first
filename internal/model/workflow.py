@@ -24,8 +24,12 @@ class Workflow(db.Model):
     __tablename__ = "workflow"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_workflow_id"),
-        Index("workflow_account_id_idx", "account_id"),
-        Index("workflow_tool_call_name_idx", "tool_call_name"),
+        Index(
+            "workflow_account_id_tool_call_name_idx",
+            "account_id",
+            "tool_call_name",
+            unique=True,
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(

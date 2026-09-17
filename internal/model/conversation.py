@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     Float,
+    Index,
     Integer,
     Numeric,
     PrimaryKeyConstraint,
@@ -30,8 +31,15 @@ class Conversation(BaseModel):
     __tablename__ = "conversation"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_conversation_id"),
-        # Index("conversation_app_id_idx", "app_id"),
-        # Index("conversation_app_created_by_idx", "created_by"),
+        Index(
+            "conversation_app_user_source_pinned_created_idx",
+            "app_id",
+            "created_by",
+            "invoke_from",
+            "is_pinned",
+            "created_at",
+            postgresql_where=text("is_deleted = false"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -86,8 +94,8 @@ class Message(BaseModel):
     __tablename__ = "message"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_message_id"),
-        # Index("message_conversation_id_idx", "conversation_id"),
-        # Index("message_created_by_idx", "created_by"),
+        Index("message_conversation_created_at_idx", "conversation_id", "created_at"),
+        Index("message_app_created_at_idx", "app_id", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -198,9 +206,11 @@ class MessageAgentThought(BaseModel):
     __tablename__ = "message_agent_thought"
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_message_agent_thought_id"),
-        # Index("message_agent_thought_app_id_idx", "app_id"),
-        # Index("message_agent_thought_conversation_id_idx", "conversation_id"),
-        # Index("message_agent_thought_message_id_idx", "message_id"),
+        Index(
+            "message_agent_thought_message_id_position_idx",
+            "message_id",
+            "position",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(

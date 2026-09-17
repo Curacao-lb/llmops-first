@@ -5,6 +5,7 @@ from typing import cast
 from sqlalchemy import (
     UUID,
     DateTime,
+    Index,
     PrimaryKeyConstraint,
     String,
     Text,
@@ -25,7 +26,12 @@ class ApiToolProvider(BaseModel):
 
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_api_tool_provider_id"),
-        # Index("idx_api_tool_provider_account_id_name", "account_id", "name"),
+        Index(
+            "api_tool_provider_account_id_name_idx",
+            "account_id",
+            "name",
+            unique=True,
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -69,8 +75,8 @@ class ApiTool(BaseModel):
 
     __table_args__ = (
         PrimaryKeyConstraint("id", name="pk_api_tool_id"),
-        # Index("idx_api_tool_account_id", "account_id"),
-        # Index("idx_api_tool_provider_id_name", "provider_id", "name"),
+        Index("api_tool_account_id_idx", "account_id"),
+        Index("api_tool_provider_id_name_idx", "provider_id", "name", unique=True),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
