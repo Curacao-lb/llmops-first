@@ -1,0 +1,22 @@
+services:  # 定义所有服务（容器）
+  llmops-ui:  # 前端界面服务
+    image: llmops-ui:0.1.0  # 构建出的镜像命名并打标签为 llmops-ui:0.1.0
+    build:  # 本地构建镜像，而非拉取远程镜像
+      context: ../../llmops-ui  # docker 目录向上两级，定位同级的 llmops-ui 项目
+      dockerfile: Dockerfile  # 使用该目录下的 Dockerfile 构建
+    container_name: llmops-ui  # 固定容器名为 llmops-ui
+    restart: always  # 容器退出后总是自动重启（含守护进程重启）
+    ports:  # 端口映射
+      - "5173:80"  # 宿主机 5173 -> 容器内 80，本机通过 http://localhost:5173 访问
+  llmops-redis:  # Redis 缓存服务
+    image: redis:6-alpine  # 使用官方 Redis 6 的 alpine 精简镜像
+    restart: always  # 容器退出后总是自动重启
+    container_name: llmops-redis  # 固定容器名为 llmops-redis
+    volumes:  # 数据卷挂载，实现持久化
+      - ./volumes/redis/data:/data  # 宿主机目录挂载到容器内 Redis 数据目录 /data，容器重建数据不丢失
+    # 启动redis服务时配置
+    command: redis-server --requirepass llmops123456  # 覆盖默认启动命令，启动 Redis 并设置访问密码
+    healthcheck:  # 健康检查
+      test: [ "CMD", "redis-cli", "-a", "llmops123456", "ping" ]  # 携带密码执行健康检查
+    ports:  # 端口映射
+      - "6379:6379"  # 宿主机 6379 -> 容器 6379（Redis 默认端口），本机通过 localhost:6379 连接
