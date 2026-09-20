@@ -12,11 +12,40 @@ services:  # 定义所有服务（容器）
     image: redis:6-alpine  # 使用官方 Redis 6 的 alpine 精简镜像
     restart: always  # 容器退出后总是自动重启
     container_name: llmops-redis  # 固定容器名为 llmops-redis
+    env_file:
+      - ./.env  # 仅在本地保存密码，该文件已被 Git 忽略
     volumes:  # 数据卷挂载，实现持久化
       - ./volumes/redis/data:/data  # 宿主机目录挂载到容器内 Redis 数据目录 /data，容器重建数据不丢失
-    # 启动redis服务时配置
-    command: redis-server --requirepass llmops123456  # 覆盖默认启动命令，启动 Redis 并设置访问密码
+    # 启动 Redis 时从容器环境变量读取密码，避免在 Compose 中明文保存
+    command:
+      - sh
+      - -c
+      - exec redis-server --requirepass "$$REDIS_PASSWORD"
     healthcheck:  # 健康检查
-      test: [ "CMD", "redis-cli", "-a", "llmops123456", "ping" ]  # 携带密码执行健康检查
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping"]
     ports:  # 端口映射
       - "6379:6379"  # 宿主机 6379 -> 容器 6379（Redis 默认端口），本机通过 localhost:6379 连接
+  llmops-db:
+    image: postgres:16.3-alpine
+    restart: always
+    container_name: llmops-db
+    env_file:
+      - ./.env
+    environment:
+      # 配置默认的账户名、账户密码、默认数据库、数据存储的位置
+      POSTGRES_USER: postgres
+      POSTGRES_DB: llmops
+    volumes:
+      # 将postgres数据挂载到本地./volumes/db/data上
+      - llmops-db-data:/var/lib/postgresql/data
+      # 初始化脚本只有在空数据挂载的情况下才会触发执行(.sql/.sh等)，如果已经存在数据则不会执行
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d llmops"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+    ports:
+      - "5432:5432"
+volumes:
+  llmops-db-data:

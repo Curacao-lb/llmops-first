@@ -25,3 +25,4 @@ storage/uploads/
 .DS_Store
 
 private.pem
+/docker/volumes/
