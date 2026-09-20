@@ -25,6 +25,28 @@ services:  # 定义所有服务（容器）
       test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping"]
     ports:  # 端口映射
       - "6379:6379"  # 宿主机 6379 -> 容器 6379（Redis 默认端口），本机通过 localhost:6379 连接
+
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.36.8
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --scheme
+      - http
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    restart: on-failure:0
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+      CLUSTER_HOSTNAME: "node1"
+
   llmops-db:
     image: postgres:16.3-alpine
     restart: always
@@ -49,3 +71,6 @@ services:  # 定义所有服务（容器）
       - "5432:5432"
 volumes:
   llmops-db-data:
+  weaviate_data:
+    # 复用原根目录 Compose 创建的数据卷，避免迁移后数据丢失
+    name: llmops-api_weaviate_data
