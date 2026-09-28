@@ -1,0 +1,22 @@
+# 开发 / 测试工具源文件(pip-tools)
+#
+# 与运行时依赖分离，生产镜像只需安装 requirements.txt。
+#
+# 用法:
+#   make deps-compile       # 同时生成 requirements.txt 与 requirements-dev.txt
+#   make install-dev        # 安装运行时依赖和开发工具
+
+# 继承运行时依赖，保证解析出的版本与 requirements.txt 一致
+-c requirements.txt
+
+# 依赖管理(pip-compile / pip-sync)
+pip-tools
+
+# 测试(见 pytest.ini)
+pytest
+
+# 代码检查与格式化(见 pyproject.toml [tool.ruff]，Makefile 中已用 ruff 取代 black)
+ruff
+
+# 类型检查(见 pyproject.toml [tool.pyright])
+pyright

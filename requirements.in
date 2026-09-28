@@ -1,0 +1,99 @@
+# 运行时依赖源文件(pip-tools)
+#
+# 本文件只声明「项目直接使用」的依赖，版本约束尽量宽松；
+# 精确锁定的完整依赖树由 pip-compile 生成到 requirements.txt。
+#
+# 用法:
+#   make deps-compile   # 重新生成 requirements.txt
+#   make deps-sync      # 按 requirements.txt 同步当前环境
+#
+# 开发/测试工具请写入 requirements-dev.in。
+
+# ---------- 环境变量与依赖注入 ----------
+python-dotenv
+injector
+
+# ---------- Flask 框架相关 ----------
+flask
+flask-login
+flask-migrate
+flask-cors
+flask-sqlalchemy
+flask-wtf
+flask-weaviate
+marshmallow
+email-validator
+concurrent-log-handler
+pywin32>=226; platform_system == "Windows"  # concurrent-log-handler 的子依赖，仅 Windows 需要
+
+# ---------- JWT 鉴权 ----------
+PyJWT
+
+# ---------- LangChain 框架相关 ----------
+# 注意: 项目代码使用 langchain_classic(仅存在于 langchain 1.x)，
+# 因此这里必须锁在 1.x，不可回退到 0.3.x。
+langchain>=1,<2
+langchain-core>=1,<2
+langchain-classic>=1,<2       # EnsembleRetriever / MultiQueryRetriever / CacheBackedEmbeddings
+langchain-community>=0.4,<0.5
+langchain-text-splitters>=1,<2
+langgraph>=1,<2
+langchain-weaviate>=0.0.6,<0.1
+tiktoken                      # token 计数，被 language_model providers 与 embeddings_service 直接使用
+
+# ---------- LLM 大语言模型相关 ----------
+# 与 internal/core/language_model/providers/providers.yaml 保持一致
+langchain-openai>=1,<2        # openai / moonshot / deepseek 均复用其 BaseChatOpenAI
+langchain-ollama>=1,<2        # ollama
+dashscope                     # tongyi(通义千问)，ChatTongyi 的运行时依赖
+
+# ---------- 自然语言处理与分词 ----------
+jieba
+pydantic>=2,<3
+
+# ---------- 并发与异步处理 ----------
+celery
+
+# ---------- 数据存储与检索 ----------
+redis
+psycopg2-binary               # 含预编译 C 扩展，免去本地编译
+weaviate-client               # 代码直接 import weaviate.classes / weaviate.collections
+cos-python-sdk-v5
+
+# ---------- 文件解析 ----------
+# extras 覆盖 internal/core/file_extractor/file_extractor.py 用到的加载器:
+# md/csv/doc/docx/xlsx/pptx(xml 无需额外依赖)
+#
+# 刻意不启用 unstructured[pdf]: 该 extra 会引入 unstructured-inference，
+# 而 unstructured/partition/pdf.py 在模块顶层硬导入 unstructured_inference，
+# 连带拉入 torch / onnxruntime / opencv 等约 2-3GB 的推理栈(strategy="fast" 也无法规避)。
+# PDF 改用 PyPDFLoader(仅依赖 pypdf，纯 Python 零强制依赖)，代价是不支持扫描件 OCR。
+#
+# 锁在 0.17.x: 0.27+ 改用 spacy 取代 nltk，会引入 spacy/thinc/blis/cymem 等
+# 编译型依赖(约 50-80MB)，并且需要额外下载 spacy 语言模型。
+# 保持 0.17.x 可继续复用已配置好的 nltk_data(约 5.9MB)。
+unstructured[md,csv,doc,docx,xlsx,pptx]>=0.17,<0.18
+pypdf                         # PDF 解析，见 file_extractor.py 的 .pdf 分支
+
+# ---------- 内置工具 ----------
+requests
+wikipedia                     # wikipedia_search 工具的运行时依赖
+ddgs                          # duckduckgo_search 工具的运行时依赖(旧名 duckduckgo-search 已废弃)
+langchain-tavily              # tavily_search 工具
+
+# ---------- 服务器部署 ----------
+gunicorn                      # docker/entrypoint.sh 生产分支使用
+gevent                        # app/http/app.py 在生产模式下打猴子补丁
+grpcio                        # app/http/app.py 调用 grpc.experimental.gevent.init_gevent()
+
+# ---------- 暂未启用(需要时取消注释并重新 compile) ----------
+# qianfan                     # 文心一言: providers.yaml 中尚未注册
+# langchain-mcp-adapters      # internal/service/agent_service.py 中相关代码仍被注释
+# transformers
+# pandas
+# faiss-cpu                   # 当前向量库走 Weaviate
+# python-pptx                 # 已由 unstructured[pptx] extras 覆盖
+# mistune
+# pypandoc
+# rule-engine
+# wechatpy                    # 微信公众号开发

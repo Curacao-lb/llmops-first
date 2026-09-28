@@ -17,9 +17,8 @@ from pkg.password import compare_password, hash_password
 from pkg.sqlalchemy import SQLAlchemy
 
 from .base_service import BaseService
+from .email_service import send_email
 from .jwt_service import JwtService
-
-# from .sms_service import SmsService
 
 
 @inject
@@ -29,7 +28,6 @@ class AccountService(BaseService):
 
     db: SQLAlchemy
     jwt_service: JwtService
-    # sms_service: SmsService
     redis_client: Redis
 
     def get_account(self, account_id: UUID) -> Account:
@@ -59,18 +57,30 @@ class AccountService(BaseService):
         """根据传递的键值对创建账号信息"""
         return self.create(Account, **kwargs)
 
-    # def send_verification_code(self, email: str):
-    #     key = f"send_verification_code:{email}"
-    #     if self.redis_client.get(key):
-    #         raise FailException("发送验证码过于频繁，请稍后重试")
-    #     code = generate_random_string(6)
-    #     self.sms_service.send_email(
-    #         email,
-    #         f"您正在进行邮箱验证。您的验证码为:{code}\n\n\n验证码 5 分钟内有效，如果不是本人操作，请忽略。",
-    #         "不懂就问-AI应用开发平台邮箱验证邮件",
-    #     )
-    #     self.redis_client.setex(key, 60, 1)
-    #     self.redis_client.setex(f"verification_code:{email}", 60 * 5, code)
+    def send_verification_code(self, email: str) -> None:
+        """发送邮箱验证码，并在 Redis 中限制频率和保存验证码。"""
+        email = email.strip()
+        cooldown_key = f"send_verification_code:{email.lower()}"
+        verification_key = f"verification_code:{email}"
+
+        if not self.redis_client.set(cooldown_key, "1", ex=60, nx=True):
+            raise FailException("发送验证码过于频繁，请稍后重试")
+
+        code = f"{secrets.randbelow(1_000_000):06d}"
+        try:
+            self.redis_client.set(verification_key, code, ex=60 * 5)
+            send_email(
+                to_email=email,
+                subject="不懂就问-AI应用开发平台邮箱验证邮件",
+                body=(
+                    f"您正在进行邮箱验证，验证码为：{code}。\n\n"
+                    "验证码 5 分钟内有效；如果这不是您本人操作，请忽略此邮件。"
+                ),
+                redis_client=self.redis_client,
+            )
+        except Exception:
+            self.redis_client.delete(cooldown_key, verification_key)
+            raise
 
     def forgetPassword(self, req: RegisterReq):
         email = req.email.data

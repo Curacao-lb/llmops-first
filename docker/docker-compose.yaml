@@ -1,30 +1,143 @@
-services:  # 定义所有服务（容器）
-  llmops-ui:  # 前端界面服务
-    image: llmops-ui:0.1.0  # 构建出的镜像命名并打标签为 llmops-ui:0.1.0
-    build:  # 本地构建镜像，而非拉取远程镜像
-      context: ../../llmops-ui  # docker 目录向上两级，定位同级的 llmops-ui 项目
-      dockerfile: Dockerfile  # 使用该目录下的 Dockerfile 构建
-    container_name: llmops-ui  # 固定容器名为 llmops-ui
-    restart: always  # 容器退出后总是自动重启（含守护进程重启）
-    ports:  # 端口映射
-      - "5173:80"  # 宿主机 5173 -> 容器内 80，本机通过 http://localhost:5173 访问
-  llmops-redis:  # Redis 缓存服务
-    image: redis:6-alpine  # 使用官方 Redis 6 的 alpine 精简镜像
-    restart: always  # 容器退出后总是自动重启
-    container_name: llmops-redis  # 固定容器名为 llmops-redis
+services:
+  llmops-ui:
+    image: llmops-ui:0.1.0
+    build:
+      context: ../../llmops-ui
+      dockerfile: Dockerfile
+    container_name: llmops-ui
+    restart: always
+    ports:
+      - "5173:80"
+
+  mailpit:
+    image: axllent/mailpit:v1.27.4
+    container_name: llmops-mailpit
+    restart: unless-stopped
+    environment:
+      # Accept the demo app's placeholder SMTP credentials on the internal
+      # Compose network; Mailpit captures messages instead of delivering them.
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "127.0.0.1:8025:8025"
+
+  llmops-api:
+    image: llmops-api:1.0.0
+    build:
+      # This compose file is in docker/, and the Dockerfile is at the repo root.
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
+    container_name: llmops-api
+    restart: always
     env_file:
-      - ./.env  # 仅在本地保存密码，该文件已被 Git 忽略
-    volumes:  # 数据卷挂载，实现持久化
-      - ./volumes/redis/data:/data  # 宿主机目录挂载到容器内 Redis 数据目录 /data，容器重建数据不丢失
-    # 启动 Redis 时从容器环境变量读取密码，避免在 Compose 中明文保存
+      - ./.env
+    environment:
+      MODE: api
+      SERVER_WORKER_AMOUNT: "4"
+      SERVER_THREAD_AMOUNT: "4"
+      MIGRATION_ENABLED: "true"
+      WTF_CSRF_ENABLED: "false"
+      SQLALCHEMY_DATABASE_URI: "postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in docker/.env}@llmops-db:5432/llmops?client_encoding=utf8"
+      SQLALCHEMY_POOL_SIZE: "30"
+      SQLALCHEMY_POOL_RECYCLE: "3600"
+      SQLALCHEMY_ECHO: "false"
+      REDIS_HOST: llmops-redis
+      REDIS_PORT: "6379"
+      REDIS_USERNAME: ""
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in docker/.env}
+      REDIS_DB: "0"
+      REDIS_USE_SSL: "false"
+      WEAVIATE_HTTP_HOST: weaviate
+      WEAVIATE_HTTP_PORT: "8080"
+      WEAVIATE_GRPC_HOST: weaviate
+      WEAVIATE_GRPC_PORT: "50051"
+      CELERY_BROKER_DB: "1"
+      CELERY_RESULT_BACKEND_DB: "1"
+      CELERY_TASK_IGNORE_RESULT: "true"
+      CELERY_RESULT_EXPIRES: "3600"
+      CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP: "true"
+      TRANSFORMERS_OFFLINE: "0"
+    volumes:
+      - ./volumes/app/storage:/app/api/storage
+      - ../private.pem:/app/api/private.pem:ro
+    ports:
+      - "5001:5001"
+    depends_on:
+      llmops-db:
+        condition: service_healthy
+      llmops-redis:
+        condition: service_healthy
+      weaviate:
+        condition: service_started
+      mailpit:
+        condition: service_started
+
+  llmops-worker:
+    image: llmops-api:1.0.0
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
+    container_name: llmops-worker
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      MODE: celery
+      CELERY_WORKER_CLASS: prefork
+      CELERY_WORKER_AMOUNT: "5"
+      MIGRATION_ENABLED: "false"
+      SQLALCHEMY_DATABASE_URI: "postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in docker/.env}@llmops-db:5432/llmops?client_encoding=utf8"
+      REDIS_HOST: llmops-redis
+      REDIS_PORT: "6379"
+      REDIS_USERNAME: ""
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in docker/.env}
+      REDIS_DB: "0"
+      REDIS_USE_SSL: "false"
+      WEAVIATE_HTTP_HOST: weaviate
+      WEAVIATE_HTTP_PORT: "8080"
+      WEAVIATE_GRPC_HOST: weaviate
+      WEAVIATE_GRPC_PORT: "50051"
+      CELERY_BROKER_DB: "1"
+      CELERY_RESULT_BACKEND_DB: "1"
+      CELERY_TASK_IGNORE_RESULT: "true"
+      CELERY_RESULT_EXPIRES: "3600"
+      CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP: "true"
+      TRANSFORMERS_OFFLINE: "0"
+    volumes:
+      - ./volumes/app/storage:/app/api/storage
+    depends_on:
+      llmops-db:
+        condition: service_healthy
+      llmops-redis:
+        condition: service_healthy
+      weaviate:
+        condition: service_started
+      mailpit:
+        condition: service_started
+
+  llmops-redis:
+    image: redis:6-alpine
+    restart: always
+    container_name: llmops-redis
+    env_file:
+      - ./.env
+    volumes:
+      - ./volumes/redis/data:/data
     command:
       - sh
       - -c
       - exec redis-server --requirepass "$$REDIS_PASSWORD"
-    healthcheck:  # 健康检查
+    healthcheck:
       test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping"]
-    ports:  # 端口映射
-      - "6379:6379"  # 宿主机 6379 -> 容器 6379（Redis 默认端口），本机通过 localhost:6379 连接
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "6379:6379"
 
   weaviate:
     image: cr.weaviate.io/semitechnologies/weaviate:1.36.8
@@ -40,12 +153,12 @@ services:  # 定义所有服务（容器）
       - "50051:50051"
     volumes:
       - weaviate_data:/var/lib/weaviate
-    restart: on-failure:0
+    restart: unless-stopped
     environment:
-      QUERY_DEFAULTS_LIMIT: 25
+      QUERY_DEFAULTS_LIMIT: "25"
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
-      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
-      CLUSTER_HOSTNAME: "node1"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      CLUSTER_HOSTNAME: node1
 
   llmops-db:
     image: postgres:16.3-alpine
@@ -54,23 +167,22 @@ services:  # 定义所有服务（容器）
     env_file:
       - ./.env
     environment:
-      # 配置默认的账户名、账户密码、默认数据库、数据存储的位置
       POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in docker/.env}
       POSTGRES_DB: llmops
     volumes:
-      # 将postgres数据挂载到本地./volumes/db/data上
-      - llmops-db-data:/var/lib/postgresql/data
-      # 初始化脚本只有在空数据挂载的情况下才会触发执行(.sql/.sh等)，如果已经存在数据则不会执行
+      # Reuse the existing PostgreSQL 16 data directory under docker/volumes/db/data.
+      - ./volumes/db/data:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d llmops"]
-      interval: 1s
+      interval: 5s
       timeout: 3s
       retries: 30
     ports:
       - "5432:5432"
+
 volumes:
-  llmops-db-data:
   weaviate_data:
-    # 复用原根目录 Compose 创建的数据卷，避免迁移后数据丢失
+    # Reuse the volume created by the earlier root-level Compose setup.
     name: llmops-api_weaviate_data

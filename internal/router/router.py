@@ -301,6 +301,22 @@ class Router:
         )  # 更新账号头像信息
 
         bp.add_url_rule(
+            "/account/register",
+            methods=["POST"],
+            view_func=self.account_handler.register,
+        )  # 注册账号
+        bp.add_url_rule(
+            "/account/forgetPassword",
+            methods=["POST"],
+            view_func=self.account_handler.forgetPassword,
+        )  # 忘记密码
+        bp.add_url_rule(
+            "/account/sendVerificationCode",
+            methods=["POST"],
+            view_func=self.account_handler.send_verification_code,
+        )  # 发送注册/找回密码验证码
+
+        bp.add_url_rule(
             "/auth/password-login",
             methods=["POST"],
             view_func=self.auth_handler.password_login,

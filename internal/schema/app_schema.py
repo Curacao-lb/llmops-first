@@ -7,7 +7,6 @@ from flask_wtf import FlaskForm
 from marshmallow import Schema, fields, pre_dump
 from wtforms import IntegerField, StringField
 from wtforms.validators import (
-    URL,
     DataRequired,
     Length,
     NumberRange,
@@ -20,6 +19,22 @@ from internal.model import App, AppConfigVersion
 from internal.model.conversation import Message
 from internal.schema.schema import ListField
 from pkg.paginator import PaginatorReq
+
+
+def validate_image_url(form, field) -> None:
+    """Validate an HTTP(S) image URL, allowing local development hosts."""
+    try:
+        parsed_url = urlparse(field.data or "")
+        is_valid = (
+            parsed_url.scheme in {"http", "https"}
+            and bool(parsed_url.netloc)
+            and bool(parsed_url.hostname)
+        )
+    except ValueError:
+        is_valid = False
+
+    if not is_valid:
+        raise ValidationError("应用图标必须是图片URL链接")
 
 
 class GetAppsWithPageReq(PaginatorReq):
@@ -74,7 +89,7 @@ class CreateAppReq(FlaskForm):
         "icon",
         validators=[
             DataRequired("应用图标不能为空"),
-            URL(message="应用图标必须是图片URL链接"),
+            validate_image_url,
         ],
     )
     description = StringField(
@@ -272,7 +287,7 @@ class UpdateAppReq(FlaskForm):
         "icon",
         validators=[
             DataRequired("应用图标不能为空"),
-            URL(message="应用图标必须是图片URL链接"),
+            validate_image_url,
         ],
     )
     description = StringField(

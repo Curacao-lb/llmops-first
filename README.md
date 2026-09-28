@@ -80,6 +80,24 @@ cp .env.example .env
 # python -m app.http
 ```
 
+## Docker Compose
+
+首次部署时复制 `docker/.env.example` 为 `docker/.env`，设置数据库、Redis 和 JWT 密钥，并按需填写外部服务密钥。账号注册和找回密码还需要项目根目录中的 `private.pem`，并在 `docker/.env` 的 `PRIVATE_KEY_PASSWORD` 中填写该密钥的口令；Compose 会只读挂载私钥到 API 容器。SMTP 用于验证码邮件。PostgreSQL 密码会进入连接 URI，建议用 `openssl rand -hex 32` 生成 URL 安全密码。
+
+### 本地 Demo 邮件
+
+Compose 会自动启动 Mailpit，接收验证码邮件但不会向真实邮箱投递，因此不需要注册邮件服务或配置真实的 SMTP 账号。启动服务后访问 <http://localhost:8025> 查看验证码。默认 SMTP 地址为 `mailpit:1025`，仅在 Docker Compose 内部使用；网页界面只绑定本机回环地址。
+
+如果需要让邮件真正到达用户邮箱，再配置外部 SMTP 服务。Outlook.com 需要 OAuth2；本项目提供 `scripts/configure_outlook_oauth.py` 授权脚本，详细方式见脚本注释和微软的 [SMTP OAuth 文档](https://learn.microsoft.com/en-us/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth)。真实邮箱 SMTP 常见使用 STARTTLS，465 端口通常使用 SMTPS。
+
+从仓库根目录构建并启动全部服务：
+
+```bash
+docker compose --env-file docker/.env -f docker/docker-compose.yaml up --build -d
+```
+
+API 运行数据库迁移，Celery worker 负责消费异步任务。PostgreSQL 和 Redis 数据保存在 `docker/volumes/`，Weaviate 使用命名卷。
+
 ## 数据库迁移
 
 在项目根目录执行。`.flaskenv` 已配置应用入口，激活虚拟环境后可以直接使用 `flask db` 命令。

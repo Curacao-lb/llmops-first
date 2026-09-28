@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from flask import request
 from flask_login import login_required, current_user
 from injector import inject
 
@@ -13,6 +14,21 @@ from internal.schema.account_schema import (
 )
 from internal.service import AccountService
 from pkg.response import success_json, validate_error_json, success_message
+
+
+def _bind_json_form_data(form):
+    """Bind the JSON envelope used by the UI onto a Flask-WTF form."""
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return
+
+    values = payload.get("body", payload)
+    if not isinstance(values, dict):
+        return
+
+    for field_name, value in values.items():
+        if field_name in form._fields:
+            form[field_name].data = value
 
 
 @inject
@@ -75,6 +91,7 @@ class AccountHandler:
 
     def register(self):
         req = RegisterReq()
+        _bind_json_form_data(req)
         if not req.validate():
             return validate_error_json(req.errors)
         self.account_service.register(req)
@@ -82,14 +99,16 @@ class AccountHandler:
 
     def forgetPassword(self):
         req = RegisterReq()
+        _bind_json_form_data(req)
         if not req.validate():
             return validate_error_json(req.errors)
         self.account_service.forgetPassword(req)
         return success_message("修改密码成功")
 
-    # def send_verification_code(self):
-    #     req = SendVerificationCodeReq()
-    #     if not req.validate():
-    #         return validate_error_json(req.errors)
-    #     self.account_service.send_verification_code(req.email.data)
-    #     return success_message("发送验证码成功")
+    def send_verification_code(self):
+        req = SendVerificationCodeReq()
+        _bind_json_form_data(req)
+        if not req.validate():
+            return validate_error_json(req.errors)
+        self.account_service.send_verification_code(req.email.data)
+        return success_message("发送验证码成功")

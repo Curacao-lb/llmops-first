@@ -2,21 +2,20 @@ import os.path
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
 
 import requests
 from injector import inject
 from langchain_community.document_loaders import (
-    UnstructuredExcelLoader,
-    UnstructuredPDFLoader,
-    UnstructuredMarkdownLoader,
-    UnstructuredHTMLLoader,
-    UnstructuredCSVLoader,
-    UnstructuredPowerPointLoader,
-    UnstructuredXMLLoader,
-    UnstructuredFileLoader,
-    UnstructuredWordDocumentLoader,
+    PyPDFLoader,
     TextLoader,
+    UnstructuredCSVLoader,
+    UnstructuredExcelLoader,
+    UnstructuredFileLoader,
+    UnstructuredHTMLLoader,
+    UnstructuredMarkdownLoader,
+    UnstructuredPowerPointLoader,
+    UnstructuredWordDocumentLoader,
+    UnstructuredXMLLoader,
 )
 from langchain_core.documents import Document as LCDocument
 
@@ -36,7 +35,7 @@ class FileExtractor:
         upload_file: UploadFile,
         return_text: bool = False,
         is_unstructured: bool = True,
-    ) -> Union[list[LCDocument], str]:
+    ) -> list[LCDocument] | str:
         """加载传入的upload_file记录，返回LangChain文档列表或者字符串"""
         # 创建一个临时的文件夹
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -52,7 +51,7 @@ class FileExtractor:
     @classmethod
     def load_from_url(
         cls, url: str, return_text: bool = False
-    ) -> Union[list[LCDocument], str]:
+    ) -> list[LCDocument] | str:
         """从传入的URL中去加载数据，返回LangChain文档列表或者字符串"""
         # 下载远程URL的文件到本地
         response = requests.get(url)
@@ -72,7 +71,7 @@ class FileExtractor:
         file_path: str,
         return_text: bool = False,
         is_unstructured: bool = True,
-    ) -> Union[list[LCDocument], str]:
+    ) -> list[LCDocument] | str:
         """从本地文件中加载数据，返回LangChain文档列表或者字符串"""
         # 获取文件的扩展名
         delimiter = "\n\n"
@@ -82,7 +81,10 @@ class FileExtractor:
         if file_extension in [".xlsx", ".xls"]:
             loader = UnstructuredExcelLoader(file_path)
         elif file_extension == ".pdf":
-            loader = UnstructuredPDFLoader(file_path)
+            # 使用 PyPDFLoader 而非 UnstructuredPDFLoader: 后者会引入
+            # unstructured-inference(torch/onnxruntime/opencv 约 2-3GB)。
+            # 注意: 仅支持文本型 PDF，扫描件需另接 OCR 服务。
+            loader = PyPDFLoader(file_path)
         elif file_extension in [".md", ".markdown"]:
             loader = UnstructuredMarkdownLoader(file_path)
         elif file_extension in [".htm", ".html"]:
@@ -93,7 +95,7 @@ class FileExtractor:
             loader = UnstructuredPowerPointLoader(file_path)
         elif file_extension == ".xml":
             loader = UnstructuredXMLLoader(file_path)
-        elif file_extension in [".doc", "docx"]:
+        elif file_extension in [".doc", ".docx"]:
             loader = UnstructuredWordDocumentLoader(file_path)
         else:
             loader = (

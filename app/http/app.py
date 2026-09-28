@@ -22,6 +22,7 @@ from injector import Injector
 
 import pkg.tiktoken_cache  # noqa: F401
 from config import Config
+from internal.extension.celery_extension import init_app as init_celery
 from internal.extension.logging_extension import init_app as init_logging
 from internal.middleware import Middleware
 from internal.router import Router
@@ -62,6 +63,12 @@ app = Http(
 
 # 统一初始化日志；后台任务服务应使用不同的 LOG_SERVICE_NAME（如 worker）。
 init_logging(app)
+
+# 初始化并导出 Celery 实例，供 API 与 worker 共用同一套 Flask 配置。
+celery = init_celery(app)
+
+# shared_task 需要在设置 Celery 默认应用后导入，确保任务注册到当前实例。
+from internal.task import dataset_task  # noqa: F401, E402
 
 if __name__ == "__main__":
     app.run(debug=True)
