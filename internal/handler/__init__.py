@@ -4,6 +4,7 @@ from .analysis_handler import AnalysisHandler
 from .api_key_handler import ApiKeyHandler
 from .api_tool_handler import ApiToolHandler
 from .app_handler import AppHandler
+from .audio_handler import AudioHandler
 from .auth_handler import AuthHandler
 from .builtin_tool_handler import BuiltinToolHandler
 from .conversation_handler import ConversationHandler
@@ -34,4 +35,5 @@ __all__ = [
     "LanguageModelHandler",
     "AnalysisHandler",
     "WebAppHandler",
+    "AudioHandler",
 ]

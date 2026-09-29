@@ -24,6 +24,7 @@ from internal.core.tools.api_tools.entites.tool_entity import ToolEntity
 from internal.core.tools.api_tools.providers import ApiProviderManager
 from internal.core.tools.builtin_tools.providers import BuiltinProviderManager
 from internal.entity.app_entity import DEFAULT_APP_CONFIG, AppConfigType, AppStatus
+from internal.entity.audio_entity import ALLOWED_AUDIO_VOICES
 from internal.entity.conversation_entity import InvokeFrom, MessageStatus
 from internal.entity.dataset_entity import RetrievalSource, RetrievalStrategy
 from internal.entity.workflow_entity import WorkflowStatus
@@ -611,7 +612,7 @@ class AppService(BaseService):
             if (
                 set(text_to_speech.keys()) != {"enable", "voice", "auto_play"}
                 or not isinstance(text_to_speech["enable"], bool)
-                # or text_to_speech["voice"] not in ALLOWED_AUDIO_VOICES
+                or text_to_speech["voice"] not in ALLOWED_AUDIO_VOICES
                 or not isinstance(text_to_speech["auto_play"], bool)
             ):
                 raise ValidateException("文本转语音设置格式错误")

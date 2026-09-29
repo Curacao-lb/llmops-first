@@ -6,6 +6,7 @@ from .api_key_service import ApiKeyService
 from .api_tool_service import ApiToolService
 from .app_config_service import AppConfigService
 from .app_service import AppService
+from .audio_service import AudioService
 from .builtin_app_service import BuiltinAppService
 from .builtin_tool_service import BuiltinToolService
 from .conversation_service import ConversationService
@@ -47,4 +48,5 @@ __all__ = [
     "WorkflowService",
     "LanguageModelService",
     "WebAppService",
+    "AudioService",
 ]
