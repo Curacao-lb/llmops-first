@@ -29,6 +29,7 @@ class AudioHandler:
             req.file.data,
             UUID(cast(str, req.app_id.data)),
             cast(Account, current_user),
+            req.web_app_token.data,
         )
 
         return success_json({"text": text})

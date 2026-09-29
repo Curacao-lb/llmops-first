@@ -14,6 +14,7 @@ class AudioToTextReq(FlaskForm):
             UUID(message="应用id格式必须为uuid"),
         ],
     )
+    web_app_token = StringField("web_app_token")
     file = FileField(
         "file",
         validators=[

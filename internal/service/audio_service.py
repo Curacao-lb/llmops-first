@@ -30,12 +30,28 @@ class AudioService(BaseService):
     app_service: AppService
 
     def audio_to_text(
-        self, audio: FileStorage, app_id: UUID, account: Account
+        self,
+        audio: FileStorage,
+        app_id: UUID,
+        account: Account,
+        web_app_token: str | None = None,
     ) -> str:
-        """校验应用语音转文本配置后，将传递的语音转换成文本"""
-        # 只允许应用创建者使用该应用的草稿语音转文本配置
-        draft_app_config = self.app_service.get_draft_app_config(app_id, account)
-        speech_to_text = draft_app_config.get("speech_to_text") or {}
+        """校验应用语音转文本配置后识别音频内容"""
+        app = self.get(App, app_id)
+        if not app:
+            raise NotFoundException("该应用不存在，请核实后重试")
+
+        # WebApp 语音输入使用 token 对应的已发布配置；没有 token 时仅允许应用所有者
+        # 使用调试区的草稿配置。
+        if web_app_token:
+            if app.token != web_app_token or app.status != AppStatus.PUBLISHED:
+                raise NotFoundException("该WebApp不存在或者未发布，请核实后重试")
+            app_config = app.app_config
+            speech_to_text = (app_config.speech_to_text if app_config else None) or {}
+        else:
+            draft_app_config = self.app_service.get_draft_app_config(app_id, account)
+            speech_to_text = draft_app_config.get("speech_to_text") or {}
+
         if speech_to_text.get("enable") is not True:
             raise FailException("该应用未开启语音转文本功能，请核实后重试")
 
