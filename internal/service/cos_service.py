@@ -1,10 +1,13 @@
+import base64
 import hashlib
+import mimetypes
 import os
 import shutil
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 from flask import has_request_context, request
 from injector import inject
@@ -91,6 +94,26 @@ class CosService:
             region = cls.get_region()
             cos_domain = f"{schema}://{bucket}.cos.{region}.myqcloud.com"
         return f"{cos_domain}/{key}"
+
+    @classmethod
+    def get_model_image_url(cls, image_url: str) -> str:
+        """Return local uploads as data URLs so remote model providers can read them."""
+        parsed_url = urlparse(image_url)
+        if not cls.is_local_provider() or not parsed_url.path.startswith("/uploaded-files/"):
+            return image_url
+
+        key = unquote(parsed_url.path.removeprefix("/uploaded-files/"))
+        if not key:
+            raise FailException("图片地址无效")
+        file_path = cls.get_local_file_path(key)
+        if not os.path.isfile(file_path):
+            raise FailException("上传图片不存在或已被删除")
+
+        with open(file_path, "rb") as file:
+            image_content = file.read()
+        mime_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+        encoded_content = base64.b64encode(image_content).decode("ascii")
+        return f"data:{mime_type};base64,{encoded_content}"
 
     @classmethod
     def get_client(cls) -> CosS3Client:

@@ -53,6 +53,7 @@ from internal.schema.app_schema import (
     GetDebugConversationMessagesWithPageReq,
     GetPublishHistoriesWithPageReq,
 )
+from internal.service.cos_service import CosService
 from pkg.paginator import Paginator
 from pkg.sqlalchemy import SQLAlchemy
 
@@ -1062,7 +1063,10 @@ class AppService(BaseService):
             human_content = [
                 {"type": "text", "text": req.query.data},
                 *[
-                    {"type": "image_url", "image_url": {"url": image_url}}
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": CosService.get_model_image_url(image_url)},
+                    }
                     for image_url in req.image_urls.data
                 ],
             ]
